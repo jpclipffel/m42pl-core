@@ -1,0 +1,175 @@
+import sys
+import regex
+import argparse
+import readline
+import logging, logging.handlers
+from dataclasses import dataclass
+
+import m42pl
+from m42pl.utils.time import now
+from m42pl.errors import M42PLError
+
+
+# Cannot use logging._levelNames anymore (change from Python 3.9).
+# Better to ignore private attribute and use own levels.
+LOG_LEVELS = ['debug', 'info', 'warning', 'error', 'critical']
+
+
+class CLIAction:
+    """Base command line action.
+    """
+    def __init__(self, name: str, subparser):
+        self.parser = subparser.add_parser(name)
+        self.parser.set_defaults(func=self)
+        # Common arguments
+        self.parser.add_argument('-m', '--modules', type=str, nargs='+', default=[], help='External modules paths')
+
+    def __call__(self, args):
+        """Runs the command line action.
+
+        Each command (i.e. child class of `CLIAction`) **should** call
+        their parent's :meth:`__call__`, e.g.:
+
+        ```
+        def __call__(self, args):
+            super().__call__(args)
+        ```
+
+        :param args:    Command arguments.
+        """
+        m42pl.load_modules(args.modules) 
+
+
+class Parse(CLIAction):
+    """Parses a M42PL script.
+    """
+    def __init__(self, *args, **kwargs):
+        super().__init__('parse', *args, **kwargs)
+        self.parser.add_argument('source', type=str, help='M42PL source script')
+        self.parser.add_argument('--command', dest='command', type=str, default=None, help='''Use the given command's parser''')
+        self.parser.add_argument('--parse-mode', dest='mode', choices=['json', 'pipeline'], default='json', help='Parser mode')
+        self.parser.add_argument('--parse-commands', dest='parse_commands', action='store_true', default=False, help='Parse commands')
+    
+    def __call__(self, args):
+        super().__call__(args)
+        with open(args.source) as fd:
+            parsed = m42pl.command('script')(source=fd.read(), mode=args.mode, parse_commands=args.parse_commands)()
+            print(parsed)
+            # # Use default ('script' command) parser
+            # if not args.command:
+            #     parsed = list(m42pl.command('script')(source=fd.read(), mode=args.mode, parse_commands=args.parse_commands)())[0]
+            # # Use the requested command parser
+            # else:
+            #     # cls.__transformer__.transform(cls.__parser__.parse(data))
+            #     command = m42pl.command(args.command)
+            #     parsed = command.__transformer__.transform(command.__parser__.parse(fd.read()))
+            # # ---
+            # print(parsed)
+
+
+class Grammar(CLIAction):
+    """Prints a command's grammar.
+    """
+    def __init__(self, *args, **kwargs):
+        super().__init__('grammar', *args, **kwargs)
+        self.parser.add_argument('command', help='Command name')
+    
+    def __call__(self, args):
+        super().__call__(args)
+        print(m42pl.command(args.command)._ebnf_)
+
+
+class Run(CLIAction):
+    """Run a M42PL script.
+    """
+    def __init__(self, *args, **kwargs):
+        super().__init__('run', *args, **kwargs)
+        self.parser.add_argument('source', type=str, help='M42PL source script')
+        self.parser.add_argument('-t', '--timeout', type=float, default=0.0, help='Pipelines timeout')
+        self.parser.add_argument('-d', '--dispatcher', type=str, default='local', help='Pipeline dispatcher name / alias')
+
+    # @classmethod
+    def __call__(self, args):
+        # m42pl.load_modules(args.modules)
+        super().__call__(args)
+        with open(args.source, 'r') as fd:
+            context = m42pl.command('script')(source=fd.read())()
+            dispatcher = m42pl.dispatcher(args.dispatcher)(context)
+            dispatcher()
+
+
+class Shell(CLIAction):
+    """A basic command line interpreter to run M42PL pipelines.
+
+    Pipelines are run with through the `local_shell` dispatcher.
+    This dispatcher will add an `output` command at the end of the
+    pipeline if not already present.
+
+    :ivar prompt:       Input prompt.
+    :ivar aliases:      List of commands aliases.
+    """
+
+    prompt = 'm42pl > '
+
+    def completer(self, text, state):
+        """Readline completer.
+        """
+        matched = [
+            alias for alias
+            in self.aliases
+            if alias.startswith(text)
+        ]+ [None,]
+        return matched[state]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__('shell', *args, **kwargs)
+        self.aliases = []
+        # Setup readline
+        readline.parse_and_bind('tab: complete')
+        readline.set_completer(self.completer)
+
+    def __call__(self, args):
+        super().__call__(args)
+        # Build aliases list for completer
+        self.aliases = [
+            alias for alias, _
+            in m42pl.commands.ALIASES.items()
+        ]
+        # Select M42PL script command and dispatcher instance
+        script = m42pl.command('script')
+        dispatcher = m42pl.dispatcher('local_shell')
+        # CLI loop
+        while True:
+            try:
+                context = script(source=input(self.prompt))()
+                dispatcher(context)()
+            except M42PLError as error:
+                print(f'M42PL exception: {error}')
+            except Exception as error:
+                print(f'Python exception: {error}')
+
+
+def main():
+    # Parser instance
+    parser = argparse.ArgumentParser('m42pl')
+    # Base arguments
+    parser.add_argument('--log-level', dest='log_level', type=str, default='warning', choices=LOG_LEVELS, help='Log level')
+    # Sub parsers
+    subparser = parser.add_subparsers(dest="command")
+    subparser.required = True
+    _commands = [ c(subparser) for c in [Parse, Grammar, Run, Shell] ]
+    # Parse
+    args = parser.parse_args()
+    # Setup logging
+    logger = logging.getLogger('m42pl')
+    logger.setLevel(args.log_level.upper())
+    handler = logging.StreamHandler()
+    handler.setLevel(args.log_level.upper())
+    handler.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(funcName)s() - %(message)s'))
+    logger.addHandler(handler)
+    # Run
+    args.func(args)
+
+
+if __name__ == "__main__":
+    main()
