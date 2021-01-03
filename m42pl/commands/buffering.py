@@ -4,6 +4,8 @@ from collections import OrderedDict
 
 from typing import AsyncGenerator
 
+from m42pl.errors import CommandError
+
 from ..event import Event
 from .base import AsyncCommand
 
@@ -73,8 +75,9 @@ class BufferingCommand(AsyncCommand):
                 await self.clear()
         except Exception as error:
             # pipeline.logger.error(str(error))
-            pipeline.logger.exception(error)
-            yield event
+            # pipeline.logger.exception(error)
+            # yield event
+            raise CommandError(command=self, message=str(error))
 
     async def full(self) -> bool:
         """Returns `True` when the buffer is full, `False` otherwise.

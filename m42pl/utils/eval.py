@@ -1,10 +1,26 @@
 from collections import defaultdict
+from textwrap import dedent
 import ntpath
 import regex
 
 from typing import Any
 
 from .time import now, reltime, strftime
+
+
+class Undefined:
+    """Undefined value placeholder.
+
+    To be returned by EvalNS when no matching field is found.
+    """
+    def __getitem__(self, *args):
+        return self
+
+    def __getattribute__(self, *args):
+        return self
+
+    def __getattr__(self, *args):
+        return self
 
 
 class EvalNS(dict):
@@ -30,7 +46,9 @@ class EvalNS(dict):
     def __getitem__(self, name: str):
         """Returns the attribute :param:`name` from current namespace.
 
-        :ivar strself_name:         Current object's name
+        :param name:                Attribute name
+
+        :ivar str self_name:        Current object's name
         :ivar dict self_functions:  Current object's functions map
         :ivar dict self_fields:     Current object's fields map
         """
@@ -48,15 +66,17 @@ class EvalNS(dict):
             # print(f'EvalNS({self_name}).__getitem__({name}) --> self.fields')
             return self_fields
         else:
+            # print(f'EvalNS({self_name}).__getitem__({name}) --> Unexistent')
+            return Undefined()
             # print(f'EvalNS({self_name}).__getitem__({name}) --> None')
-            raise Exception(f'TEST EXCEPTION -- EvalNS({self_name}).__getitem__({name}) --> None')
-            # return None
+            # raise Exception(f'TEST EXCEPTION -- EvalNS({self_name}).__getitem__({name}) --> None')
+            # return self
 
-    def __getattribute__(self, name: str):
+    def __getattribute__(self, name: str, *args):
         # print(f'EvalNS.__getattribute__({name}) --> self.__getitem__({name})')
         return super().__getattribute__('__getitem__')(name)
 
-    def __getattr__(self, name: str):
+    def __getattr__(self, name: str, *args):
         # print(f'EvalNS.__getattr__({name}) --> self.__getitem__({name})')
         return super().__getattribute__('__getitem__')(name)
     
@@ -105,8 +125,14 @@ class EvalNS(dict):
     def __lt__(self, other):
         return super().__getattribute__('__cast__')(other) < other
 
+    def __le__(self, other):
+        return super().__getattribute__('__cast__')(other) <= other
+
     def __gt__(self, other):
         return super().__getattribute__('__cast__')(other) > other
+
+    def __ge__(self, other):
+        return super().__getattribute__('__cast__')(other) >= other
 
 
 def solve(attr, types: list = [], *args):
@@ -116,6 +142,7 @@ def solve(attr, types: list = [], *args):
     :param types:   Accepted types list (toptional).
     :param *args:   Default value to return (optional).
     """
+    # print(f'solve() --> {attr}, {types}, {args}')
     # If the attribute is an EvalNS, continue the evalutation and
     # return the result.
     if isinstance(attr, EvalNS):
@@ -130,7 +157,7 @@ def solve(attr, types: list = [], *args):
             return args[0]
         else:
             return None
-    # If no expected types are give, returns the attribute.
+    # If no expected types are given, returns the attribute.
     return attr
 
 
@@ -157,14 +184,15 @@ class Evaluator:
         'toint':        lambda field: int(solve(field)),
         'tofloat':      lambda field: float(solve(field)),
         # String
-        'length':       lambda field: len(solve(field, [str, ], 0)),
+        'length':       lambda field: len(solve(field, [str, ], '')),
         'basename':     lambda field: ntpath.basename(solve(field, [str, ], 0)),
         'dirname':      lambda field: ntpath.dirname(solve(field, [str, ], 0)),
+        'clean':        lambda field: ''.join(solve(field, [str,], '').split()),
         # List
         'list':         lambda *args: [solve(i) for i in args],
         'join':         lambda field, delimiter='': delimiter.join(solve(field, [list, tuple, str, ])),
         'slice':        lambda field, start, *end: len(end) and solve(field, [str, list, tuple, ], None)[start:end[0]] or solve(field, [str, list, tuple, ], None)[start:],
-        'at':           lambda field, position: solve(field, [str, list, tuple, ], None)[position],
+        'index':        lambda field, position: solve(field, [str, list, tuple, ], None)[position],
         # Math
         'round':        lambda field, x: round(solve(field, [float, int, ], 0), x),
         'even':         lambda field: solve(field, [int, float], 0) % 2 == 0,
@@ -179,33 +207,43 @@ class Evaluator:
         # String
         'str':      functions['tostring'],
         'string':   functions['tostring'],
-        'len':      functions['length']
+        'len':      functions['length'],
+        # List
+        'at':       functions['index']
     })
     
     def __init__(self, expression: str):
-        self.compiled = compile(source=expression, filename='<string>', mode='eval')
+        """
+        :param expression:  Python expression to evaluate.
+                            This expression may uses the functions
+                            defined in `Evaluator.functions`.
+        """
+        # Pre-compile the expression
+        self.compiled = compile(
+            source=expression,
+            filename='<string>', 
+            mode='eval'
+        )
 
     def __call__(self, data: dict = {}):
+        """Run evaluation.
+
+        :param data:    Events fields (`event.data`).
+                        Will be used as eval's `global`.
+        """
         # ---
-        # return eval(self.compiled, {
-        #     **{ '__builtins__': None },
-        #     **self.functions,
-        #     **data
-        # })
-        # ---
-        # env = defaultdict(Any(data), {
-        #     **self.functions
-        # })
-        # ---
+        # Build environement (functions map and globals)
         env = EvalNS(name='', functions=self.functions, fields=data)
-        # evaluated = eval(self.compiled, env)
-        # if isinstance(evaluated, EvalNS):
-        #     return super(EvalNS, evaluated).__getattribute__('fields')
-        # print(f'evaluating...')
+        # ---
+        # Evaluate the pre-compiled expression using built env
+        # print(f'Evaluator --> evaluating')
         evaluated = eval(self.compiled, env)
-        # print(f'evaluated ! --> {evaluated}')
-        # print(f'solving...')
+        # print(f'Evaluator --> evaluated --> {evaluated}')
+        # ---
+        # Solve the result a last time as EvalNS may returns a nother EvalNS
+        # print(f'Evaluator --> solving')
         solved = solve(evaluated, [], None)
-        # print(f'solved ! --> {solved}')
+        # print(f'Evaluator --> solved --> {solved}')
+        # ---
+        # Done
         return solved
-        # return evaluated

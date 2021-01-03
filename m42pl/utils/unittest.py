@@ -32,6 +32,7 @@ class TestScript:
     source: str
     expected: list
     fields_in: list = field(default_factory=list)
+    fields_out: list = field(default_factory=list)
 
 
 class Command:
@@ -91,10 +92,10 @@ class Command:
                     {cls.script_end}
                 ''')
                 # ---
-                # Copy the test script's `expected` and `fields_in`
-                # references
+                # Local copy the test script parameters
                 expected = test_script.expected
                 fields_in = test_script.fields_in
+                fields_out = test_script.fields_out
                 # ---
                 # Initialize M42PL
                 context = m42pl.command('script')(source=source)()
@@ -107,17 +108,24 @@ class Command:
                 self.assertEqual(len(results), len(expected))
                 # ---
                 # Test results content
+                # Events are compared on-by-one with each other from
+                # the results set and the expected set.
                 for res, exp in zip(results, expected):
                     # Clean up all fields but the selected one
-                    for field in fields_in:
-                        res.pop(field, None)
-                        exp.pop(field, None)
+                    for dataset in (res, exp):
+                        # Keep only fields named in fields_in
+                        for field in [k for k, v in dataset.data.items() if k not in fields_in]:
+                            dataset.data.pop(field)
+                        # Remove fields named in fields_out
+                        for field in fields_out:
+                            dataset.data.pop(field)
                     # Assert JSON dumps of result and expected match
                     self.assertEqual(
                         json.dumps(res.data, sort_keys=True), 
                         json.dumps(exp.data, sort_keys=True)
                     )
-
+            # ---
+            # Return the generated test case function `testcase`
             return testcase
 
         # Generated tests methods
@@ -181,6 +189,17 @@ class Command:
             dedent(f'''\
                 Command should be an instance of 
                 {" or ".join([i.__name__ for i in valid_types])}.
+            ''')
+        )
+    
+    def test_initsuper(self):
+        """Tests if the command `init` its parent class.
+        """
+        # pylint: disable=no-member
+        self.assertTrue(
+            '__init__' in self.command.__init__.__code__.co_names,
+            dedent(f'''\
+                Command does not initialize parent class.
             ''')
         )
 

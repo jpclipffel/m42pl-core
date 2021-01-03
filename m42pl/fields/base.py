@@ -38,6 +38,7 @@ class BaseField:
                     Defaults to `None`.
     :ivar cast:     Cast function to apply to the value before
                     returning it. Returns raw value by default.
+    :ivar literal:      True when the field is a literal value.
     """
 
     def __init__(self, name: FieldName, default = None, cast = lambda x: x):
@@ -49,10 +50,12 @@ class BaseField:
                             found. Defaults to `None`.
         :param cast:        Cast function to apply to the value before
                             returning it. Returns raw value by default.
+        :ivar literal:      True when the field is a literal value.
         """
         self.name = name
         self.default = default
         self.cast = cast
+        self.literal = True
 
     async def read(self, event: 'Event', pipeline: 'Pipeline' = None):
         """Returns (get) the configured field :attr:`self.name` from

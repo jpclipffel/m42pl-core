@@ -4,8 +4,9 @@ from .base import BaseField, FieldName
 from .json import JsonField
 from .dict import DictField
 from .seqn import SeqnField
-from .none import NoneField
 from .pipe import PipeField
+from .eval import EvalField
+from .none import NoneField
 
 
 def Field(name: FieldName, *args, **kwargs):
@@ -59,6 +60,10 @@ def Field(name: FieldName, *args, **kwargs):
             elif name[0] == '{' and name[-1] == '}':
                 # print(f'field({name}) -> string -> JsonField ({name})')
                 return JsonField(name[1:-1])
+            # ---
+            # Eval field
+            elif name[0] == '`' and name[-1] == '`':
+                return EvalField(name[1:-1])
             # ---
             # Pipeline reference
             elif name[0] == '@':

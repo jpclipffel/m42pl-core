@@ -39,17 +39,20 @@ class Command():
 
     The following attributes are set by the command developer:
 
-    :ivar _about_:        High level command description.
-    :ivar _syntax_:       Command syntax.
-    :ivar _aliases_:      List of command names.
-    :ivar _grammar_:      Command grammar (blocks).
-    :ivar Transformer:      Lark transformer class.
+    :ivar _about_:          High level command description
+    :ivar _syntax_:         Command syntax
+    :ivar _aliases_:        List of command names
+    :ivar _grammar_:        Command grammar (blocks)
+    :ivar Transformer:      Lark transformer class
 
     The following attributes are set at run time:
 
-    :ivar _ebnf_:         Command grammar (string).
-    :ivar _transformer_:  Lark transformer instance.
-    :ivar _parser_:       Lark parser.
+    :ivar _ebnf_:           Command grammar (string)
+    :ivar _transformer_:    Lark transformer instance
+    :ivar _parser_:         Lark parser
+    :ivar _lncol_:          Line / Column in source
+    :ivar _offset_:         Offset in source
+    :ivar _name_:           Command name in source
     """
 
     _about_     = ''
@@ -59,11 +62,12 @@ class Command():
     _grammar_   = OrderedDict({
         # ---
         'directives': dedent('''\
-            // directives
+            COMMENT : "/*" /.*/ "*/" 
             %import common.WS
             %import common.NEWLINE
             %ignore NEWLINE
             %ignore WS
+            %ignore COMMENT
         '''),
         # ---
         'eval_terminals': dedent('''\
@@ -77,8 +81,9 @@ class Command():
             FLOAT       : ("-")? DIGIT+ "." DIGIT+
             INTEGER     : ("-")? DIGIT+
             BOOLEAN.2   : "true"i | "false"i | "yes"i | "no"i
-            NAME        : /[a-zA-Z_]+[a-zA-Z0-9_]*/
-            STRING      : /"(?:[^"\\\\]|\\\\.)*"/ | /'(?:[^'\\\\]|\\\\.)*'/
+            NAME        : /[a-zA-Z_]+[a-zA-Z0-9_-]*/
+            // STRING      : /"(?:[^"\\\\]|\\\\.)*"/ | /'(?:[^'\\\\]|\\\\.)*'/
+            STRING      : /"(?:[^"\\\\]|\\\\.|\n)*"/xs | /'(?:[^'\\\\]|\\\\.|\n)*'/xs
             EVAL        : /`(?:[^`\\\\]|\\\\.)*`/
             JSPATH      : /\{.*\}/
             DOTPATH     : NAME ( "." NAME )+
@@ -98,7 +103,8 @@ class Command():
         '''),
         # ---
         'eval_rules': dedent('''\
-            symbol  : EVAL_SYMBOLS
+            symbol      : EVAL_SYMBOLS
+            operation   : (field|function) (symbol (field|function))+
         '''),
         # ---
         'fields_rules': dedent('''\
@@ -123,7 +129,7 @@ class Command():
         # '''),
         'collections_rules': dedent('''\
             // collections_rules
-            function    : FUNC_START ((field | collection | EVAL_SYMBOLS) ","?)* COLLECTION_END
+            function    : FUNC_START ((field | collection | operation | EVAL_SYMBOLS) ","?)* COLLECTION_END
             sequence    : SEQN_START ((field | collection | EVAL_SYMBOLS) ","?)* COLLECTION_END
             ?collection : function
                         | sequence
@@ -158,6 +164,9 @@ class Command():
         def _discard(self, _):
             raise Discard
         
+        # comment_rules
+        comment     = _discard
+
         # fields_rules
         float       = lambda self, items: float(items[0])
         integer     = lambda self, items: int(items[0])
@@ -170,6 +179,7 @@ class Command():
 
         # eval_rules
         symbol      = lambda self, items: str(items[0])
+        operation   = lambda self, items: ' '.join([str(i) for i in  items])
 
         # collections_rules
         function    = lambda self, items: f'{items[0]}{", ".join([str(i) for i in items[1:-1]])}{items[-1]}'  # print(f'function --> {items}')
@@ -210,6 +220,13 @@ class Command():
     logger.info(f'creating generic command transformer')
     _transformer_ = Transformer()
 
+    # Line/column and offset position in original source
+    _lncol_ = (-1, -1)
+    _offset_ = -1
+
+    # Command name (as wrote by the user)
+    _name_ = ''
+
     @classmethod
     def from_script(cls: type, data: str) -> 'Command':
         """Returns a new :class:`Command` instance from a script wrote 
@@ -232,9 +249,12 @@ class Command():
     def from_dict(cls: type, data: dict) -> 'Command':
         """Returns a new :class:`Command` from a :class:`dict`.
         
-        The given :class:`dict` must match with the following mapping:
+        The source map :param:`data` must match with the following map:
 
-            `{ 'args': [], 'kwargs': [] }`
+            {
+                'args': [],     # Command's arguments list
+                'kwargs': []    # Command's keyword arguments map
+            }
         
         :param data:    :class:`dict` instance.
         """
@@ -279,15 +299,15 @@ class Command():
         :param kwargs:      Kwargs map to be automatically
                             exported using `to_dict()`.
         
-        :ivar _logger:      Command instance logger.
-        :ivar _args:        Automatically exported args list.
-        :ivar _kwargs:      Automatically exported kwargs list.
-        :ivar _chunk:       Command instance chunk number.
-        :ivar _chunks:      Number of chunks running in parallel.
+        :ivar logger:      Command instance logger.
+        :ivar chunk:       Command instance chunk number.
+        :ivar chunks:      Number of chunks running in parallel.
+        :ivar _args:       Automatically exported args list.
+        :ivar _kwargs:     Automatically exported kwargs list.
         """
-        self._logger = logging.getLogger(self.__class__.__name__)
-        self._args, self._kwargs = args, kwargs
+        self.logger = logging.getLogger(self.__class__.__name__)
         self._chunk, self._chunks = 1, 1
+        self._args, self._kwargs = args, kwargs
 
     def to_dict(self) -> Dict:
         """Returns a JSON-serializable :class:`dict` from the current
@@ -329,7 +349,7 @@ class Command():
         This method *should* be implemented by generating commands.
         Streaming commands may use this default implementation.
         """
-        self._logger.info(f'setting command chunk: chunk={chunk}, chunks={chunks}')
+        self.logger.info(f'setting command chunk: chunk={chunk}, chunks={chunks}')
         self._chunk = chunk
         self._chunks = chunks
 
@@ -392,6 +412,7 @@ class AsyncCommand(Command):
         For late initialization, a command may uses :meth:`setup` which
         receies the current pipeline and latest event.
         """
+        self.logger.info('entering command context')
         return self
     
     async def __aexit__(self, *args, **kwargs):
@@ -401,4 +422,5 @@ class AsyncCommand(Command):
         file descriptors, shared memory, etc. should closes / frees / 
         releases / ... these resources here.
         """
+        self.logger.debug('exiting command context')
         pass

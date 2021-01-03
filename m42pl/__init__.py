@@ -31,32 +31,35 @@ IMPORTED_MODULES_PATHS = [] # type: List[str]
 
 
 def command(alias: str) -> Any:
-    '''Returns the requested :class:`m42pl.Command` class.
+    """Returns the requested :class:`m42pl.Command` class.
 
     :param alias:   Command alias.
-    '''
+    """
     logger.info(f'requesting command: name="{alias}"')
     try:
         return m42pl.commands.ALIASES[alias]
     except KeyError:
-        raise M42PLError(f'Command not found: alias="{alias}"')
+        raise M42PLError(f'Command not found: name="{alias}"')
 
 
-def dispatcher(name: str = 'local') -> Any:
-    '''Returns the requested :class:`spell.Dispatcher` class.
+def dispatcher(alias: str = 'local') -> Any:
+    """Returns the requested :class:`spell.Dispatcher` class.
 
-    :param name: Dispatcher name.
-    '''
-    logger.info(f'requesteing dispatcher: name="{name}"')
-    return m42pl.dispatchers.ALIASES[name]
+    :param alias:   Dispatcher alias.
+    """
+    logger.info(f'requesting dispatcher: name="{alias}"')
+    try:
+        return m42pl.dispatchers.ALIASES[alias]
+    except KeyError:
+        raise M42PLError(f'Dispatcher not found: name="{alias}"')
 
 
 def load_module_path(namespace: str, path: str) -> None:
-    '''Loads a module by path.
+    """Loads a module by path.
     
-    :param namespace: Module namespace (e.g. 'm42pl.commands')
-    :param path: Module path
-    '''
+    :param namespace:   Module namespace (e.g. `m42pl.commands`)
+    :param path:        Module path
+    """
     logger.info(f'loading module by path: namespace="{namespace}", path="{path}"')
     # ---
     # Build module name for its basename
@@ -65,7 +68,7 @@ def load_module_path(namespace: str, path: str) -> None:
     # ---
     # Get module entry point
     if os.path.isdir(path):
-        module_entrypoint = os.path.join(path, "__init__.py")
+        module_entrypoint = os.path.join(path, '__init__.py')
     else:
         module_entrypoint = path
     logger.debug(f'module_entrypoint="{module_entrypoint}"')
@@ -85,10 +88,10 @@ def load_module_path(namespace: str, path: str) -> None:
 
 
 def load_module_name(name: str) -> None:
-    '''Load Spell plugins modules.
+    """Load a module by name.
     
-    :param name: Module name.
-    '''
+    :param name:    Module name.
+    """
     logger.info(f'loading module by name: name="{name}"')
     importlib.import_module(name)
     IMPORTED_MODULES_NAMES.append(name)
@@ -96,14 +99,14 @@ def load_module_name(name: str) -> None:
 
 def load_modules(search_paths: list = [], paths: list = [],
                  names: list = [], namespace: str = "m42pl") -> None:
-    '''Loads Spell modules.
+    """Loads modules.
     
     :param search_paths:    Modules search paths.
     :param paths:           Modules paths.
     :param names:           Modules names.
     :param namespace:       Loaded modules namespace.
                             Default to 'spell.modules'.
-    '''
+    """
     # ---
     # Load modules found in search paths.
     for path in search_paths:

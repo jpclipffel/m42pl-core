@@ -2,21 +2,20 @@ from .base import BaseField, FieldValue
 
 
 class DictField(BaseField):
-    '''Dict-path (doted path) field solver.
+    """Dict-path (doted path) field solver.
 
     This field solver targets variables-like fields:
 
     * Variable name: `foo`
-    * Variable path: `foo.bar.baz`
-
-    Complex JSON path expression are handled by :class:`JsonField`.
-    '''
+    * Variable path: `foo.bar.baz`, `foo.a-long_name.baz`
+    """
 
     def __init__(self, *args, **kwargs):
-        '''
+        """
         :ivar path: Field path as list (easier to navigate).
-        '''
+        """
         super().__init__(*args, **kwargs)
+        self.literal = False
         self.path = list(filter(None, self.name.split('.')))
     
     def _read(self, event: 'Event' = None, pipeline: 'Pipeline' = None):

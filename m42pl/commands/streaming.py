@@ -1,5 +1,7 @@
 from typing import AsyncGenerator
 
+from m42pl.errors import CommandError
+
 from ..event import Event
 from .base import AsyncCommand
 
@@ -21,8 +23,9 @@ class StreamingCommand(AsyncCommand):
                     yield event
             except Exception as error:
                 # pipeline.logger.error(str(error))
-                pipeline.logger.exception(error)
-                yield event
+                # pipeline.logger.exception(error)
+                # yield event
+                raise CommandError(command=self, message=str(error))
         else:
             yield event
 

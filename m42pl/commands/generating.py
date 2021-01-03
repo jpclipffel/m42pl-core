@@ -1,6 +1,7 @@
 from typing import AsyncGenerator
 
 from m42pl.event import Event
+from m42pl.errors import CommandError
 
 from .base import AsyncCommand
 
@@ -27,8 +28,9 @@ class GeneratingCommand(AsyncCommand):
             async for _event in self.target(event or Event(), pipeline):
                 yield _event
         except Exception as error:
-            pipeline.logger.error(str(error))
-            pipeline.logger.exception(error)
+            # pipeline.logger.error(str(error))
+            # pipeline.logger.exception(error)
+            raise CommandError(command=self, message=str(error))
     
     async def target(self, event: Event, pipeline: 'Pipeline',
                         *args, **kwargs) -> AsyncGenerator[Event, None]:

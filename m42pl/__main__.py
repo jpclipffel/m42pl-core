@@ -7,11 +7,12 @@ from dataclasses import dataclass
 
 import m42pl
 from m42pl.utils.time import now
+from m42pl.utils.errors import CLIErrorRender
 from m42pl.errors import M42PLError
 
 
 # Cannot use logging._levelNames anymore (change from Python 3.9).
-# Better to ignore private attribute and use own levels.
+# Switch to hard-coded levels names.
 LOG_LEVELS = ['debug', 'info', 'warning', 'error', 'critical']
 
 
@@ -53,18 +54,12 @@ class Parse(CLIAction):
     def __call__(self, args):
         super().__call__(args)
         with open(args.source) as fd:
-            parsed = m42pl.command('script')(source=fd.read(), mode=args.mode, parse_commands=args.parse_commands)()
+            parsed = m42pl.command('script')(
+                source=fd.read(),
+                mode=args.mode, 
+                parse_commands=args.parse_commands
+            )()
             print(parsed)
-            # # Use default ('script' command) parser
-            # if not args.command:
-            #     parsed = list(m42pl.command('script')(source=fd.read(), mode=args.mode, parse_commands=args.parse_commands)())[0]
-            # # Use the requested command parser
-            # else:
-            #     # cls.__transformer__.transform(cls.__parser__.parse(data))
-            #     command = m42pl.command(args.command)
-            #     parsed = command.__transformer__.transform(command.__parser__.parse(fd.read()))
-            # # ---
-            # print(parsed)
 
 
 class Grammar(CLIAction):
@@ -87,21 +82,26 @@ class Run(CLIAction):
         self.parser.add_argument('source', type=str, help='M42PL source script')
         self.parser.add_argument('-t', '--timeout', type=float, default=0.0, help='Pipelines timeout')
         self.parser.add_argument('-d', '--dispatcher', type=str, default='local', help='Pipeline dispatcher name / alias')
+        self.parser.add_argument('-r', '--raise-errors', dest='raise_errors', action='store_true', default=False, help='Raise errors')
 
-    # @classmethod
     def __call__(self, args):
-        # m42pl.load_modules(args.modules)
         super().__call__(args)
         with open(args.source, 'r') as fd:
-            context = m42pl.command('script')(source=fd.read())()
-            dispatcher = m42pl.dispatcher(args.dispatcher)(context)
-            dispatcher()
+            try:
+                source = fd.read()
+                context = m42pl.command('script')(source=source)()
+                dispatcher = m42pl.dispatcher(args.dispatcher)(context)
+                dispatcher()
+            except Exception as error:
+                print(CLIErrorRender(error, source).render())
+                if args.raise_errors:
+                    raise
 
 
-class Shell(CLIAction):
-    """A basic command line interpreter to run M42PL pipelines.
+class REPL(CLIAction):
+    """A basic REPL to run M42PL pipelines.
 
-    Pipelines are run with through the `local_shell` dispatcher.
+    Pipelines are run with the `local_shell` dispatcher.
     This dispatcher will add an `output` command at the end of the
     pipeline if not already present.
 
@@ -109,7 +109,7 @@ class Shell(CLIAction):
     :ivar aliases:      List of commands aliases.
     """
 
-    prompt = 'm42pl > '
+    prompt = 'm42pl | '
 
     def completer(self, text, state):
         """Readline completer.
@@ -122,7 +122,7 @@ class Shell(CLIAction):
         return matched[state]
 
     def __init__(self, *args, **kwargs):
-        super().__init__('shell', *args, **kwargs)
+        super().__init__('repl', *args, **kwargs)
         self.aliases = []
         # Setup readline
         readline.parse_and_bind('tab: complete')
@@ -138,15 +138,25 @@ class Shell(CLIAction):
         # Select M42PL script command and dispatcher instance
         script = m42pl.command('script')
         dispatcher = m42pl.dispatcher('local_shell')
+        # Print status
+        print(f'm42pl | {len(self.aliases)} commands loaded')
         # CLI loop
         while True:
             try:
-                context = script(source=input(self.prompt))()
-                dispatcher(context)()
-            except M42PLError as error:
-                print(f'M42PL exception: {error}')
+                source = input(self.prompt).lstrip(' ').rstrip(' ')
+                if len(source):
+                    # Built-in command: exit
+                    if regex.match(r'^exit(\s.*)?$', source, flags=regex.IGNORECASE):
+                        break
+                    # Built-in command: help
+                    elif regex.match(r'^help(\s.*)?$', source, flags=regex.IGNORECASE):
+                        print('No help yet')
+                    # M42PL command
+                    else:
+                        context = script(source)()
+                        dispatcher(context)()
             except Exception as error:
-                print(f'Python exception: {error}')
+                print(CLIErrorRender(error, source).render())
 
 
 def main():
@@ -155,9 +165,9 @@ def main():
     # Base arguments
     parser.add_argument('--log-level', dest='log_level', type=str, default='warning', choices=LOG_LEVELS, help='Log level')
     # Sub parsers
-    subparser = parser.add_subparsers(dest="command")
+    subparser = parser.add_subparsers(dest='command')
     subparser.required = True
-    _commands = [ c(subparser) for c in [Parse, Grammar, Run, Shell] ]
+    _commands = [ c(subparser) for c in [Parse, Grammar, Run, REPL] ]
     # Parse
     args = parser.parse_args()
     # Setup logging
