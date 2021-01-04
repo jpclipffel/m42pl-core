@@ -114,11 +114,13 @@ class Command:
                     # Clean up all fields but the selected one
                     for dataset in (res, exp):
                         # Keep only fields named in fields_in
-                        for field in [k for k, v in dataset.data.items() if k not in fields_in]:
-                            dataset.data.pop(field)
+                        if len(fields_in):
+                            for field in [k for k, v in dataset.data.items() if k not in fields_in]:
+                                dataset.data.pop(field)
                         # Remove fields named in fields_out
-                        for field in fields_out:
-                            dataset.data.pop(field)
+                        if len(fields_out):
+                            for field in fields_out:
+                                dataset.data.pop(field)
                     # Assert JSON dumps of result and expected match
                     self.assertEqual(
                         json.dumps(res.data, sort_keys=True), 
