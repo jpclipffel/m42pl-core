@@ -23,7 +23,7 @@ class CLIAction:
         self.parser = subparser.add_parser(name)
         self.parser.set_defaults(func=self)
         # Common arguments
-        self.parser.add_argument('-m', '--modules', type=str, nargs='+', default=[], help='External modules paths')
+        self.parser.add_argument('-m', '--module', action='append', help='External module')
 
     def __call__(self, args):
         """Runs the command line action.
@@ -38,7 +38,7 @@ class CLIAction:
 
         :param args:    Command arguments.
         """
-        m42pl.load_modules(args.modules) 
+        m42pl.load_modules(names=args.module)
 
 
 class Parse(CLIAction):
