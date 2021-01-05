@@ -184,7 +184,6 @@ class Evaluator:
         'toint':        lambda field: int(solve(field)),
         'tofloat':      lambda field: float(solve(field)),
         # String
-        'length':       lambda field: len(solve(field, [str, ], '')),
         'basename':     lambda field: ntpath.basename(solve(field, [str, ], 0)),
         'dirname':      lambda field: ntpath.dirname(solve(field, [str, ], 0)),
         'clean':        lambda field: ''.join(solve(field, [str,], '').split()),
@@ -193,6 +192,7 @@ class Evaluator:
         'join':         lambda field, delimiter='': delimiter.join(solve(field, [list, tuple, str, ])),
         'slice':        lambda field, start, *end: len(end) and solve(field, [str, list, tuple, ], None)[start:end[0]] or solve(field, [str, list, tuple, ], None)[start:],
         'index':        lambda field, position: solve(field, [str, list, tuple, ], None)[position],
+        'length':       lambda field: len(solve(field, [str, list, tuple], '')),
         # Math
         'round':        lambda field, x: round(solve(field, [float, int, ], 0), x),
         'even':         lambda field: solve(field, [int, float], 0) % 2 == 0,
@@ -207,9 +207,9 @@ class Evaluator:
         # String
         'str':      functions['tostring'],
         'string':   functions['tostring'],
-        'len':      functions['length'],
         # List
-        'at':       functions['index']
+        'at':       functions['index'],
+        'len':      functions['length'],
     })
     
     def __init__(self, expression: str):
