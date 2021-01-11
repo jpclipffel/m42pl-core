@@ -11,7 +11,7 @@ from m42pl.utils.errors import CLIErrorRender
 from m42pl.errors import M42PLError
 
 
-# Cannot use logging._levelNames anymore (change from Python 3.9).
+# Cannot use `logging._levelNames` anymore (change from Python 3.9).
 # Switch to hard-coded levels names.
 LOG_LEVELS = ['debug', 'info', 'warning', 'error', 'critical']
 
@@ -23,7 +23,8 @@ class CLIAction:
         self.parser = subparser.add_parser(name)
         self.parser.set_defaults(func=self)
         # Common arguments
-        self.parser.add_argument('-m', '--module', action='append', help='External module')
+        self.parser.add_argument('-m', '--module', action='append',
+            default=[], help='External module')
 
     def __call__(self, args):
         """Runs the command line action.
@@ -46,10 +47,17 @@ class Parse(CLIAction):
     """
     def __init__(self, *args, **kwargs):
         super().__init__('parse', *args, **kwargs)
-        self.parser.add_argument('source', type=str, help='M42PL source script')
-        self.parser.add_argument('--command', dest='command', type=str, default=None, help='''Use the given command's parser''')
-        self.parser.add_argument('--parse-mode', dest='mode', choices=['json', 'pipeline'], default='json', help='Parser mode')
-        self.parser.add_argument('--parse-commands', dest='parse_commands', action='store_true', default=False, help='Parse commands')
+        # Source file
+        self.parser.add_argument('source', type=str, help='M42PL script')
+        # Debug - Use specific parser
+        self.parser.add_argument('--command', dest='command', type=str,
+            default=None, help='Use the given command parser')
+        # Debug - Parse mode
+        self.parser.add_argument('--parse-mode', dest='mode',
+            choices=['json', 'pipeline'], default='json', help='Parser mode')
+        # Debug - Parse commands or not
+        self.parser.add_argument('--parse-commands', dest='parse_commands',
+            action='store_true', default=False, help='Parse commands')
     
     def __call__(self, args):
         super().__call__(args)
@@ -79,10 +87,17 @@ class Run(CLIAction):
     """
     def __init__(self, *args, **kwargs):
         super().__init__('run', *args, **kwargs)
-        self.parser.add_argument('source', type=str, help='M42PL source script')
-        self.parser.add_argument('-t', '--timeout', type=float, default=0.0, help='Pipelines timeout')
-        self.parser.add_argument('-d', '--dispatcher', type=str, default='local', help='Pipeline dispatcher name / alias')
-        self.parser.add_argument('-r', '--raise-errors', dest='raise_errors', action='store_true', default=False, help='Raise errors')
+        # Source file
+        self.parser.add_argument('source', type=str, help='M42PL script')
+        # Optional - Generator timeout
+        self.parser.add_argument('-t', '--timeout', type=float, default=0.0,
+            help='Pipelines timeout')
+        # Optional - Select dispatcher
+        self.parser.add_argument('-d', '--dispatcher', type=str,
+            default='local', help='Pipeline dispatcher name / alias')
+        # Debug - Raise errors
+        self.parser.add_argument('-r', '--raise-errors', dest='raise_errors',
+            action='store_true', default=False, help='Raise errors')
 
     def __call__(self, args):
         super().__call__(args)
@@ -162,8 +177,9 @@ class REPL(CLIAction):
 def main():
     # Parser instance
     parser = argparse.ArgumentParser('m42pl')
-    # Base arguments
-    parser.add_argument('--log-level', dest='log_level', type=str, default='warning', choices=LOG_LEVELS, help='Log level')
+    # Common arguments
+    parser.add_argument('--log-level', dest='log_level', type=str,
+        default='warning', choices=LOG_LEVELS, help='Log level')
     # Sub parsers
     subparser = parser.add_subparsers(dest='command')
     subparser.required = True

@@ -1,6 +1,7 @@
 from ..errors import FieldInitError
 
-from .base import BaseField, FieldName
+from .__base__ import BaseField
+from .literal import LiteralField
 from .json import JsonField
 from .dict import DictField
 from .seqn import SeqnField
@@ -9,7 +10,7 @@ from .eval import EvalField
 from .none import NoneField
 
 
-def Field(name: FieldName, *args, **kwargs):
+def Field(name, *args, **kwargs):
     '''Fields factory function.
 
     The correct field implementation is choosen this way:
@@ -45,7 +46,7 @@ def Field(name: FieldName, *args, **kwargs):
         # Number
         elif type(name) in [bool, int, float]:
             # print(f'field({name}) -> {type(name)} -> BaseField')
-            return BaseField(name, *args, **kwargs)
+            return LiteralField(name, *args, **kwargs)
         # ---
         # String and string sub-types
         elif isinstance(name, str):
@@ -54,7 +55,7 @@ def Field(name: FieldName, *args, **kwargs):
             if name[0] in ['\'', '"'] and name[-1] in ['\'', '"']:
                 # print(f'field.field({name}) -> string -> BaseField')
                 name = name[1:-1]
-                return BaseField(name, *args, **kwargs)
+                return LiteralField(name, *args, **kwargs)
             # ---
             # Json path
             elif name[0] == '{' and name[-1] == '}':

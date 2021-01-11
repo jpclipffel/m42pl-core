@@ -1,6 +1,6 @@
 import asyncio
 
-from .base import BaseField, FieldValue
+from .__base__ import BaseField, FieldValue
 
 
 class PipeField(BaseField):
@@ -29,10 +29,7 @@ class PipeField(BaseField):
         self.literal = False
         self.results = []
 
-    def _read(self, data: 'Event' = None, pipeline: 'Pipeline' = None):
-        return None
-
-    async def read(self, data: 'Event' = None, pipeline: 'Pipeline' = None):
+    async def _read(self, data: 'Event' = None, pipeline: 'Pipeline' = None):
         if not pipeline:
             return self.default
         # ---

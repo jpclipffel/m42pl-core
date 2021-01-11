@@ -1,6 +1,6 @@
 import jsonpath_ng
 
-from .base import BaseField, FieldValue
+from .__base__ import BaseField, FieldValue
 from .dict import DictField
 
 
@@ -14,8 +14,8 @@ class JsonField(BaseField):
     * The underlying package `jsonpath_ng` does not allow to create a
       new field from an expression. Thus, if no field is found during
       a `write` operation, a new field is created using `DictField`.
-    * As `DictField` solves only simple expression, it cannot handles
-      complex expressions such as arrays selection.
+      However, `DictField` solves only simple expression, and cannot
+      handles complex expressions such as arrays selection.
     """
 
     def __init__(self, *args, **kwargs):
@@ -26,17 +26,14 @@ class JsonField(BaseField):
         self.literal = False
         self.matcher = jsonpath_ng.parse(self.name)
     
-    def _read(self, event: 'Event' = None, pipeline: 'Pipeline' = None):
+    async def _read(self, event: 'Event' = None, pipeline: 'Pipeline' = None):
         if event:
             matched =  [ match.value for match in self.matcher.find(event.data) ]
             return len(matched) > 1 and matched or matched[0]
         return self.default
     
-    async def read(self, event: 'Event' = None, pipeline: 'Pipeline' = None):
-        return self._read(event, pipeline)
-    
-    def _write(self, event: 'Event', value: FieldValue):
-        # First, attempt to match then update fields.
+    async def _write(self, event: 'Event', value: FieldValue):
+        # First, attempt to match then update field.
         matched = self.matcher.find(event.data)
         if len(matched):
             for match in matched:
@@ -50,12 +47,6 @@ class JsonField(BaseField):
         # Done, return event.
         return event
     
-    async def write(self, event: 'Event', value: FieldValue):
-        return self._write(event, value)
-    
-    def _delete(self, event: 'Event'):
+    async def _delete(self, event: 'Event'):
         self.matcher.filter(lambda _: True, event.data)
         return event
-    
-    async def delete(self, event: 'Event'):
-        return self._delete(event)

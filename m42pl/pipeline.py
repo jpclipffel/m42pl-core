@@ -67,12 +67,13 @@ class Pipeline:
             else:
                 yield command
 
-    def __init__(self, commands: list = [], context: Context = None, 
+    def __init__(self, commands: list = [], context: Context = None,
                  distributable: bool = True, name: str = 'lambda',
                  timeout: float = 0) -> None:
         """
         :param commands:        Pipeline's commands list.
         :param context:         Pipeline's context.
+        :param kvstore:         Pipeline's KV store instance.
         :param distributable:   True if the pipeline execution can be distributed, False otherwise.
         :param name:            Pipeline's name.
         :param timeout:         Generator timeout in seconds.
@@ -315,16 +316,14 @@ class Pipeline:
             generator = await stack.enter_async_context(self.generator)
             processors = [await stack.enter_async_context(cmd) for cmd in self.processors]
             # ---
-            self.logger.debug(f'running pipeline metas')
+            self.logger.info(f'running pipeline metas: pipeline="{self.name}"')
             self._run_commands(commands=metas, event=None, ending=False, remain=0)
             # ---
             itr = generator(event=event or Event(), pipeline=self).__aiter__()
+            self.logger.info(f'starting pipeline: pipeline="{self.name}"')
             while True:
-                self.logger.debug(f'running pipeline generator loop: pipeline="{self.name}"')
-                # ---
                 # Generate event
                 try:
-                    self.logger.debug(f'awaiting event: pipeline="{self.name}"')
                     if self.timeout > 0:
                         task = asyncio.create_task(itr.__anext__())
                         event = await asyncio.wait_for(asyncio.shield(task), self.timeout)
@@ -338,10 +337,8 @@ class Pipeline:
                 except StopAsyncIteration:
                     self.logger.debug(f'received StopAsyncIteration, breaking pipeline loop: pipeline="{self.name}"')
                     break
-                # ---
                 # Process event
                 if len(processors):
-                    self.logger.info(f'running pipeline processors: pipeline="{self.name}"')
                     async for e in self._run_commands(commands=processors, event=event, ending=False, remain=0):
                         yield e
                 else:
@@ -354,7 +351,6 @@ class Pipeline:
                 self.logger.info(f'running pipeline processors in end mode: pipeline="{self.name}"')
                 async for e in self._run_commands(commands=processors, event=None, ending=True, remain=0):
                     yield e
-                    pass
         # ---
         # Done
         self.logger.debug(f'finished pipeline: pipeline="{self.name}"')

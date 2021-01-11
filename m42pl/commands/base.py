@@ -11,7 +11,7 @@ from types import MethodType
 from typing import Any, Tuple, Dict, List, Generator, AsyncGenerator
 
 from m42pl.event import Event
-from m42pl.fields import BaseField, DictField, JsonField
+# from m42pl.fields import BaseField, DictField, JsonField
 
 from . import ALIASES
 

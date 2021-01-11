@@ -8,6 +8,7 @@ from typing import List, Dict, Any
 
 import m42pl.commands
 import m42pl.dispatchers
+import m42pl.kvstores
 from m42pl.errors import *
 
 
@@ -31,7 +32,7 @@ IMPORTED_MODULES_PATHS = [] # type: List[str]
 
 
 def command(alias: str) -> Any:
-    """Returns the requested :class:`m42pl.Command` class.
+    """Returns the requested :class:`Command` class.
 
     :param alias:   Command alias.
     """
@@ -43,7 +44,7 @@ def command(alias: str) -> Any:
 
 
 def dispatcher(alias: str = 'local') -> Any:
-    """Returns the requested :class:`spell.Dispatcher` class.
+    """Returns the requested :class:`Dispatcher` class.
 
     :param alias:   Dispatcher alias.
     """
@@ -52,6 +53,18 @@ def dispatcher(alias: str = 'local') -> Any:
         return m42pl.dispatchers.ALIASES[alias]
     except KeyError:
         raise M42PLError(f'Dispatcher not found: name="{alias}"')
+
+
+def kvstore(alias: str = 'local') -> Any:
+    """Returns the requested :class:`KVStore` class.
+
+    :param alias:   KVStore alias.
+    """
+    logger.info(f'requesting kvstore: name="{alias}"')
+    try:
+        return m42pl.kvstores.ALIASES[alias]
+    except KeyError:
+        raise M42PLError(f'KVStore not found: name="{alias}"')
 
 
 def load_module_path(namespace: str, path: str) -> None:
