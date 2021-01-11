@@ -77,14 +77,14 @@ Most commands takes **parameters** (aka. **fields**):
 
 Commands **fields** (aka. **parameters**) support various syntax:
 
-| Example                        | Field                 | Description         |
-|--------------------------------|-----------------------|---------------------|
-| `| make count=2`               | `2`                   | Integer constant    |
-| `| output format='json'`       | `'json'`              | String constant     |
-| ``` | make showinfo=`True` ``` | `` `True` ``          | Eval expression     |
-| `| fields response.items`      | `response.items`      | Field path variable |
-| `| fields {response.items[0]}` | `{response.items[0]}` | JSON path variable  |
-| `| wget url=[| read url.txt]`  | `[| read url.txt]`    | Sub-pipeline        |
+| Example                               | Field                 | Description         |
+|---------------------------------------|-----------------------|---------------------|
+| ``` \| make count=2 ```               | `2`                   | Integer constant    |
+| ``` \| output format='json' ```       | `'json'`              | String constant     |
+| ``` \| make showinfo=`True` ```       | `` `True` ``          | Eval expression     |
+| ``` \| fields response.items ```      | `response.items`      | Field path variable |
+| ``` \| fields {response.items[0]} ``` | `{response.items[0]}` | JSON path variable  |
+| ``` \| wget url=[\| read url.txt] ``` | `[\| read url.txt]`   | Sub-pipeline        |
 
 A comment is a call to the `| ignore` or `| comment` command:
 
