@@ -2,6 +2,7 @@ from collections import defaultdict
 from textwrap import dedent
 import ntpath
 import regex
+import os
 
 from typing import Any
 
@@ -135,25 +136,31 @@ class EvalNS(dict):
         return super().__getattribute__('__cast__')(other) >= other
 
 
-def solve(attr, types: list = [], *args):
+def solve(attr, types: tuple = (), *args):
     """Resolves an attribute returned by :class:`EvalNS`.
 
     :param attr:    Attribute to resolve.
     :param types:   Accepted types list (toptional).
     :param *args:   Default value to return (optional).
     """
-    # print(f'solve() --> {attr}, {types}, {args}')
     # If the attribute is an EvalNS, continue the evalutation and
     # return the result.
     if isinstance(attr, EvalNS):
         return super(EvalNS, attr).__getattribute__('fields')
-    # If attribute match one of the expected types, return it.
-    # Otherwise, return the default value `args[0]` or None if no
+    # If the attribute match one of the expected types, return it.
+    # Otherwise, return the default value `args[0]` or `None` if no
     # default is given.
     elif len(types):
-        if type(attr) in types:
+        if isinstance(attr, types):
             return attr
         elif len(args):
+            return args[0]
+        else:
+            return None
+    # If the attribute is an `Undefined` or `None`, return the default value
+    # `args[0]` or `None` if no default is given.
+    elif isinstance(attr, Undefined):
+        if len(args):
             return args[0]
         else:
             return None
@@ -174,7 +181,10 @@ class Evaluator:
     # Evaluation functions
     functions = {
         # Misc.
-        'field':        lambda field, default = None: solve(field, [type(default), ], default),
+        'field':        lambda field, default = None: solve(field, (type(default),), default),
+        'isnull':       lambda field: solve(field, [], None) is None,
+        'isnotnull':    lambda field: solve(field, [], None),
+        'coalesce':     lambda *fields: next(filter(None, [solve(field) for field in fields]), None),
         # Time
         'now':          lambda: now().timestamp(),
         'reltime':      lambda expression: reltime(expression).timestamp(),
@@ -184,32 +194,41 @@ class Evaluator:
         'toint':        lambda field: int(solve(field)),
         'tofloat':      lambda field: float(solve(field)),
         # String
-        'basename':     lambda field: ntpath.basename(solve(field, [str, ], 0)),
-        'dirname':      lambda field: ntpath.dirname(solve(field, [str, ], 0)),
-        'clean':        lambda field: ''.join(solve(field, [str,], '').split()),
+        'clean':        lambda field: ''.join(solve(field, (str,), '').split()),
         # List
         'list':         lambda *args: [solve(i) for i in args],
-        'join':         lambda field, delimiter='': delimiter.join(solve(field, [list, tuple, str, ])),
-        'slice':        lambda field, start, *end: len(end) and solve(field, [str, list, tuple, ], None)[start:end[0]] or solve(field, [str, list, tuple, ], None)[start:],
-        'index':        lambda field, position: solve(field, [str, list, tuple, ], None)[position],
-        'length':       lambda field: len(solve(field, [str, list, tuple], '')),
+        'join':         lambda field, delimiter='': delimiter.join(solve(field, (list, tuple, str))),
+        'slice':        lambda field, start, *end: len(end) and solve(field, (str, list, tuple), None)[start:end[0]] or solve(field, (str, list, tuple), None)[start:],
+        'index':        lambda field, position: solve(field, (str, list, tuple), None)[position],
+        'length':       lambda field: len(solve(field, (str, list, tuple), '')),
         # Math
-        'round':        lambda field, x: round(solve(field, [float, int, ], 0), x),
-        'even':         lambda field: solve(field, [int, float], 0) % 2 == 0,
+        'round':        lambda field, x: round(solve(field, (float, int), 0), x),
+        'even':         lambda field: solve(field, (int, float), 0) % 2 == 0,
         'true':         lambda field: field == True,
         'false':        lambda field: field == False,
         # Filter
-        'match':        lambda field, values: bool(list(filter(None, [ regex.findall(v, solve(field, [str, ])) for v in values ]))),
+        'match':        lambda field, values: bool(list(filter(None, [ regex.findall(v, solve(field, (str,))) for v in values ]))),
+        # Path
+        'basename':     lambda field: ntpath.basename(solve(field, (str,), 0)),
+        'dirname':      lambda field: ntpath.dirname(solve(field, (str,), 0)),
+        'joinpath':     lambda *args: os.path.join(*[solve(i) for i in args]),
+        'cwd':          lambda: os.getcwd(),
     }
     
     # Evaluation functions aliases
     functions.update({
+        # Misc
+        'isnone':       functions['isnull'],
+        'isnotnone':    functions['isnotnull'],
         # String
-        'str':      functions['tostring'],
-        'string':   functions['tostring'],
+        'str':          functions['tostring'],
+        'string':       functions['tostring'],
         # List
-        'at':       functions['index'],
-        'len':      functions['length'],
+        'at':           functions['index'],
+        'len':          functions['length'],
+        # Path
+        'makepath':     functions['joinpath'],
+        'workdir':      functions['cwd'],
     })
     
     def __init__(self, expression: str):
@@ -240,7 +259,7 @@ class Evaluator:
         evaluated = eval(self.compiled, env)
         # print(f'Evaluator --> evaluated --> {evaluated}')
         # ---
-        # Solve the result a last time as EvalNS may returns a nother EvalNS
+        # Solve the result a last time as EvalNS may returns another EvalNS
         # print(f'Evaluator --> solving')
         solved = solve(evaluated, [], None)
         # print(f'Evaluator --> solved --> {solved}')
