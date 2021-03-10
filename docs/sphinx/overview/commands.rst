@@ -18,3 +18,28 @@ derived from one of the fundamental classes defined in `m42pl.commands` module:
                          m42pl.commands.MetaCommand
                          m42pl.commands.BufferingCommand
    :parts: 1
+
+Command class anatomy
+---------------------
+
+To do.
+
+Implement a new generating command
+----------------------------------
+
+To do.
+
+Implement a new streaming command
+---------------------------------
+
+To do.
+
+Implement a new buffering command
+---------------------------------
+
+To do.
+
+Implement a new meta command
+----------------------------
+
+To do.

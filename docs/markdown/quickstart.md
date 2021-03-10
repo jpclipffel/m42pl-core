@@ -1,9 +1,8 @@
 ---
-layout: default
 title: Quick start
-nav_order: 1
 parent: M42PL
-has_children: false
+layout: default
+nav_order: 1
 ---
 
 # Requirements
@@ -19,19 +18,22 @@ python3 -m virtualenv m42pl
 source m42pl/bin/activate
 ```
 
-Install the core language `m42pl_core`:
+Install the core language `m42pl-core`:
+
 ```
 git clone https://github.com/jpclipffel/m42pl-core
 pip install m42pl-core
 ```
 
-Install the core commands `m42pl_commands`:
+Install the core commands `m42pl-commands`:
+
 ```
 git clone https://github.com/jpclipffel/m42pl-commands
 pip install m42pl-commands
 ```
 
-Install the core dispatchers `m42pl_dispatchers`:
+Install the core dispatchers `m42pl-dispatchers`:
+
 ```
 git clone https://github.com/jpclipffel/m42pl-dispatchers
 pip install m42pl-dispatchers
@@ -42,22 +44,16 @@ pip install m42pl-dispatchers
 M42PL can executes scripts or can be run as an interpreter. M42PL scripts are
 standard text files.
 
-To start an interpreter, run the command `m42pl shell` (type `exit` to leave):
+To start an interpreter, run the command `m42pl repl` (type `exit` to leave):
 
 ```
-$ m42pl shell
+$ m42pl repl
 m42pl |
-```
-
-Obligatory *hello world* script:
-
-```shell
-| make | eval hello = 'world !' | output
 ```
 
 You may run a M42PL script using the `m42pl run` command:
 
-```shell
+```
 $ m42pl run <filename.mpl>
 ```
 
@@ -65,15 +61,33 @@ A M42PL script is a **pipeline** (a list of **commands** starting with
 pipes `|`):
 
 ```
-| make | eval foo='bar' | output
+| make | eval hello = 'world !' | output
 ```
+
+* `make` generates events
+* `eval` evaluates Python expressions and assign results to fields
+* `output` print events on the standard output
 
 You can separate commands with new lines too (new lines are ignored):
 
 ```
 | make
-| eval foo='bar'
+| eval hello = 'world !'
 | output
+```
+
+The list of available commands and their associated documentation can be
+obtained by running the command `mpl_command`:
+
+```
+| mpl_command
+```
+
+To get information about a specific command, run `mpl_command` followed by the
+command name:
+
+```
+| mpl_command 'make'
 ```
 
 Most commands takes **parameters** (aka. **fields**):

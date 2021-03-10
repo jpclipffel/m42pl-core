@@ -62,3 +62,6 @@ autoclass_content = 'both'
 
 # -- Graphviz ----------------------------------------------------------------
 inheritance_graph_attrs = dict(rankdir="TB", size='""')
+
+# -- Pygments ----------------------------------------------------------------
+pygments_style = 'sphinx'

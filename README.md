@@ -1,13 +1,10 @@
 # M42PL
 
-M42PL is a *data processing language*, inspired by Bash and Splunk's SPL.
+M42PL is a **data processing language**, inspired by Unix shells and [Splunk][].
 
 The language is designed to be as easy as possible to use, and to make common 
 scripting and programming tasks even easier. It does not have a tedious syntax
 to learn, and hides advanced programming concepts from the user.
-
-Nearly all language features are implemented in **commands** which are
-dynamically loaded from one or more **plugins** directory(ies).
 
 Example:
 
@@ -20,11 +17,14 @@ Example:
 
 You may find more examples in [the examples directory](/examples).
 
-The core commands [are available here][m42pl-commands]. Some example:
+Nearly all language features are implemented in **commands** which are
+dynamically loaded from **plugins**. The core commands 
+[are available here][m42pl-commands]. Some example:
 
-* `| url`: Performs HTTP requests
-* `| eval`: Evaluate fields using Python expressions
-* `| xpath`: Extract fields using an XPath expression
+* `url`: Performs HTTP requests
+* `eval`: Evaluate fields using Python expressions
+* `xpath`: Extract fields using an XPath expression
+* `stats`: Performs statistical operations and aggregations
 
 ## Quick introduction
 
@@ -41,7 +41,7 @@ m42pl |
 Mandatory *hello world* script:
 
 ```shell
-| make | eval hello = 'world !'
+| eval hello = 'world !'
 ```
 
 You may run a M42PL script using the `m42pl run` command:
@@ -73,9 +73,9 @@ Most commands takes **parameters** (aka. **fields**):
 ```
 
 * **positional parameters** have no name (ex: `2`)
-* **named parameters** are prefixed with their name (e.g. `showinfo=yes`)
+* **named parameters** are prefixed with their name (ex: `showinfo=yes`)
 
-Commands **fields** (aka. **parameters**) support various syntax:
+Commands **parameters** (aka. **fields**) support various syntax:
 
 | Example                               | Field                 | Description         |
 |---------------------------------------|-----------------------|---------------------|
@@ -94,7 +94,8 @@ A comment is a call to the `| ignore` or `| comment` command:
 | output format=json
 ```
 
-Commands have multiple names; the following snippets are identical:
+Commands have **multiple names** (aka. **aliases**); The following snippets
+are identical:
 
 ```
 | make | eval foo='bar' | output
@@ -112,13 +113,13 @@ Three types of commands exists:
 * **Meta**: Control the pipeline behaviour and parameters. As many as needed
   per pipeline.
 
-Having a single generating command per pipeline may looks limitating; But M42PL
+Having a single generating command per pipeline may looks limitating, but M42PL
 supports **sub-pipelines**:
 
 ```
-| read 'list_of_urls.txt'
+| readfile 'list_of_urls.txt'
 | foreach [
-    | wget url
+    | url url
     | fields response.content
 ]
 | output
@@ -127,17 +128,23 @@ supports **sub-pipelines**:
 Commands may also implements their own, custom grammar:
 
 ```
-| make count=2 showinfo=yes
-| rename id as 'event.id'
+| make count=10 showinfo=yes
+| rename id as event.id 
+| eval is_even = even(event.id) 
+| stats count by is_even
 ```
 
-You can create and uses macros (reusable pipelines) with the `| macro` command:
+You can create and uses macros (reusable pipelines) with the `macro` command:
 
 ```
-| macro 'output' [ | output format=json ]
+| macro 'makesome' [
+    | make count=10 showinfo=yes
+    | eval is_even = even(id)
+    | fields is_even
+]
 
-| make showinfo=yes
-| macro output
+| macro 'makesome'
+| stats count by is_even
 ```
 
 ## Components
@@ -220,5 +227,6 @@ language as Splunk, but I quickly drifted from my goal.
 
 ---
 
+[Splunk]: https://splunk.com
 [m42pl-commands]: https://github.com/jpclipffel/m42pl-commands
 [m42pl-dispatchers]: https://github.com/jpclipffel/m42pl-dispatchers
