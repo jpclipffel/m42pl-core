@@ -30,7 +30,7 @@ class BufferingCommand(AsyncCommand):
     When implementing a buffering command, one should either:
     
     * Inherit from this class (:class:`BufferingCommand`)
-    * Define a new class with the following methods:
+    * Define a new class with the following members:
 
       * :meth:`full`:   Returns `True` when the command's buffer is
                         full, `False` otherwise.
@@ -52,7 +52,12 @@ class BufferingCommand(AsyncCommand):
     async def setup(self, event: Event, pipeline: 'Pipeline', maxsize: int):
         if maxsize < 0:
             raise Exception(f'invalid buffer size: maxsize="{maxsize}", reason="Size should be >= 1"')
-        self.buffer = self.queue_class(maxsize=maxsize)
+        self.queue = self.queue_class(maxsize=maxsize)
+
+    async def remain(self) -> int:
+        """Returns the amount of remaining events.
+        """
+        return self.queue.qsize()
 
     async def __call__(self, event: Event, pipeline: 'Pipeline',
                         ending: bool = False, remain: int = 0, 
@@ -67,22 +72,26 @@ class BufferingCommand(AsyncCommand):
         :param remain:      Amount of remaining events
         """
         try:
+            # Always stores the new event if it is not None
             if event:
                 await self.store(event, pipeline)
+            # Process buffered events when:
+            # * no event has been received (this indicates a pipeline wakeup)
+            # * the pipeline is ending
+            # * the internal buffer is full
             if not event or (ending and remain == 0) or await self.full():
+                # print(f'{self} -> queue full, yielding')
                 async for event in self.target(pipeline):
                     yield event
                 await self.clear()
         except Exception as error:
-            # pipeline.logger.error(str(error))
-            # pipeline.logger.exception(error)
-            # yield event
             raise CommandError(command=self, message=str(error))
 
     async def full(self) -> bool:
         """Returns `True` when the buffer is full, `False` otherwise.
         """
-        return self.buffer.full()
+        # print(f'{self} -> is queue full: {self.queue.full()}')
+        return self.queue.full()
     
     async def empty(self) -> bool:
         """Returns `True` when the buffer is empty, `False` otherwise.
@@ -92,13 +101,19 @@ class BufferingCommand(AsyncCommand):
     async def store(self, event: Event, pipeline: 'Pipeline') -> None:
         """Stores the received `event`.
 
+        The method takes care of copying the event before storing it to
+        the internal buffer.
+
         :param event:       Current event
         :param pipeline:    Current pipeline instance
         """
-        await self.buffer.put(deepcopy(event))
+        await self.queue.put(deepcopy(event))
     
     async def clear(self) -> None:
         """Clears the buffer.
+
+        The default implementation does nothing sinc the events are
+        `pop`-ed out of the internal buffer.
         """
         pass
 
@@ -109,103 +124,32 @@ class BufferingCommand(AsyncCommand):
         """
         try:
             while True:
-                yield self.buffer.get_nowait()
+                # print(f'{self} -> processing item')
+                yield self.queue.get_nowait()
         except asyncio.QueueEmpty:
+            # print(f'{self} -> empty queue reached')
             pass
 
 
 class DequeBufferingCommand(BufferingCommand):
-    """Buffering command which keeps only the latest version of events.
+    """Buffers events and replaces them with their new versions.
 
     Each event received through :meth:`store` is added to the internal
     :class:`OrderedDict` instance and replace the existing event having
     the same `signature`.
-
-    The replaced events position in the queue is not preserved: if a
-    new event replaces event #N, event #N is poped out of the queue and
-    the new event is placed at the end of the queue.
     """
 
     class OrderedDictQueue(asyncio.Queue):
+        """Custom AsyncIO queue based on an OrderedDict.
+        """
         def _init(self, maxsize):
             self._queue = OrderedDict()
+            self._maxsize = maxsize
         
         def _put(self, item):
-            self._queue.pop(item.signature, None)
-            self._queue[item.signature] = deepcopy(item)
+            self._queue[item.signature] = item
 
         def _get(self):
-            i = self._queue.popitem()[1]
-            return i
+            return self._queue.popitem(last=False)[1]
 
     queue_class = OrderedDictQueue
-
-
-# class QueueBufferingCommand(BufferingCommand):
-#     '''
-#     '''
-#     def __init__(self, maxlen: int = 0, *args, **kwargs):
-#         super().__init__(*args, **kwargs)
-#         self.buffer = asyncio.Queue(maxsize=maxlen)
-    
-#     async def remain(self):
-#         return self.buffer.qsize()
-    
-#     async def full(self):
-#         return self.buffer.full()
-    
-#     async def store(self, event: Event, pipeline: 'Pipeline'):
-#         await self.buffer.put(deepcopy(event))
-    
-#     async def clear(self):
-#         pass
-
-#     async def target(self, pipeline: 'Pipeline'):
-#         try:
-#             while True:
-#                 yield self.buffer.get_nowait()
-#         except asyncio.QueueEmpty:
-#             pass
-
-
-# class DictBufferingCommand(BufferingCommand):
-#     '''Buffers *unique* events in a circular buffer.
-
-#     Duplicated events are filtered: An existing event having the same
-#     signature as the new one will be replaced.
-#     '''
-
-#     class DequeDict(OrderedDict):
-#         def __init__(self, maxlen, *args, **kwargs):
-#             self.maxlen = maxlen
-#             super().__init__(*args, **kwargs)
-
-#         def __setitem__(self, key, value):
-#             # OrderedDict.__setitem__(self, key, value)
-#             super().__setitem__(key, value)
-#             if self.maxlen and len(self) > self.maxlen:
-#                 self.popitem(False)
-
-#     def __init__(self, maxlen: int = 0, *args, **kwargs):
-#         '''
-#         :param maxlen:  Buffer maximum size.
-#                         Defaults to 0 (events are processed immediately).
-#         '''
-#         super().__init__(*args, **kwargs)
-#         self.buffer = self.DequeDict(maxlen=maxlen)
-
-#     async def remain(self):
-#         return len(self.buffer)
-
-#     async def full(self):
-#         return len(self.buffer) >= self.buffer.maxlen
-    
-#     async def store(self, event: Event, pipeline: 'Pipeline'):
-#         self.buffer[event.signature] = deepcopy(event)
-    
-#     async def clear(self):
-#         self.buffer.clear()
-
-#     async def target(self, pipeline: 'Pipeline'):
-#         for _, event in self.buffer.items(): # pylint: disable=not-an-iterable
-#             yield event

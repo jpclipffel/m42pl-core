@@ -27,7 +27,7 @@ class Command():
     
     This base class provides the following functionalities:
 
-    * Default metadata fields (about, syntax, etc.)
+    * Default metadata fields (*about*, *syntax*, etc.)
     * Commands registration
     * Default parsing tools (grammar, transformer, parser)
     * Default serialization
@@ -137,8 +137,8 @@ class Command():
         # ---
         'arguments_rules': dedent('''\
             // arguments_rules
-            arg         : field
-            kwarg       : KWARG field
+            arg         : (field | collection)
+            kwarg       : KWARG (field | collection)
             args        : (arg ","?)+
             kwargs      : (kwarg ","?)+
             arguments   : args? ","? kwargs?
@@ -183,7 +183,8 @@ class Command():
 
         # collections_rules
         function    = lambda self, items: f'{items[0]}{", ".join([str(i) for i in items[1:-1]])}{items[-1]}'  # print(f'function --> {items}')
-        sequence    = lambda self, items: f'{items[0]}{" ".join([str(i) for i in items[1:-1]])}{items[-1]}'
+        # sequence    = lambda self, items: f'{items[0]}{" ".join([str(i) for i in items[1:-1]])}{items[-1]}'
+        sequence    = lambda self, items: len(items) > 2 and items[1:-1] or []
 
         # arguments_rules
         arg         = lambda self, items: items[0]
@@ -220,16 +221,16 @@ class Command():
     logger.info(f'creating generic command transformer')
     _transformer_ = Transformer()
 
-    # Line/column and offset position in original source
+    # Default line & column and offset position in original source
     _lncol_ = (-1, -1)
     _offset_ = -1
 
-    # Command name (as wrote by the user)
+    # Command name (as wrote in the script)
     _name_ = ''
 
     @classmethod
     def from_script(cls: type, data: str) -> 'Command':
-        """Returns a new :class:`Command` instance from a script wrote 
+        """Returns a new :class:`Command` instance from a script wrote
         in the command's custom grammar.
         
         :param data:    Script string.
@@ -264,6 +265,8 @@ class Command():
         )
 
     def __init_subclass__(cls, **kwargs) -> None:
+        """Initializes a command inheriting from this class.
+        """
         super().__init_subclass__(**kwargs)
         if len(cls._aliases_):
             module = f'{cls.__module__}.{cls.__name__}'
@@ -299,11 +302,11 @@ class Command():
         :param kwargs:      Kwargs map to be automatically
                             exported using `to_dict()`.
         
-        :ivar logger:      Command instance logger.
-        :ivar chunk:       Command instance chunk number.
-        :ivar chunks:      Number of chunks running in parallel.
-        :ivar _args:       Automatically exported args list.
-        :ivar _kwargs:     Automatically exported kwargs list.
+        :ivar logger:       Command instance logger.
+        :ivar chunk:        Command instance chunk number.
+        :ivar chunks:       Number of chunks running in parallel.
+        :ivar _args:        Automatically exported args list.
+        :ivar _kwargs:      Automatically exported kwargs list.
         """
         self.logger = logging.getLogger(self.__class__.__name__)
         self._chunk, self._chunks = 1, 1
@@ -315,7 +318,11 @@ class Command():
 
         The returned :attr:`dict` must be understandable by 
         attr:`from_dict` and match with the following mapping:
-        `{ 'args': [], 'kwargs': [] }`
+
+            {
+                'args': [],     # Command's arguments list
+                'kwargs': []    # Command's keyword arguments map
+            }
         """
         return {
             'alias': self._aliases_[0],
@@ -324,34 +331,45 @@ class Command():
         }
 
     @property
-    def chunk(self):
+    def chunk(self) -> tuple[int, int]:
+        """Returns the current chunk number and total chunks number.
+        """
         return self._chunk, self._chunks
     
     @chunk.setter
-    def chunk(self, value: tuple):
+    def chunk(self, value: tuple[int, int]) -> None:
+        """Sets the current chunk number and total chunks number.
+        """
         self._chunk, self._chunks = value
 
     @property
-    def first_chunk(self):
+    def first_chunk(self) -> bool:
+        """Returns `True` we are in the first chunk, `False` otherwise.
+        """
         return self._chunk == 1
     
     @property
-    def last_chunk(self):
+    def last_chunk(self) -> bool:
+        """Returns `True` we are in the last chunk, `False` otherwise.
+        """
         return self._chunk == self._chunks
     
     @property
-    def inter_chunk(self):
+    def inter_chunk(self) -> bool:
+        """Returns `True` if we are neither in the first or last chunk,
+        `False` otherwise.
+        """
         return not self.first_chunk and not self.last_chunk
 
-    def set_chunk(self, chunk: int = 1, chunks: int = 1):
-        """Specialize command into a single chunk.
+    # def set_chunk(self, chunk: int = 1, chunks: int = 1):
+    #     """Specialize command into a single chunk.
 
-        This method *should* be implemented by generating commands.
-        Streaming commands may use this default implementation.
-        """
-        self.logger.info(f'setting command chunk: chunk={chunk}, chunks={chunks}')
-        self._chunk = chunk
-        self._chunks = chunks
+    #     This method *should* be implemented by generating commands.
+    #     Streaming commands may use this default implementation.
+    #     """
+    #     self.logger.info(f'setting command chunk: chunk={chunk}, chunks={chunks}')
+    #     self._chunk = chunk
+    #     self._chunks = chunks
 
 
 class AsyncCommand(Command):
@@ -410,7 +428,7 @@ class AsyncCommand(Command):
 
         Most commands may use this default implementation.
         For late initialization, a command may uses :meth:`setup` which
-        receies the current pipeline and latest event.
+        receives the current pipeline and initial event.
         """
         self.logger.info('entering command context')
         return self
