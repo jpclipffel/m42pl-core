@@ -10,7 +10,13 @@ import m42pl
 from m42pl import errors
 from m42pl.event import Event
 from m42pl.context import Context
-from m42pl.commands import GeneratingCommand, StreamingCommand, BufferingCommand, MetaCommand, MergingCommand
+from m42pl.commands import (
+    GeneratingCommand,
+    StreamingCommand,
+    BufferingCommand,
+    MetaCommand,
+    MergingCommand
+)
 
 
 class Pipeline:
@@ -100,13 +106,7 @@ class Pipeline:
         # ---
         # Pipeline state
         self._commands_set = False
-        # ---
-        # TODO: Replace this macro map with a proper KV/Store.
-        self.macros = {}
-
-    # @property
-    # def commands(self):
-    #     return self.metas + [self.generator,] + self.processors
+        self._ready = True
 
     def to_dict(self) -> Dict:
         """Returns a represention of the current pipeline as a JSON-serializable :class:`dict`.
@@ -128,88 +128,14 @@ class Pipeline:
         """
         self.chunk, self.chunks = chunk, chunks
         for command in self.commands:
-            # print (f'setting command chunk: comand="{command}", chunk={chunk}, chunks={chunks}')
             command.set_chunk(chunk, chunks)
-
-    # def prepend_commands(self, commands: list, where) -> None:
-    #     """Preppend commands to the commands list.
-
-    #     :param commands:    Commands list to prepend.
-    #     """
-    #     for command in reversed(list(Pipeline.flatten_commands(commands))):
-    #         self._commands.insert(0, command)
-
-    # def append_commands(self, commands: list, where) -> None:
-    #     """Append commands to the comands list.
-        
-    #     :param commands:    Commands list to append.
-    #     """
-    #     for command in Pipeline.flatten_commands(commands):
-    #         self._commands.append(command)
-
-    # def append_metas(self, commands: list):
-    #     self.metas += list(Pipeline.flatten_commands(commands))
-    
-    # def prepend_metas(self, commands: list):
-    #     self.metas = list(Pipeline.flatten_commands(commands)) + self.meta
-
-    # def set_generatoe
-
-    # def append_processors(self, commands: list):
-    #     self.processors += list(Pipeline.flatten_commands(commands))
-    
-    # def prepend_processors(self, commands: list):
-    #     self.processors = list(Pipeline.flatten_commands(commands)) + self.processors
-
-    # def derive(self, commands: list = []) -> 'Pipeline':
-    #     """Returns a duplicated :class:`Pipeline` with the given
-    #     :param:`commands`.
-
-    #     :param commands:    New commmands list.
-    #     """
-    #     return Pipeline(commands, self._distribulate, self.name, self.timeout)
-
-    # def split_by_type(self, cmd_type: type, single: bool = False, all: bool = True) -> Generator['Pipeline', None, None]:
-    #     """Split pipeline at each command :param:`cmdtype`.
-
-    #     If :param single: is `True`, each command of the given type
-    #     :param cmd_type: is isolated in its own pipeline. Otherwise,
-    #     they are put as leading command in their pipeline, followed by
-    #     the next(s) command(s).
-
-    #     :param cmd_type:    Split pipeline at these command type.
-    #     :param single:      If true, isolate each command of the given
-    #                         type into its own pipeline. Defaults to
-    #                         False.
-    #     :param all:         If true, split as many times as possible.
-    #                         Otherwise, stop after the first split.
-    #                         Defaults to true.
-    #     """
-    #     stop = False
-    #     pipelines = []
-    #     for command in self._commands:
-    #         if not isinstance(command, cmd_type):
-    #             if len(pipelines) < 1:
-    #                 pipelines.append(self.derive())
-    #             pipelines[-1].append_commands([command,])
-    #         else:
-    #             pipelines.append(self.derive([command,]))
-    #             if single:
-    #                 pipelines.append(self.derive())
-    #     return pipelines
-
-    # def __override_command_logger(self):
-    #     '''Replaces each command :instance_attribute:`Command.logger`.
-    #     '''
-    #     for _, command in enumerate(self.commands):
-    #         command.logger = self.logger.getChild(command.__class__.__name__)
 
     def build(self):
         """(Re)builds the pipeline.
         """
         self.logger.info(f'building pipeline: pipeline="{self.name}"')
         # ---
-        # (Re)Initialize commands blocks
+        # Initialize commands sets
         self.metas = []
         self.generator = None
         self.processors = []
@@ -219,6 +145,7 @@ class Pipeline:
         for i, command in enumerate(self.commands):
             # Heading meta commands
             if isinstance(command, MetaCommand) and self.generator is None:
+                self.logger.info(f'Adding command to metas')
                 self.metas.append(command)
             # Generating command
             elif isinstance(command, GeneratingCommand):
@@ -232,6 +159,13 @@ class Pipeline:
                     self.logger.info('Pipeline does not start with a generator: adding "echo" as default generator')
                     self.generator = m42pl.command('echo')()
                 self.processors.append(command)
+
+    def get_pipeline(self, name: str):
+        """Get a pipeline by name from the internal context.
+
+        :param name:    Pipeline name, optionally starting with '@'.
+        """
+        return self.context.pipelines[name.lstrip('@')]
 
     async def _setup_commands(self, event):
         """Setup the commands (aka. commands post-initialization).
@@ -251,7 +185,7 @@ class Pipeline:
                 )
                 # Setup command
                 try:
-                    await command.setup(event=event or Event(), pipeline=self)
+                    await command.setup(event=event, pipeline=self)
                 except Exception as error:
                     if not isinstance(error, errors.M42PLError):
                         raise errors.CommandError(command, message=str(error))
@@ -275,14 +209,28 @@ class Pipeline:
         if len(commands):
             # Current command instance and children commands
             command, has_further_commands = commands[0], len(commands) > 1
+            # print(f'{command} -> call')
             # Run command and children commands
             async for _event in command(event=event, pipeline=self, ending=ending, remain=remain):
+                # print(f'{command} -> got event, continue with new event')
                 if has_further_commands:
                     async for __event in self._run_commands(commands[1:], _event, ending, (remain + await command.remain())):
                         yield __event
-                else:
-                    if _event:
-                        yield _event
+                elif _event:
+                    yield _event
+            else:
+                if ending:
+                    # print(f'{command} -> got no event, continue with last event')
+                    if has_further_commands:
+                        async for _event in self._run_commands(commands[1:], None, ending, remain):
+                            yield _event
+                    elif event:
+                        yield event
+
+    def stop(self):
+        """Stops the pipeline.
+        """
+        self._ready = False
 
     async def __call__(self, event: Event = None):
         """Runs the pipeline.
@@ -290,15 +238,15 @@ class Pipeline:
         The pipeline is ran in two or more iterations:
 
         * At first, events are processed as they are generated
-        * At last AND when the pipeline's generating command time out,
+        * At last AND when the pipeline's generating command times out,
           the pipeline's commands are *awakened* to force them to yield
           their buffered events.
 
         :param event:   Initial event (may be `None`)
         """
         # ---
-        # Build pipeline
-        # self.build()
+        # Prepare source event
+        event = event or Event()
         # ---
         # Control pipeline structure
         if not self.generator:
@@ -317,9 +265,10 @@ class Pipeline:
             processors = [await stack.enter_async_context(cmd) for cmd in self.processors]
             # ---
             self.logger.info(f'running pipeline metas: pipeline="{self.name}"')
-            self._run_commands(commands=metas, event=None, ending=False, remain=0)
+            async for _ in self._run_commands(commands=metas, event=event, ending=False, remain=0):
+                pass
             # ---
-            itr = generator(event=event or Event(), pipeline=self).__aiter__()
+            itr = generator(event=event, pipeline=self).__aiter__()
             self.logger.info(f'starting pipeline: pipeline="{self.name}"')
             while True:
                 # Generate event
@@ -343,6 +292,10 @@ class Pipeline:
                         yield e
                 else:
                     yield event
+                # Control state
+                if not self._ready:
+                    self.logger.debug(f'pipeline state switched to not ready, breaking pipeline loop: pipeline="{self.name}')
+                    break
             # ---
             # Process buffered events
             self.logger.debug(f'terminating pipeline: pipeline="{self.name}"')

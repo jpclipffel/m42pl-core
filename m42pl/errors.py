@@ -55,3 +55,13 @@ class FieldError(M42PLError):
 class FieldInitError(FieldError):
     def __init__(self, field_name, message):
         super().__init__(field_name, f'failed to initialize field: {message}')
+
+
+class DispatcherError(M42PLError):
+    """Base class for errors happening in dispatchers init or run.
+    """
+    short_desc = 'A dispatcher error occured'
+
+    def __init__(self, dispatcher, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.instance = dispatcher

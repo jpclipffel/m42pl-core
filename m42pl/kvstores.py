@@ -49,7 +49,7 @@ class KVStore:
     def __init__(self):
         pass
 
-    def read(self, key: str, pipeline: str = None) -> list:
+    async def read(self, key: str, pipeline: str = None) -> list:
         """Read a key from the KV Store.
 
         :param key:         Key name.
@@ -57,7 +57,7 @@ class KVStore:
         """
         return []
     
-    def write(self, key: str, value: Any, pipeline: str = None) -> None:
+    async def write(self, key: str, value: Any, pipeline: str = None) -> None:
         """Write (create or update) a key to the KV Store.
 
         :param key:         Key name.
@@ -66,7 +66,7 @@ class KVStore:
         """
         pass
 
-    def delete(self, key: str, pipeline: str = None) -> None:
+    async def delete(self, key: str, pipeline: str = None) -> None:
         """Delete a key from the KV Store.
 
         :param key:         Key name.
@@ -85,12 +85,12 @@ class LocalKVStore(KVStore):
         # Map for keys within pipeline
         self.pipelines = {}
     
-    def read(self, key: str, pipeline: str = None) -> list:
+    async def read(self, key: str, pipeline: str = None) -> list:
         if pipeline:
             return self.pipelines.get(pipeline, {}).get(key, [])
         return self.default.get(key, [])
     
-    def write(self, key: str, value: Any, pipeline: str = None) -> None:
+    async def write(self, key: str, value: Any, pipeline: str = None) -> None:
         if pipeline:
             if not pipeline in self.pipelines:
                 self.pipelines[pipeline] = {}
@@ -98,7 +98,7 @@ class LocalKVStore(KVStore):
         else:
             self.default[pipeline][key] = value
 
-    def delete(self, key: str, pipeline: str = None) -> None:
+    async def delete(self, key: str, pipeline: str = None) -> None:
         if pipeline:
             self.pipelines.get(pipeline, {}).pop(key, None)
         else:

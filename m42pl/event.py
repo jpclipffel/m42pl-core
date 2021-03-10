@@ -9,9 +9,7 @@ import sys
 
 
 class Event:
-    """An M42PL event.
-    
-    The single unit of information produced and processed by commands.
+    """A single unit of information produced and processed by commands.
     
     :attr data:         Public, JSON-serilizable fields.
     :attr meta:         Private, binary-serializable fields.
@@ -20,25 +18,29 @@ class Event:
 
     __slots__ = ('data', 'meta', '_signature')
 
-    def __init__(self, data: dict = {}, meta: dict = {}, signature: str = None):
+    def __init__(self, data: dict = None, meta: dict = None, signature: str = None):
         """
         :param data:        Event data.
         :param meta:        Event meta data.
         :param signature:   Event signature.
                             Defaults to `None` (lazy-evaluated).
         """
-        self.data = data
-        self.meta = meta
+        self.data = data or {}
+        self.meta = meta or {}
         self._signature = signature
 
     @property
     def signature(self):
+        """Returns the event signature, generating it if necessary.
+        """
         if not self._signature:
             self._signature = str(uuid.uuid4())
         return self._signature
     
     @signature.setter
     def signature(self, value):
+        """Sets the event signature.
+        """
         self._signature = value
 
     # def sign(self, fields: list = []):
@@ -64,4 +66,33 @@ class Event:
     #     return self._signature
     
     def __deepcopy__(self, memo):
-        return Event(data=deepcopy(self.data, memo), meta=deepcopy(self.meta, memo), signature=self.signature)
+        """Returns an event copy.
+        """
+        return Event(
+            data=deepcopy(self.data, memo),
+            meta=deepcopy(self.meta, memo),
+            signature=self.signature
+        )
+
+    def derive(self, data: dict = {}, meta: dict = {}, signature: str = None):
+        """Returns a copied and updated event.
+
+        :param data:        Fields to add to existing data.
+                            Existing data fields will be updated.
+                            Defaults to an empty dict.
+        :param meta:        Fields to add to existing meta.
+                            Defaults to an empty dict.
+                            Existing meta fields will be updated.
+        :param signature:   New event signature.
+                            Defaults to None (signature left empty).
+        """
+        # return Event(
+        #     data={**deepcopy(self.data), **data},
+        #     meta={**deepcopy(self.meta), **meta},
+        #     signature=signature
+        # )
+        return Event(
+            data={**self.data, **data},
+            meta={**self.meta, **data},
+            signature=signature
+        )
