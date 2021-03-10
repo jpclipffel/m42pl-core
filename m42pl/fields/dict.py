@@ -22,7 +22,7 @@ class DictField(BaseField):
         if event:
             if len(self.path) == 1:
                 return event.data.get(self.path[0], self.default)
-            else:
+            elif len(self.path) > 1:
                 _dc = event.data
                 try:
                     for _name in self.path[0:-1]:
@@ -30,6 +30,8 @@ class DictField(BaseField):
                     return _dc[self.path[-1]]
                 except KeyError:
                     return self.default
+            else:
+                return self.default
         else:
             return self.default
 

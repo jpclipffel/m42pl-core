@@ -48,8 +48,8 @@ class PipeField(BaseField):
             if len(results) == 1:
                 # Single event && single field:
                 if len(results[0].data) == 1:
-                    return self.cast(list(results[0].data.items())[0][1])
-                return self.cast(results)
+                    return list(results[0].data.items())[0][1]
+                return results
             return results
         # No event at all:
         return self.default

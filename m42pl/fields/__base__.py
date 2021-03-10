@@ -17,7 +17,6 @@ class BaseField:
 
     Each field solver **should** implements the following methods:
 
-    * `__init__`: Initialize the field solver class
     * `_read`: Read (solves) the field value
     * `_write`: Write (set, update) the field value
     * `_delete`: Delete the field
@@ -47,7 +46,7 @@ class BaseField:
     :ivar literal:  True when the field is a literal value.
     """
 
-    def __init__(self, name: FieldName, default: Optional = None,
+    def __init__(self, name: FieldName, default = None,
                     type: FieldType = None,
                     seqn: bool = False):
         """

@@ -40,8 +40,8 @@ def Field(name, *args, **kwargs):
         # ---
         # List or tuple
         if type(name) in [list, tuple]:
-            # print(f'field({name}) -> {type(name)} -> ListField')
-            return SeqnField([ Field(f, *args, **kwargs) for f in name ])
+            # print(f'field({name}) -> {type(name)} -> SeqnField')
+            return SeqnField([ Field(f) for f in name ])
         # ---
         # Number
         elif type(name) in [bool, int, float]:

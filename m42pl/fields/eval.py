@@ -15,7 +15,7 @@ class EvalField(BaseField):
         """
         super().__init__(*args, **kwargs)
         self.expr = Evaluator(self.name)
-    
+        
     async def _read(self, event: 'Event' = None, pipeline: 'Pipeline' = None):
         try:
             return self.expr(event and event.data or {})
