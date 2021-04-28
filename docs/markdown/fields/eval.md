@@ -18,17 +18,18 @@ same functions and syntax as the `eval` and `where` commands.
 
 ## Examples
 
-Read a file content using `readfile` with a `path` argument built using the
-`joinpath` function:
+Read a file line by line using `readlines` with a `path` argument built with
+the `joinpath` function:
 
 ```
-| readfile path=`joinpath('/some/path', filename)`
+| readlines path=`joinpath(root, filename)`
+| ...
 ```
 
-(re)Run a sub-pipeline until the expression becomes true (`some.variable` is `0`):
+Run a sub-pipeline until a becomes true (`some.variable` must be `42`):
 
 ```
-| until `some.variable == 0` [
-    ...
+| until `some.variable == 42` [
+    | ...
 ]
 ```

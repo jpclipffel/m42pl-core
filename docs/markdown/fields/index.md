@@ -22,15 +22,68 @@ keys / values structures which contains keys of various types:
 M42PL provides multiple **fields syntax** and **fields solvers** to access 
 (read or write) fields:
 
-| Field example         | Description         | Command example                       | Field solver   |
-|-----------------------|---------------------|---------------------------------------|----------------|
-| `name`                | Variable name       | ``` \| rename foo as bar ```          | [LiteralField][] |
-| `2`                   | Integer constant    | ``` \| make count=2 ```               | [LiteralField][] |
-| `'json'`              | String constant     | ``` \| output format='json' ```       | [LiteralField][] |
-| `` `True` ``          | Eval expression     | ``` \| make showinfo=`True` ```       | [EvalField][]    |
-| `response.items`      | Field path variable | ``` \| fields response.items ```      | [DictField][]    |
-| `{response.items[0]}` | JSON path variable  | ``` \| fields {response.items[0]} ``` | [JsonField][]    |
-| `[\| read url.txt]`   | Sub-pipeline        | ``` \| wget url=[\| read url.txt] ``` | [PipeField][]    |
+## Numbers
+
+Field solver: [LiteralField]
+
+```
+| make count=10
+| eval value = 42
+| output
+```
+
+## Strings
+
+Field solver: [LiteralField]
+
+```
+| mpl_commands 'make'
+```
+
+## Variables
+
+Field solver: [DictField]
+
+```
+| mpl_commands
+| fields command.aliases, command.about
+```
+
+## Eval expressions
+
+Field solver: [EvalField]
+
+```
+| make count=10 showinfo=yes
+| foreach [
+    | readfile path=`joinpath('path', 'to', 'files', id)`
+]
+```
+
+## JSON path
+
+Field solver: [JsonField]
+
+```
+| mpl_commands
+| fields {command.aliases[0]}
+```
+
+## Sub-pipeline
+
+Field solver: [PipeField]
+
+```
+| mpl_commands [ | make | eval command_name = 'jinja' ]
+```
+
+## Sequence
+
+Field solver: [SeqnField]
+
+```
+TODO
+```
 
 ---
 

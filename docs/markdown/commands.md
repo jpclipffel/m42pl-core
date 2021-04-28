@@ -7,7 +7,7 @@ nav_order: 2
 
 # Commands
 
-M42PL commands implements nearly all the project functionnalities, from the
+M42PL commands implements nearly all M42PL functionnalities, from the
 language parsing to data processing.
 
 ## General syntax
@@ -23,7 +23,7 @@ name and optionally by its arguments:
 
 ## Arguments syntax
 
-Commands arguments respects the [fields syntax][fields]. Some arguments are
+Most commands arguments uses the [fields syntax][fields]. Some arguments are
 **static** while other are **dynamic**:
 
 | Argument type | Documentation syntax | Description                                  |
@@ -60,7 +60,7 @@ Notes:
 * A streaming command may returns more or less than 1 event:
   * If the command filters events (e.g. the `where` command), some events may
     be discarded.
-  * If the command generate new events from the recivev one (e.g. the
+  * If the command generates new events from the received one (e.g. the
     `expand` command), new events will be returned instead of the original one
 
 ### Buffering commands
@@ -71,15 +71,14 @@ pipeline.
 
 Notes:
 
-* Buffering commands may store only the latest version of an event (e.g. the
-  `output` command)
+* Buffering commands **may** store only the latest version of an event (e.g.
+  the `output` command).
 
 ### Meta commands
 
 Meta commands can be placed anywhere in the pipeline and sub-pipelines.
 They behave like streaming commands except they are designed to manipulate
 the pipeline and sub-pipelines instead of events.
-
 
 ---
 

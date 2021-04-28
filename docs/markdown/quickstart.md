@@ -11,13 +11,6 @@ nav_order: 1
 
 # Installation
 
-Create and activate a virtual environement:
-
-```shell
-python3 -m virtualenv m42pl
-source m42pl/bin/activate
-```
-
 Install the core language `m42pl-core`:
 
 ```
