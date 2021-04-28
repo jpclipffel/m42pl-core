@@ -1,8 +1,12 @@
+from typing import Any
+from m42pl.event import Event
+from m42pl.pipeline import Pipeline
+
 from .__base__ import BaseField, FieldValue
 
 
 class DictField(BaseField):
-    """Variables and nest variables field solver.
+    """Variables and nested variables field solver.
 
     This field solver targets variables-like fields:
 
@@ -16,9 +20,13 @@ class DictField(BaseField):
         """
         super().__init__(*args, **kwargs)
         self.literal = False
-        self.path = list(filter(None, self.name.split('.')))
+        self.path = [
+            n.strip('"').strip("'")
+            for n
+            in filter(None, self.name.split('.'))
+        ]
     
-    async def _read(self, event: 'Event' = None, pipeline: 'Pipeline' = None):
+    async def _read(self, event: Event, pipeline: Pipeline) -> Event:
         if event:
             if len(self.path) == 1:
                 return event.data.get(self.path[0], self.default)
@@ -35,7 +43,7 @@ class DictField(BaseField):
         else:
             return self.default
 
-    async def _write(self, event: 'Event', value: FieldValue):
+    async def _write(self, event: Event, value: FieldValue) -> Any:
         if len(self.path) == 1:
             event.data[self.path[0]] = value
         else:
@@ -47,7 +55,7 @@ class DictField(BaseField):
             _dc[self.path[-1]] = value
         return event
 
-    async def _delete(self, event: 'Event'):
+    async def _delete(self, event: Event) -> Event:
         if len(self.path) == 1:
             event.data.pop(self.path[0], None)
         else:

@@ -2,8 +2,8 @@ from .__base__ import BaseField
 
 
 class NoneField(BaseField):
-    '''Dummy field solver class.
-    '''
+    """Dummy field solver class.
+    """
 
     async def _read(self, *args, **kwargs):
         return None

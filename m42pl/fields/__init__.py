@@ -1,6 +1,9 @@
+import asyncio
+from types import SimpleNamespace
+from collections import OrderedDict
+
 from ..errors import FieldInitError
 
-from .__base__ import BaseField
 from .literal import LiteralField
 from .json import JsonField
 from .dict import DictField
@@ -11,76 +14,66 @@ from .none import NoneField
 
 
 def Field(name, *args, **kwargs):
-    '''Fields factory function.
+    """Fields factory function.
 
-    The correct field implementation is choosen this way:
-
-    ```
-        ├── list, tuple
-        │   └── SeqnField
-        ├── bool, int, float
-        │   └── BaseField
-        ├── str
-        │   ├── Literal string
-        │   |   └── BaseField
-        │   ├── JSONPath
-        │   |   └── JsonField
-        │   ├── Pipeline reference
-        │   |   └── PipeField
-        │   ├── Other string
-        │       └── DictField
-        └── other
-            └── NoneField
-    ```
-
-    :param name:    The field name or literal value.
-    '''
+    :param name:    The field name or literal value
+    """
 
     try:
-        # ---
         # List or tuple
-        if type(name) in [list, tuple]:
-            # print(f'field({name}) -> {type(name)} -> SeqnField')
-            return SeqnField([ Field(f) for f in name ])
-        # ---
+        if isinstance(name, (list, tuple)):
+            return SeqnField([Field(f) for f in name])
         # Number
-        elif type(name) in [bool, int, float]:
-            # print(f'field({name}) -> {type(name)} -> BaseField')
+        elif isinstance(name, (bool, int, float)):
             return LiteralField(name, *args, **kwargs)
-        # ---
         # String and string sub-types
         elif isinstance(name, str):
-            # ---
+            # Boolean
+            if name in ['yes', 'true']:
+                return LiteralField(True, *args, **kwargs)
+            elif name in ['no', 'false']:
+                return LiteralField(False, *args, **kwargs)
             # Literal
-            if name[0] in ['\'', '"'] and name[-1] in ['\'', '"']:
-                # print(f'field.field({name}) -> string -> BaseField')
-                name = name[1:-1]
-                return LiteralField(name, *args, **kwargs)
-            # ---
+            elif name[0] == '\'' and name[-1] == '\'':
+                return LiteralField(name[1:-1], *args, **kwargs)
             # Json path
             elif name[0] == '{' and name[-1] == '}':
-                # print(f'field({name}) -> string -> JsonField ({name})')
                 return JsonField(name[1:-1])
-            # ---
             # Eval field
             elif name[0] == '`' and name[-1] == '`':
                 return EvalField(name[1:-1])
-            # ---
             # Pipeline reference
             elif name[0] == '@':
-                # print(f'field({name}) -> string -> PipeField ({name})')
                 return PipeField(name[1:], *args, **kwargs)
-            # ---
-            # Dict key
+            # Dict key with space
+            elif name[0] == '"' and name[-1] == '"':
+                return DictField(name[1:-1], *args, **kwargs)
+            # Dict key without space
             else:
-                # print(f'field({name}) -> string -> DictField')
                 return DictField(name, *args, **kwargs) # type: ignore
-        # ---
         # Invalid or empty field
         else:
-            # print(f'field({name}) -> None ({type(name)}) -> NoneField')
             return NoneField(name) # type: ignore
-    # ---
     # Field creation error
     except Exception as error:
         raise FieldInitError(name, str(error))
+
+
+class FieldsMap:
+    """Access multiples fields within a single container.
+    """
+
+    def __init__(self, **fields):
+        self.fields = OrderedDict(fields)
+
+    async def read(self, event, pipeline) -> SimpleNamespace:
+        return SimpleNamespace(**type({})([
+            (name, field)
+            for name, field
+            in zip(
+                self.fields.keys(),
+                await asyncio.gather(*[
+                    field.read(event, pipeline) for _, field in self.fields.items()
+                ])
+            )
+        ]))

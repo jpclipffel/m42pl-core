@@ -1,3 +1,6 @@
+from m42pl.event import Event
+from m42pl.pipeline import Pipeline
+
 from .__base__ import BaseField, FieldValue
 
 

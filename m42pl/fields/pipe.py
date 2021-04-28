@@ -1,17 +1,15 @@
-import asyncio
+from m42pl.event import Event
+from m42pl.pipeline import Pipeline
 
 from .__base__ import BaseField, FieldValue
 
 
 class PipeField(BaseField):
-    '''M42PL sub pipeline field solver.
+    """M42PL sub pipeline field solver.
 
     This field solver targets M42PL pipelines:
 
-    ```
-    | command [ | foo | bar | ... ]
-    | ...
-    ```
+        | command [ | foo | bar | ... ]
 
     The type of the returned value depends on the sub pipeline result:
 
@@ -23,13 +21,13 @@ class PipeField(BaseField):
 
     :ivar name: Pipeline reference in current context
                 (minus the leading '@').
-    '''
+    """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.literal = False
         self.results = []
 
-    async def _read(self, data: 'Event' = None, pipeline: 'Pipeline' = None):
+    async def _read(self, event: Event, pipeline: Pipeline):
         if not pipeline:
             return self.default
         # ---
@@ -37,8 +35,8 @@ class PipeField(BaseField):
         results = []
         _pipeline = pipeline.context.pipelines.get(self.name, None)
         if _pipeline:
-            async for event in _pipeline():
-                results.append(event)
+            async for _event in _pipeline(pipeline.context, event):
+                results.append(_event)
         # ---
         # Format and return the result.
         #
@@ -49,7 +47,9 @@ class PipeField(BaseField):
                 # Single event && single field:
                 if len(results[0].data) == 1:
                     return list(results[0].data.items())[0][1]
-                return results
-            return results
+                # Single event && multiple fields
+                return results[0].data
+            # Multiple events
+            return [result.data for result in results]
         # No event at all:
         return self.default

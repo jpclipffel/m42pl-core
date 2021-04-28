@@ -1,5 +1,8 @@
 import jsonpath_ng
 
+from m42pl.event import Event
+from m42pl.pipeline import Pipeline
+
 from .__base__ import BaseField, FieldValue
 from .dict import DictField
 
@@ -26,13 +29,21 @@ class JsonField(BaseField):
         self.literal = False
         self.matcher = jsonpath_ng.parse(self.name)
     
-    async def _read(self, event: 'Event' = None, pipeline: 'Pipeline' = None):
+    async def _read(self, event: Event, pipeline: Pipeline):
         if event:
-            matched =  [ match.value for match in self.matcher.find(event.data) ]
-            return len(matched) > 1 and matched or matched[0]
+            matched =  [
+                match.value
+                for match
+                in self.matcher.find(event.data)
+            ]
+            if len(matched):
+                if len(matched) > 1:
+                    return matched
+                elif len(matched) == 1:
+                    return matched[0]
         return self.default
     
-    async def _write(self, event: 'Event', value: FieldValue):
+    async def _write(self, event: Event, value: FieldValue):
         # First, attempt to match then update field.
         matched = self.matcher.find(event.data)
         if len(matched):
@@ -43,10 +54,10 @@ class JsonField(BaseField):
         # arrays.
         # TODO: Improve behaviour when adding a new field.
         else:
-            event = DictField(self.name)._write(event, value)
+            event = await DictField(self.name)._write(event, value)
         # Done, return event.
         return event
     
-    async def _delete(self, event: 'Event'):
+    async def _delete(self, event: Event):
         self.matcher.filter(lambda _: True, event.data)
         return event

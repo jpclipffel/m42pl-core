@@ -1,4 +1,7 @@
-from typing import Union, Optional, Collection
+from typing import Union, Collection
+
+from m42pl.event import Event
+from m42pl.pipeline import Pipeline
 
 
 # pylint: disable=unsubscriptable-object
@@ -50,52 +53,56 @@ class BaseField:
                     type: FieldType = None,
                     seqn: bool = False):
         """
-        :param name:        Field name.
-                            If the field is a literal, this is also the 
-                            field value.
+        :param name:        Field name; If the field is a literal, 
+                            this is also the field value
         :param default:     Default value to return is the field is not
-                            found. Defaults to `None`.
-        :param type:        Accepted fields type(s). If a list is
-                            returned, each item is tested.
-                            Default to `None` (no type check).
-        :param seqn:        Always returns a list of values.
-                            If a command accepts a multiple values for
+                            found; Defaults to `None`
+        :param type:        Accepted fields type(s); If a list is
+                            returned, each item is tested; Default to 
+                            `None` (no type check)
+        :param seqn:        Always returns a list of values if `True`;
+                            If a command accepts multiple values for
                             a field, this should be set to `True` to
-                            ensure a list is always returned.
-                            Default to `False`.
+                            ensure a list is always returned; Defaults
+                            to `False`
                         
-        :ivar literal:      True when the field is a literal value.
-        :ivar allow_seqn:   True if a sequence (list, tuple, set) is an
-                            accepted type.
+        :ivar literal:      `True` when the field is a literal value
         """
         self.name = name
         self.default = default
         self.type = type
         self.seqn = seqn
-        # ---
         self.literal = True
 
-    async def _read(self, event, pipeline):
+    async def _read(self, event: Event, pipeline: Pipeline):
         """Gets the configured field.
 
         This method should be implemented by a child class.
+
+        :param event:       Event from which the field must be read
+        :param pipeline:    Current pipeline
+        :return:            Read field value
         """
         raise NotImplementedError()
 
-    async def read(self, event: 'Event', pipeline: 'Pipeline' = None):
-        """Fetches, normalizes and returns the configured field.
+    async def read(self, event: Event, pipeline: Pipeline = None):
+        """Normalizes and returns the configured field's value.
 
-        :param event:       Event to read from.
-        :param pipeline:    Current pipeline instance.
-                            Default to `None`.
+        :param event:       Event from which the field must be read
+        :param pipeline:    Current pipeline
+        :return:            Read field value
         """
 
         def enlist(value):
+            """Wraps the field's value into a list.
+            """
             if not isinstance(value, (list, tuple, set)) and self.seqn:
                 return [value, ]
             return value
 
         def check(items):
+            """Checks the field's value type.
+            """
             for item in isinstance(items, (list, tuple, set)) and items or [items, ]:
                 if self.type and not isinstance(item, self.type):
                     raise Exception(f'Invalid type for field {self.name}')
@@ -103,31 +110,40 @@ class BaseField:
 
         return enlist(check(await self._read(event, pipeline)))
 
-    async def _write(self, event, value: FieldValue):
+    async def _write(self, event: Event, value: FieldValue) -> Event:
         """Sets the configured field.
 
         This method should be implemented by a child class.
+
+        :param event:   Event to which the file must be write
+        :param value:   Field value
+        :return:        Updated event
         """
         raise NotImplementedError()
 
-    async def write(self, event: 'Event', value: FieldValue):
+    async def write(self, event: Event, value: FieldValue) -> Event:
         """Sets the configured field.
 
-        :param event:   Event to write to.
-        :param value:   Value to set.
+        :param event:   Event to which the file must be write
+        :param value:   Field value
+        :return:        Updated event
         """
         return await self._write(event, value)
     
-    async def _delete(self, event):
+    async def _delete(self, event: Event) -> Event:
         """Removes the configured field.
 
         This method should be implemented by a child class.
+
+        :param event:   Event from which the field must be removed
+        :return:        Updated event
         """
         raise NotImplementedError()
 
-    async def delete(self, event: 'Event'):
+    async def delete(self, event: Event) -> Event:
         """Removes the configured field.
 
-        :param event:   Event to delete from.
+        :param event:   Event from which the field must be removed
+        :return:        Updated event
         """
         return await self._delete(event)
