@@ -1,4 +1,11 @@
-| http_server '127.0.0.1' port=8080 [
-    | echo
-    | output
-]
+| http_server with
+    '*' on '/foo' = [
+        | echo
+        | eval path='foo', mode='infinite+iterator'
+        | fields path, mode
+    ],
+    '*' on '/bar' = [
+        | eval path='bar', mode='infinite+stream'
+        | fields path, mode
+    ],
+    '*' on '/{path}' = []
