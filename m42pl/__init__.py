@@ -1,3 +1,4 @@
+import importlib
 import importlib.util
 import logging
 import glob
@@ -21,7 +22,8 @@ modules = {} # type: Dict[str, Any]
 # List of modules to import by their names.
 BUILTINS_MODULES_NAMES = [
     "m42pl_commands",
-    "m42pl_dispatchers"
+    "m42pl_dispatchers",
+    "m42pl_kvstores"
 ]
 
 # List of modules imported by their names.
@@ -98,6 +100,7 @@ def load_module_path(namespace: str, path: str) -> None:
     logger.info(f'registering module: module_name="{module_name}"')
     sys.modules[module_spec.name] = module
     IMPORTED_MODULES_PATHS.append(path)
+    modules[module_name] = module
 
 
 def load_module_name(name: str) -> None:
@@ -106,19 +109,19 @@ def load_module_name(name: str) -> None:
     :param name:    Module name.
     """
     logger.info(f'loading module by name: name="{name}"')
-    importlib.import_module(name)
+    module = importlib.import_module(name)
     IMPORTED_MODULES_NAMES.append(name)
+    modules[name] = module
 
 
 def load_modules(search_paths: list = [], paths: list = [],
                  names: list = [], namespace: str = "m42pl") -> None:
     """Loads modules.
     
-    :param search_paths:    Modules search paths.
-    :param paths:           Modules paths.
-    :param names:           Modules names.
-    :param namespace:       Loaded modules namespace.
-                            Default to 'spell.modules'.
+    :param search_paths:    Modules search paths
+    :param paths:           Modules paths
+    :param names:           Modules names
+    :param namespace:       Modules namespace; Defaults to 'm42pl'
     """
     # ---
     # Load modules found in search paths.
@@ -134,3 +137,15 @@ def load_modules(search_paths: list = [], paths: list = [],
     # Load modules specified by name.
     for name in set(BUILTINS_MODULES_NAMES + names):
         load_module_name(name=name)
+
+
+def reload_modules():
+    """Reloads previously imported modules.
+
+    Returns the name of reloaded modules.
+    """
+    reloaded = []
+    for name, module in modules.items():
+        importlib.reload(module)
+        reloaded.append(name)
+    return reloaded

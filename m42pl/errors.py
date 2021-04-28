@@ -12,7 +12,7 @@ class M42PLError(Exception):
 
 
 class ScriptError(M42PLError):
-    """Base class for errors happening in script parsing.
+    """Base class for errors happening during script parsing.
 
     :ivar line:     Error line number in source script
     :ivar column:   Error column number in source script
