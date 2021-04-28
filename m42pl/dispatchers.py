@@ -1,20 +1,20 @@
+from m42pl.context import Context
 import re
 import sys
 import logging
 
-from typing import Any, List, Dict, Set, Generator
-
+import m42pl
 import m42pl.commands
-from m42pl.pipeline import Pipeline
 from m42pl.event import Event
-from m42pl.context import Context
+from m42pl.kvstores import KVStore
 
 
 # Dispatchers aliases map
-ALIASES = dict() # type: Dict[str, object]
+ALIASES = dict() # type: dict[str, object]
 
 # Module-level logger
 logger = logging.getLogger("m42pl.dispatchers")
+
 
 class Dispatcher:
     """Base dispatcher class.
@@ -71,10 +71,6 @@ class Dispatcher:
         _commands.append(_subcommands)
         return _commands
 
-    @classmethod
-    def from_dict(cls, dc):
-        pass
-
     def __init_subclass__(cls, **kwargs) -> None:
         super().__init_subclass__(**kwargs)
         module = f'{cls.__module__}.{cls.__name__}'
@@ -86,19 +82,35 @@ class Dispatcher:
             # Register dispatcher alias
             logger.info(f'registering dispatcher alias: dispatcher="{cls.__name__}", alias="{alias}"')
             ALIASES[alias] = cls
-        # super(_Dispatcher, cls).__init__(name, bases, clsdict)
 
-    def __init__(self, context: Context) -> None:
-        '''
-        :param context: M42PL context.
-        '''
-        self.context = context
+    def __init__(self) -> None:
+        self.script = m42pl.command('script')
 
-    def to_dict(self):
-        """Returns a JSON-serializable :class:`dict` representation of
-        the context instance.
+    def target(self, context: Context, event: Event):
+        """Runs the dispatcher.
+
+        This method must be implemented by the actual dispatcher class,
+        and should:
+
+        * Enters KVStore context (e.g. `with context.kvstore: ...`)
+        * Handle execution and pipeline exceptions 
+
+        :param context: Pipelines context
+        :param event:   Initial event
         """
-        return {}
+        pass
 
-    def __call__(self):
-        return
+    def __call__(self, source: str, kvstore: KVStore, event: Event = None):
+        """Prepares to runs the dispatcher.
+
+        :param source:  Script source
+        :param kvstore: KVStore instance
+        :param event:   Initial event
+        """
+        return self.target(
+            context = Context(
+                pipelines=self.script(source)(),
+                kvstore=kvstore
+            ),
+            event=event or Event()
+        )
