@@ -3,24 +3,30 @@
 M42PL scripts examples.
 Scripts can be run with `m42pl run <script_name>.mpl`.
 
-### Script - `external-ip.mpl`
+## Scripts
+
+### `external-ip.mpl`
 
 Query the famous `api.ipify.org`.
 
-### Script - `commands.mpl`
+### `commands.mpl`
 
 Returns a cleaned list of available M42PL commands.
 
-### Script - `scrapper-music.mpl`
+### `scrapper-music.mpl`
 
-Scrapes Lorne Balfe's Ghost In The Shell MP3 files from the artist web site.
+Scrapes Lorne Balfe's *Ghost In The Shell* tracks URL from the artist web site.
 
-### Script - `scrapper-duckduckgo.mpl`
+### `server-http.mpl`
 
-Searches on DuckDuckGo and returns each result as an event.
+HTTP server which listen on `127.0.0.1:8080` by default and accept any requests
+(`GET`, `POST`, ...) on the following paths:
 
-### Script - `server-http.mpl`
+* `/foo`
+* `/bar`
+* `/{path}` (replace `{path}` with a value like `my-path`, e.g. `/my-path`)
 
-Basic HTTP server.
+You may test it with `curl` or `ab`:
 
-Once started, test with with `curl -X POST http://127.0.0.1:8080 -d '{"hello": "world"}'`.
+* `curl -Lki http://127.0.0.1:8080/foo`
+* `ab -n 100 -c 100 http://127.0.0.1:8080/bar`
