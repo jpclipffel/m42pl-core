@@ -7,7 +7,7 @@ from m42pl.utils.errors import CLIErrorRender
 from .__base__ import RunAction
 
 
-class Run(RunAction):
+class Start(Action):
     """Runs a M42PL script.
     """
 
