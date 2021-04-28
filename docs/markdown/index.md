@@ -15,6 +15,6 @@ to learn, and hides advanced programming concepts from the user.
 
 
 ---
-[Splunk]: https://splunker.com
+[Splunk]: https://splunk.com
 [m42pl-commands]: https://github.com/jpclipffel/m42pl-commands
 [m42pl-dispatchers]: https://github.com/jpclipffel/m42pl-dispatchers
