@@ -1,24 +1,32 @@
 from copy import deepcopy
-import hashlib
-import time
+from inspect import signature
 import uuid
-import sys
-
-
-# from m42pl.fields import Field, BaseField
 
 
 class Event:
     """A single unit of information produced and processed by commands.
     
-    :attr data:         Public, JSON-serilizable fields.
-    :attr meta:         Private, binary-serializable fields.
-    :attr signature:    Event signature (lazy-evaluated).
+    :attr data:         Public, JSON-serilizable fields
+    :attr meta:         Private fields
+    :attr signature:    Event signature (property, lazy-evaluated)
     """
 
     __slots__ = ('data', 'meta', '_signature')
 
-    def __init__(self, data: dict = None, meta: dict = None, signature: str = None):
+    @classmethod
+    def from_dict(cls, data: dict) -> 'Event':
+        """Returns a new :class:`Event` from a :class:`dict`.
+
+        :param data:    Event serialized as a :class:`dict`
+        """
+        return cls(
+            data=data.get('data', None),
+            meta=data.get('meta', None),
+            signature=data.get(signature, None)
+        )
+
+    def __init__(self, data: dict = None, meta: dict = None,
+                    signature: str = None):
         """
         :param data:        Event data.
         :param meta:        Event meta data.
@@ -29,44 +37,38 @@ class Event:
         self.meta = meta or {}
         self._signature = signature
 
+    def to_dict(self) -> dict:
+        """Serializes the event as a :class:`dict`.
+        """
+        return {
+            'data': self.data,
+            'meta': self.meta,
+            'signature': self.signature
+        }
+
     @property
-    def signature(self):
-        """Returns the event signature, generating it if necessary.
+    def signature(self) -> str:
+        """Returns the event signature.
+
+        If the event is not yet signed, a new signature is computed and
+        returned.
         """
         if not self._signature:
             self._signature = str(uuid.uuid4())
         return self._signature
     
     @signature.setter
-    def signature(self, value):
+    def signature(self, value: str) -> None:
         """Sets the event signature.
+
+        :param value:   Signature
         """
         self._signature = value
 
-    # def sign(self, fields: list = []):
-    #     """Set the event signature.
-        
-    #     The signature of an event can change over time. It is either
-    #     random, either computed using the value of the given fields.
-        
-    #     :param fields:  Update signature using the given fields only.
-    #                     If no field is requested, the signature remains
-    #                     unchanged.
-    #                     FIXME: The current implementation uses field's
-    #                     `_read` method (not asynchrounous) and should
-    #                     be replaced by another solution.
-    #     """
-    #     if len(fields):
-    #         if isinstance(fields[0], LiteralField):
-    #             self._signature = hashlib.md5(''.join([ str(f.read_sync(self)) for f in fields ]).encode()).hexdigest()
-    #         else:
-    #             self._signature = hashlib.md5(''.join([ str(Field(f).read_sync(self)) for f in fields ]).encode()).hexdigest()
-    #     else:
-    #         self._signature = str(uuid.uuid4())
-    #     return self._signature
-    
-    def __deepcopy__(self, memo):
+    def __deepcopy__(self, memo) -> 'Event':
         """Returns an event copy.
+
+        :param memo:    Deepcopy's memo :class:`dict`.
         """
         return Event(
             data=deepcopy(self.data, memo),
@@ -74,17 +76,16 @@ class Event:
             signature=self.signature
         )
 
-    def derive(self, data: dict = {}, meta: dict = {}, signature: str = None):
+    def derive(self, data: dict = {}, meta: dict = {},
+                signature: str = None) -> 'Event':
         """Returns a copied and updated event.
 
-        :param data:        Fields to add to existing data.
-                            Existing data fields will be updated.
-                            Defaults to an empty dict.
-        :param meta:        Fields to add to existing meta.
-                            Defaults to an empty dict.
-                            Existing meta fields will be updated.
-        :param signature:   New event signature.
-                            Defaults to None (signature left empty).
+        :param data:        Fields to add to existing data
+                            Existing data fields are updated
+        :param meta:        Fields to add to existing meta
+                            Existing meta fields are updated
+        :param signature:   New event signature
+                            Defaults to `None` (signature left empty)
         """
         # return Event(
         #     data={**deepcopy(self.data), **data},
