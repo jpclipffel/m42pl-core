@@ -1,31 +1,21 @@
-import unittest
 from textwrap import dedent
-from collections import OrderedDict, namedtuple
 from dataclasses import dataclass, field
 import json
-import jsonpath_ng
 
 import m42pl
-
-
-# TestScript = namedtuple('TestScript', [
-#     'name',         # Test name
-#     'source',       # M42PL source script
-#     'expected',     # Expected results (list of events)
-#     'fields_in'     # Filter out all but those fields
-# ])
 
 
 @dataclass
 class TestScript:
     """Test case template.
 
-    :ivar name:         Script name.
-    :ivar source:       M42PL script source code.
-    :ivar expected:     Expected results, in the form of list of
-                        events.
-    :ivar fields_in:    Filter out all fields but these ones from
-                        the results.
+    :param name:        Script name
+    :param source:      M42PL script source code
+    :param expected:    Expected results, in the form of list of
+                        events
+    :param fields_in:   Filter out all fields but these ones from
+                        the results
+    :param fields_out:  Filter out these specific fields
     """
 
     name: str
@@ -98,11 +88,12 @@ class Command:
                 fields_out = test_script.fields_out
                 # ---
                 # Initialize M42PL
-                context = m42pl.command('script')(source=source)()
-                dispatcher = m42pl.dispatcher('local_test')(context)
+                # context = m42pl.command('script')(source=source)()
+                kvstore = m42pl.kvstore('local')()
+                dispatcher = m42pl.dispatcher('local_test')()
                 # ---
                 # Run the the test script
-                results = dispatcher()
+                results = dispatcher(source, kvstore)
                 # ---
                 # Test results length
                 self.assertEqual(len(results), len(expected))

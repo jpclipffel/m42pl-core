@@ -11,6 +11,7 @@ from m42pl.event import Event
 class Formatter:
     """Base event formatter.
     """
+
     def __init__(self, *args, **kwargs):
         pass
 
@@ -21,6 +22,7 @@ class Formatter:
 class Raw(Formatter):
     """Formats event as a string.
     """
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -33,6 +35,9 @@ class Json(Formatter):
     """
 
     class JSONDecoder(json.JSONEncoder):
+        """JSON decoder for :class:`Event`.
+        """
+
         def __init__(self, *args, **kwargs):
             super().__init__(*args, **kwargs)
         
@@ -41,7 +46,14 @@ class Json(Formatter):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.dumper = partial(json.dumps, *args, **{**kwargs, **{'cls': self.JSONDecoder}})
+        self.dumper = partial(
+            json.dumps,
+            *args, 
+            **{
+                **kwargs,
+                **{'cls': self.JSONDecoder}
+            }
+        )
 
     def __call__(self, event: Event):
         return self.dumper(event.data) # pylint: disable=too-many-function-args
@@ -50,6 +62,7 @@ class Json(Formatter):
 class HJson(Json):
     """Format event as a highlighted JSON string.
     """
+    
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.lexer = JsonLexer()
