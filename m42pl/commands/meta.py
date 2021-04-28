@@ -3,7 +3,7 @@ from typing import AsyncGenerator
 from m42pl.errors import CommandError
 
 from ..event import Event
-from .base import AsyncCommand
+from .__base__ import AsyncCommand
 
 
 class MetaCommand(AsyncCommand):

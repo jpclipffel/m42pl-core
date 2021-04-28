@@ -1,8 +1,8 @@
 # Commands aliases map
-ALIASES = dict() # type: Dict[str, object]
+ALIASES = dict()    # type: dict[str, object]
 
 
-from .base import Command
+from .__base__ import Command
 from .buffering import BufferingCommand, DequeBufferingCommand
 from .generating import GeneratingCommand
 from .merging import MergingCommand

@@ -1,17 +1,10 @@
 import re
-import sys
 import logging
-import inspect
-import json
-from collections import ChainMap, OrderedDict
+from collections import OrderedDict
 from textwrap import dedent
 from lark import Lark, Transformer as _Transformer, Discard
 
-from types import MethodType
-from typing import Any, Tuple, Dict, List, Generator, AsyncGenerator
-
 from m42pl.event import Event
-# from m42pl.fields import BaseField, DictField, JsonField
 
 from . import ALIASES
 
@@ -37,22 +30,23 @@ class Command():
 
     * The commands calling machinery
 
-    The following attributes are set by the command developer:
+    The following attributes must be set by the command developer:
 
-    :ivar _about_:          High level command description
+    :ivar _about_:          Command short description
     :ivar _syntax_:         Command syntax
     :ivar _aliases_:        List of command names
-    :ivar _grammar_:        Command grammar (blocks)
+    :ivar _grammar_:        Command grammar blocks
     :ivar Transformer:      Lark transformer class
+    :ivar logger:           Logger instance
 
     The following attributes are set at run time:
 
     :ivar _ebnf_:           Command grammar (string)
     :ivar _transformer_:    Lark transformer instance
     :ivar _parser_:         Lark parser
-    :ivar _lncol_:          Line / Column in source
-    :ivar _offset_:         Offset in source
-    :ivar _name_:           Command name in source
+    :ivar _lncol_:          Common position (line, col) in source script
+    :ivar _offset_:         Command offset in source script
+    :ivar _name_:           Command name in source script
     """
 
     _about_     = ''
@@ -72,7 +66,7 @@ class Command():
         # ---
         'eval_terminals': dedent('''\
             // eval_terminals
-            EVAL_SYMBOLS    : ( "+" | "-" | "*" | "/" | "%" | "^" | "!" | "<" | ">" | "==" | ">=" | "<=" | "!=" )
+            EVAL_SYMBOLS    : ( "+" | "-" | "*" | "/" | "%" | "^" | "!" | ">=" | "<=" | "<" | ">" | "==" | "!=" )
         '''),
         # ---
         'fields_terminals': dedent('''\
@@ -80,9 +74,7 @@ class Command():
             DIGIT       : "0".."9"
             FLOAT       : ("-")? DIGIT+ "." DIGIT+
             INTEGER     : ("-")? DIGIT+
-            BOOLEAN.2   : "true"i | "false"i | "yes"i | "no"i
             NAME        : /[a-zA-Z_]+[a-zA-Z0-9_-]*/
-            // STRING      : /"(?:[^"\\\\]|\\\\.)*"/ | /'(?:[^'\\\\]|\\\\.)*'/
             STRING      : /"(?:[^"\\\\]|\\\\.|\n)*"/xs | /'(?:[^'\\\\]|\\\\.|\n)*'/xs
             EVAL        : /`(?:[^`\\\\]|\\\\.)*`/
             JSPATH      : /\{.*\}/
@@ -111,7 +103,6 @@ class Command():
             // fields_rules
             ?field  : FLOAT     -> float
                     | INTEGER   -> integer
-                    | BOOLEAN   -> boolean
                     | STRING    -> string
                     | EVAL      -> eval
                     | JSPATH    -> jspath
@@ -221,7 +212,7 @@ class Command():
     logger.info(f'creating generic command transformer')
     _transformer_ = Transformer()
 
-    # Default line & column and offset position in original source
+    # Default line & column and offset position in source script
     _lncol_ = (-1, -1)
     _offset_ = -1
 
@@ -230,12 +221,12 @@ class Command():
 
     @classmethod
     def from_script(cls: type, data: str) -> 'Command':
-        """Returns a new :class:`Command` instance from a script wrote
-        in the command's custom grammar.
+        """Returns a new :class:`Command` from a M42PL command.
+
+        The new :class:`Command` instance is built by parsing the given
+        :param:`data` with the command :ivar:`_transformer_`.
         
-        :param data:    Script string.
-                        By default, commands accepts a list of 
-                        arguments and keywords arguments.
+        :param data:    M42PL command
         """
         logger.info(f'instanciating command from script: cls="{cls.__name__}"')
         if data and len(data):
@@ -254,7 +245,7 @@ class Command():
 
             {
                 'args': [],     # Command's arguments list
-                'kwargs': []    # Command's keyword arguments map
+                'kwargs': {}    # Command's keyword arguments map
             }
         
         :param data:    :class:`dict` instance.
@@ -298,21 +289,21 @@ class Command():
     def __init__(self, *args, **kwargs):
         """
         :param args:        Args list to be automatically
-                            exported using `to_dict()`.
+                            exported using `to_dict()`
         :param kwargs:      Kwargs map to be automatically
-                            exported using `to_dict()`.
+                            exported using `to_dict()`
         
-        :ivar logger:       Command instance logger.
-        :ivar chunk:        Command instance chunk number.
-        :ivar chunks:       Number of chunks running in parallel.
-        :ivar _args:        Automatically exported args list.
-        :ivar _kwargs:      Automatically exported kwargs list.
+        :ivar logger:       Command instance logger
+        :ivar chunk:        Command instance chunk number (starts at 0)
+        :ivar chunks:       Number of chunks running in parallel
+        :ivar _args:        Automatically exported args list
+        :ivar _kwargs:      Automatically exported kwargs list
         """
         self.logger = logging.getLogger(self.__class__.__name__)
-        self._chunk, self._chunks = 1, 1
+        self._chunk, self._chunks = 0, 1
         self._args, self._kwargs = args, kwargs
 
-    def to_dict(self) -> Dict:
+    def to_dict(self) -> dict:
         """Returns a JSON-serializable :class:`dict` from the current
         instance.
 
@@ -320,8 +311,9 @@ class Command():
         attr:`from_dict` and match with the following mapping:
 
             {
+                'alias': ''     # Command's name / alias
                 'args': [],     # Command's arguments list
-                'kwargs': []    # Command's keyword arguments map
+                'kwargs': {}    # Command's keyword arguments map
             }
         """
         return {
@@ -346,13 +338,13 @@ class Command():
     def first_chunk(self) -> bool:
         """Returns `True` we are in the first chunk, `False` otherwise.
         """
-        return self._chunk == 1
+        return self._chunk == 0
     
     @property
     def last_chunk(self) -> bool:
         """Returns `True` we are in the last chunk, `False` otherwise.
         """
-        return self._chunk == self._chunks
+        return self._chunk == (self._chunks - 1)
     
     @property
     def inter_chunk(self) -> bool:
@@ -387,6 +379,7 @@ class AsyncCommand(Command):
 
     * The commands calling machinery
     """
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -403,7 +396,7 @@ class AsyncCommand(Command):
 
         Unlike :meth:`__init__`, :meth:`setup` is a coroutine and thus
         can perform more advanced operation, such as fields resolution
-        (which are asynchronous operations).
+        (which is an asynchronous operation).
 
         Generating commands may omit to call :meth:`setup` and let
         their :meth:`target` method performs the initialization since
@@ -418,8 +411,8 @@ class AsyncCommand(Command):
             await super().setup(event, piepeline)
         ```
 
-        :param event:       Latest generated event (may be empty).
-        :param pipeline:    Current pipeline.
+        :param event:       Latest generated event (may be empty)
+        :param pipeline:    Current pipeline
         """
         return
 
@@ -441,4 +434,4 @@ class AsyncCommand(Command):
         releases / ... these resources here.
         """
         self.logger.debug('exiting command context')
-        pass
+        return

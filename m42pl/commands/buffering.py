@@ -7,7 +7,7 @@ from typing import AsyncGenerator
 from m42pl.errors import CommandError
 
 from ..event import Event
-from .base import AsyncCommand
+from .__base__ import AsyncCommand
 
 
 class BufferingCommand(AsyncCommand):
@@ -80,7 +80,6 @@ class BufferingCommand(AsyncCommand):
             # * the pipeline is ending
             # * the internal buffer is full
             if not event or (ending and remain == 0) or await self.full():
-                # print(f'{self} -> queue full, yielding')
                 async for event in self.target(pipeline):
                     yield event
                 await self.clear()
