@@ -1,7 +1,8 @@
-import os
 from collections import OrderedDict
 
-from . import pipeline
+import m42pl
+import m42pl.pipeline
+from .kvstores import KVStore
 
 
 class Context:
@@ -9,33 +10,50 @@ class Context:
     """
     
     @classmethod
-    def from_dict(cls, dc: dict) -> 'Context':
-        return cls(pipelines=[
-            pipeline.Pipeline.from_dict(p) for p in dc['pipelines']
-        ])
+    def from_dict(cls, data: dict) -> 'Context':
+        """Returns a new :class:`Context` from a :class:`dict`.
+        """
+        return cls(
+            pipelines=dict([
+                (name, m42pl.pipeline.Pipeline.from_dict(pipeline))
+                for name, pipeline
+                in data['pipelines'].items()
+            ]),
+            kvstore=m42pl.kvstore(data['kvstore']['alias'])(
+                *data['kvstore']['args'],
+                data['kvstore']['kwargs']
+            )
+        )
 
-    def __init__(self, pipelines: list = None):
-        '''
-        :param pipelines:   List of pipelines.
-        :param wd:          Working directory.
-        :ivar pipelines:    Mapping of pipelines name and instances
-        '''
-        self.pipelines = OrderedDict(dict([
-            (p.name, p) for p in pipelines or []
-        ]))
-    
-    def add_pipelines(self, pipelines: dict):
-        '''Add one or more pipelines to the context.
+    def __init__(self, pipelines: dict, kvstore: KVStore):
+        """
+        :param pipelines:   Pipelines dict (name:instance)
+        :param kvstore:     KVStore instance
+        """
+        self.pipelines = pipelines
+        self.kvstore = kvstore
 
-        :param pipelines:   Pipelines to add to the context.
-        '''
-        self.pipelines.update(pipelines)
-
-    def to_dict(self) -> dict:
-        """Returns a JSON-serializable :class:`dict` representation.
+    def to_dict(self):
+        """Serializes the pipeline as a :class:`dict`.
         """
         return {
-            'pipelines': [
-                p.to_dict() for _, p in self.pipelines.items()
-            ]
+            'pipelines': dict([(name, pipeline.to_dict()) for name, pipeline in self.pipelines.items()]),
+            'kvstore': self.kvstore.to_dict()
         }
+
+    # @property
+    # def main_pipeline(self):
+    #     """Returns the main pipeline.
+    #     """
+    #     return list(self.pipelines.values())[-1]
+    
+    # @main_pipeline.setter
+    # def main_pipeline(self, value):
+    #     self.pipelines
+
+    def add_pipelines(self, pipelines: dict):
+        """Add one or more pipelines to the context.
+
+        :param pipelines:   Pipelines to add to the context
+        """
+        self.pipelines.update(pipelines)
