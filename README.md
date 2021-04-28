@@ -15,23 +15,39 @@ Example:
 | output format=json
 ```
 
-You may find more examples in [the examples directory](/examples).
+You may find more examples in [the examples directory](/examples/README.md).
 
 Nearly all language features are implemented in **commands** which are
-dynamically loaded from **plugins**. The core commands 
+dynamically loaded from **plugins**. The core commands
 [are available here][m42pl-commands]. Some example:
 
-* `url`: Performs HTTP requests
+* `url`: Performs one or more parallel HTTP requests
 * `eval`: Evaluate fields using Python expressions
 * `xpath`: Extract fields using an XPath expression
 * `stats`: Performs statistical operations and aggregations
 
+## M42PL specificities
+
+* Commands may implements their own custom grammar (like the `stats` command),
+  which means that only the `|` (pipe) and `[]` (sub-pipeline) structures are
+  part of the core language
+* M42PL runs *on* a Python interpreter, but its execution is managed by
+  **dispatchers** which controls *how* and *where* the code is ran: on the
+  local interpreter, on multiple processes, on Celery nodes, etc.
+* Most fields (commands arguments) in M42PL behaves like lambdas; To refers to
+  the field `user.name`, you can write:
+  * `data=user.name` (direct access)
+  * `data={user.name}` (in-line JsonPath expression)
+  * ```data=`field(user.name)` ``` (in-line eval statement)
+  * `data=[ | curl '...' | fields response.json.name ]` (in-line sub-pipeline)
+
 ## Quick introduction
 
 M42PL can executes scripts or can be run in REPL mode. M42PL scripts are
-standard text files, which may end with `.mpl` or `.m42pl`.
+standard text files, which end with `.mpl` or `.m42pl` by convention.
 
-To start an interpreter, run the command `m42pl repl` (type `exit` to leave):
+To start an interpreter (REPL), run the command `m42pl repl`
+(type `exit` to leave):
 
 ```
 $ m42pl repl
@@ -40,8 +56,8 @@ m42pl |
 
 Mandatory *hello world* script:
 
-```shell
-| eval hello = 'world !'
+```
+| make | eval hello = 'world !'
 ```
 
 You may run a M42PL script using the `m42pl run` command:
@@ -54,14 +70,14 @@ A M42PL script is a **pipeline** (a list of **commands** starting with
 pipes `|`):
 
 ```
-| make | eval foo='bar' | output
+| make | eval foo = 'bar' | output
 ```
 
 You can separate commands with new lines too (new lines are ignored):
 
 ```
 | make
-| eval foo='bar'
+| eval foo = 'bar'
 | output
 ```
 
@@ -79,8 +95,8 @@ Commands **parameters** (aka. **fields**) support various syntax:
 
 | Example                               | Field                 | Description         |
 |---------------------------------------|-----------------------|---------------------|
-| ``` \| make count=2 ```               | `2`                   | Integer constant    |
-| ``` \| output format='json' ```       | `'json'`              | String constant     |
+| ``` \| make count=2 ```               | `2`                   | Nunber    |
+| ``` \| output format='json' ```       | `'json'`              | String     |
 | ``` \| make showinfo=`True` ```       | `` `True` ``          | Eval expression     |
 | ``` \| fields response.items ```      | `response.items`      | Field path variable |
 | ``` \| fields {response.items[0]} ``` | `{response.items[0]}` | JSON path variable  |
@@ -119,31 +135,17 @@ supports **sub-pipelines**:
 ```
 | readfile 'list_of_urls.txt'
 | foreach [
-    | url url
+    | wget url
     | fields response.content
 ]
-| output
 ```
 
 Commands may also implements their own, custom grammar:
 
 ```
 | make count=10 showinfo=yes
-| rename id as event.id 
-| eval is_even = even(event.id) 
-| stats count by is_even
-```
-
-You can create and uses macros (reusable pipelines) with the `macro` command:
-
-```
-| macro 'makesome' [
-    | make count=10 showinfo=yes
-    | eval is_even = even(id)
-    | fields is_even
-]
-
-| macro 'makesome'
+| rename id as event.id
+| eval is_even = even(event.id)
 | stats count by is_even
 ```
 
@@ -176,6 +178,12 @@ Implements M42PL execution method (local, multi-processing, Celery, etc.).
 
 * [Repository link][m42pl-dispatchers]
 
+### Key/value stores
+
+Implements M42PL key/value stores.
+
+* [Repository link][m42pl-kvstores]
+
 ## Installation
 
 Create and activate a virtual environement:
@@ -188,19 +196,25 @@ source m42pl/bin/activate
 Install the core language `m42pl_core`:
 ```
 git clone https://github.com/jpclipffel/m42pl-core
-pip install m42pl-core
+pip install -e m42pl-core
 ```
 
 Install the core commands `m42pl_commands`:
 ```
 git clone https://github.com/jpclipffel/m42pl-commands
-pip install m42pl-commands
+pip install -e m42pl-commands
 ```
 
 Install the core dispatchers `m42pl_dispatchers`:
 ```
 git clone https://github.com/jpclipffel/m42pl-dispatchers
-pip install m42pl-dispatchers
+pip install -e m42pl-dispatchers
+```
+
+Install the core kvstores `m42pl_kvsotres`:
+```
+git clone https://github.com/jpclipffel/m42pl-kvstores
+pip install -e m42pl-kvstores
 ```
 
 ## FAQ
@@ -230,3 +244,4 @@ language as Splunk, but I quickly drifted from my goal.
 [Splunk]: https://splunk.com
 [m42pl-commands]: https://github.com/jpclipffel/m42pl-commands
 [m42pl-dispatchers]: https://github.com/jpclipffel/m42pl-dispatchers
+[m42pl-kvstores]: https://github.com/jpclipffel/m42pl-kvstores
