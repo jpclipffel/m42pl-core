@@ -24,10 +24,10 @@ class Run(RunAction):
             source = fd.read()
             try:
                 # Select, instanciate and run dispatcher
-                m42pl.dispatcher(args.dispatcher)()(
+                m42pl.dispatcher(args.dispatcher)(**args.dispatcher_kwargs)(
                     source=source,
-                    kvstore=m42pl.kvstore(args.kvstore)(),
-                    event=Event.from_dict(json.loads(args.event))
+                    kvstore=m42pl.kvstore(args.kvstore)(**args.kvstore_kwargs),
+                    event=Event(args.event)
                 )
             except Exception as error:
                 print(CLIErrorRender(error, source).render())
