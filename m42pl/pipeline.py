@@ -1,10 +1,15 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Generator, AsyncGenerator, Tuple, Dict, List
+
+if TYPE_CHECKING:
+    from m42pl.context import Context
+
 import logging
 from contextlib import ExitStack, AsyncExitStack
 import asyncio
 import inspect
 import itertools
-
-from typing import Dict, List, Generator
 
 import m42pl
 from m42pl import errors
@@ -236,7 +241,7 @@ class Pipeline:
         """
         self._ready = False
 
-    async def __call__(self, context: 'Context' = None, event: Event = None,
+    async def __call__(self, context: Context = None, event: Event = None,
                         infinite: bool = False):
         """Runs the pipeline.
 
@@ -288,6 +293,7 @@ class Pipeline:
                 iterator = generator and generator(event=event, pipeline=self).__aiter__() or None
             # ---
             # Start pipeline loop
+            next_event = event
             while True:
                 # self.trace(2, 'looping')
                 try:
@@ -322,14 +328,14 @@ class Pipeline:
                         # self.trace(3, f'next event is None, raise StopAsyncIteration')
                         raise StopAsyncIteration()
                 # ---
-                # Timeout occurs when the iterator took too lokng to yield an
-                # event. Send a None to the processors to 'wake-up' the
+                # Timeout occurs when the iterator took too long to yield an
+                # event. Send None to the processors to 'wake-up' the
                 # buffering commands and process the buffered events.
                 except asyncio.TimeoutError:
                     self.logger.debug(f'generator timeout, forcing pipeline wakeup: pipeline="{self.name}"')
                     async for e in self._run_commands(commands=processors, event=None, ending=False, remain=0):
                         yield e
-                    next_event = await next_event()
+                    next_event = await next_event() # type: ignore
                 # ---
                 # StopAsyncIteration occurs when either the iterator or the
                 # calling function have finished to produce events.
@@ -337,7 +343,7 @@ class Pipeline:
                     # self.trace(3, 'catched StopAsyncIteration')
                     # Always empty the buffered events
                     if len(processors):
-                        self.logger.info(f'running pipeline processors in end mode: pipeline="{self.name}"')
+                        self.logger.info(f'received StopAsyncIteration, running pipeline processors in end mode: pipeline="{self.name}"')
                         # self.trace(4, f'running processors in end mode')
                         async for _event in self._run_commands(commands=processors, event=None, ending=True, remain=0):
                             # self.trace(5, f'yield event from processors in end mode: {_event.signature}')
@@ -363,6 +369,8 @@ class Pipeline:
                     async for _event in self._run_commands(commands=processors, event=next_event, ending=False, remain=0):
                         # self.trace(4, f'yield event from processors: {_event.signature}')
                         yield _event
+                    # Reinitialize next event
+                    next_event = None
                 elif next_event:
                     yield next_event
             #     # ---
