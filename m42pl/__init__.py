@@ -36,7 +36,7 @@ IMPORTED_MODULES_PATHS = [] # type: List[str]
 def command(alias: str) -> Any:
     """Returns the requested :class:`Command` class.
 
-    :param alias:   Command alias.
+    :param alias:   Command alias
     """
     logger.info(f'requesting command: name="{alias}"')
     try:
@@ -48,7 +48,7 @@ def command(alias: str) -> Any:
 def dispatcher(alias: str = 'local') -> Any:
     """Returns the requested :class:`Dispatcher` class.
 
-    :param alias:   Dispatcher alias.
+    :param alias:   Dispatcher alias
     """
     logger.info(f'requesting dispatcher: name="{alias}"')
     try:
@@ -60,7 +60,7 @@ def dispatcher(alias: str = 'local') -> Any:
 def kvstore(alias: str = 'local') -> Any:
     """Returns the requested :class:`KVStore` class.
 
-    :param alias:   KVStore alias.
+    :param alias:   KVStore alias
     """
     logger.info(f'requesting kvstore: name="{alias}"')
     try:
@@ -77,7 +77,7 @@ def load_module_path(namespace: str, path: str) -> None:
     """
     logger.info(f'loading module by path: namespace="{namespace}", path="{path}"')
     # ---
-    # Build module name for its basename
+    # Build module name from its basename
     module_name = f'''{namespace}.{os.path.basename(path).split('.')[0].replace(' ', '_').replace('-', '_')}'''
     logger.debug(f'module_name="{module_name}"')
     # ---
@@ -139,13 +139,9 @@ def load_modules(search_paths: list = [], paths: list = [],
         load_module_name(name=name)
 
 
-def reload_modules():
-    """Reloads previously imported modules.
+# def reload_modules():
+#     """Reloads previously imported modules.
 
-    Returns the name of reloaded modules.
-    """
-    reloaded = []
-    for name, module in modules.items():
-        importlib.reload(module)
-        reloaded.append(name)
-    return reloaded
+#     Returns the name of reloaded modules.
+#     """
+#     # Reload modules loaded by name.

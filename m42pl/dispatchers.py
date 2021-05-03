@@ -85,6 +85,7 @@ class Dispatcher:
 
     def __init__(self) -> None:
         self.script = m42pl.command('script')
+        self.logger = logger.getChild(self.__class__.__name__)
 
     def target(self, context: Context, event: Event):
         """Runs the dispatcher.
