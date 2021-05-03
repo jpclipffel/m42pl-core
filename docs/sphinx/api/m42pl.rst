@@ -1,4 +1,4 @@
-m42pl
+M42PL
 =====
 
 .. automodule:: m42pl

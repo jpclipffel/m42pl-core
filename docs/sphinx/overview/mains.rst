@@ -1,8 +1,8 @@
 Mains
 =====
 
-The :module:`m42pl.mains` implements M42PL command line entry points,
-built using `argparse`.
+The module :mod:`m42pl.mains` implements M42PL command line entry points, built
+using `argparse`.
 
 The different entry points are referred as *actions* and must derive from one
 of the following classes:
@@ -10,7 +10,8 @@ of the following classes:
 * :class:`m42pl.mains.__base__.RunAction` for actions running M42PL scripts
 * :class:`m42pl.mains.__base__.DebugAction` for debug / hacks actions
 
-Current inheritance diagram:
+Inheritance diagram
+-------------------
 
 .. inheritance-diagram:: m42pl.mains.repl.REPL
                          m42pl.mains.run.Run
@@ -20,12 +21,12 @@ Current inheritance diagram:
 Action class anatomy
 --------------------
 
-An *action* class is a functor which implements two methods:
+An *action* class is a functor which implements at least two methods:
 
 .. code-block:: Python
 
     def __init__(self, *args, **kwargs) -> None:
-        """Initializes the class and its parrent(s) class(es).
+        """Initializes the class and its parent(s) class(es).
         """
 
 .. code-block:: Python
@@ -52,7 +53,7 @@ Action class behaviour
     class MyAction(RunAction):
 
         def __init__(self, *args, **kwargs):
-            """Initializes the class and its parrent(s) class(es).
+            """Initializes the class and its parent(s) class(es).
             """
 
             # Mandatory: The parent class must be initialized with the
@@ -76,7 +77,7 @@ Action class behaviour
         def __call__(self, args):
             """Runs the action.
 
-            :param args: Arguments map parsed by argparse
+            :param args:    Arguments map parsed by argparse
             """
             # Mandatory: call the parent(s) class(es)
             super().__call__(args)

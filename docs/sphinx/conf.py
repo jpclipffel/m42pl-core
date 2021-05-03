@@ -18,7 +18,7 @@
 # -- Project information -----------------------------------------------------
 
 project = 'M42PL'
-copyright = '2020, @jpclipffel'
+copyright = '2020 - 2021, @jpclipffel'
 author = '@jpclipffel'
 
 
