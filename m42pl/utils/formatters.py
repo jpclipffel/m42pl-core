@@ -21,6 +21,11 @@ class Formatter:
 
 class Raw(Formatter):
     """Formats event as a string.
+
+    One should probably **not** use this formatter, as it relies
+    only on Python's `str` type (and thus on `__str__` and `__repr__`).
+
+    TODO: Remove this formatter ?
     """
 
     def __init__(self, *args, **kwargs):
@@ -32,17 +37,33 @@ class Raw(Formatter):
 
 class Json(Formatter):
     """Formats event as a JSON string.
+
+    This formatter implements a simple custom JSON encoder, which
+    will handle non-json-serializable fields by returning a three
+    fields dict instead, to inform the user about the data type,
+    size (if bytes) and why its is not presented as expected.
     """
 
-    class JSONDecoder(json.JSONEncoder):
-        """JSON decoder for :class:`Event`.
+    class Encoder(json.JSONEncoder):
+        """JSON encoder for :class:`Event`.
         """
 
         def __init__(self, *args, **kwargs):
             super().__init__(*args, **kwargs)
         
         def default(self, o):
-            return repr(o)
+            if isinstance(o, (bytes)):
+                return {
+                    'type': 'bytes',
+                    'size': len(o),
+                    'info': 'Data type not suitable for Json formatter'
+                }
+            else:
+                return {
+                    'type': str(type(o)),
+                    'repr': str(repr(o)),
+                    'info': 'Data type not suitable for Json formatter'
+                }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -51,7 +72,7 @@ class Json(Formatter):
             *args, 
             **{
                 **kwargs,
-                **{'cls': self.JSONDecoder}
+                **{'cls': self.Encoder}
             }
         )
 
