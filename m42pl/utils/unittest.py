@@ -3,6 +3,7 @@ from dataclasses import dataclass, field
 import json
 
 import m42pl
+from m42pl.event import Event
 
 
 @dataclass
@@ -16,6 +17,7 @@ class TestScript:
     :param fields_in:   Filter out all fields but these ones from
                         the results
     :param fields_out:  Filter out these specific fields
+    :param first_event: Initial event payload as a dict
     """
 
     name: str
@@ -23,6 +25,7 @@ class TestScript:
     expected: list
     fields_in: list = field(default_factory=list)
     fields_out: list = field(default_factory=list)
+    first_event: Event = field(default_factory=Event)
 
 
 class Command:
@@ -60,6 +63,7 @@ class Command:
             Returns a new test case method from a :class:`TestScript`
             instance.
             """
+
             def testcase(self):
                 """Tests command execution and results.
 
@@ -86,14 +90,14 @@ class Command:
                 expected = test_script.expected
                 fields_in = test_script.fields_in
                 fields_out = test_script.fields_out
+                first_event = test_script.first_event
                 # ---
                 # Initialize M42PL
-                # context = m42pl.command('script')(source=source)()
                 kvstore = m42pl.kvstore('local')()
                 dispatcher = m42pl.dispatcher('local_test')()
                 # ---
                 # Run the the test script
-                results = dispatcher(source, kvstore)
+                results = dispatcher(source, kvstore, first_event)
                 # ---
                 # Test results length
                 self.assertEqual(len(results), len(expected))
@@ -200,7 +204,6 @@ class Command:
 class GeneratingCommand(Command):
     """Unit test case class for generating command.
     """
-    pass
 
 
 class StreamingCommand(Command):
@@ -208,10 +211,12 @@ class StreamingCommand(Command):
 
     This class injects a default M42PL code snippet to generate one
     event for the command to process.
-
-    :ivar script_begin: Default M42PL code snipped to append. This
-                        snippet generate 1 (one) empty event.
     """
     script_begin = dedent('''\
-        | make count=1 showinfo=no
+        | make count=1
     ''')
+
+
+class BufferingCommand(Command):
+    """Unit test case class for buffering command.
+    """
