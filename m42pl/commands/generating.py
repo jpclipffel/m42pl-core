@@ -1,4 +1,9 @@
-from typing import AsyncGenerator
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, AsyncGenerator
+
+if TYPE_CHECKING:
+    from m42pl.pipeline import Pipeline
 
 from m42pl.event import Event
 from m42pl.errors import CommandError
@@ -17,8 +22,8 @@ class GeneratingCommand(AsyncCommand):
     * Be `None` (then an empty event is generated and used in place)
     """
 
-    async def __call__(self, event: Event, pipeline: 'Pipeline',
-                        *args, **kwargs) -> AsyncGenerator[Event, None]:
+    async def __call__(self, event: Event, pipeline: Pipeline,
+                        *args, **kwargs) -> AsyncGenerator[Event|None, None]:
         """Runs the command.
 
         :param event:       Latest generated event or `None`
@@ -29,12 +34,12 @@ class GeneratingCommand(AsyncCommand):
                 yield _event
         except Exception as error:
             raise CommandError(command=self, message=str(error)) from error
-    
-    async def target(self, event: Event, pipeline: 'Pipeline',
-                        *args, **kwargs) -> AsyncGenerator[Event, None]:
+
+    async def target(self, event: Event, pipeline: Pipeline,
+                        *args, **kwargs) -> AsyncGenerator[Event|None, None]:
         """Generates and yields events.
 
         :param event:       Latest generated event
         :param pipeline:    Current pipeline instance
         """
-        yield
+        yield None

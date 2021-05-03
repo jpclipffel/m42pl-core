@@ -1,8 +1,13 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, AsyncGenerator
+
+if TYPE_CHECKING:
+    from m42pl.pipeline import Pipeline
+
 import asyncio
 from copy import deepcopy
 from collections import OrderedDict
-
-from typing import AsyncGenerator
 
 from m42pl.errors import CommandError
 
@@ -22,10 +27,9 @@ class BufferingCommand(AsyncCommand):
     The method :meth:`__call__` support two additional arguments
     when compared to :class:`AsyncCommand`:
 
-    * :attr:`ending`:   `True` when the pipeline is ending 
-                        (i.e. no more events are being generated), 
-                        `False` otherwise.
-    * :attr:`remain`:   The amount of remaining events in the pipeline.
+    * `ending`: `True` when the pipeline is ending (i.e. no
+      more events are being generated), `False` otherwise
+    * `remain`: The amount of remaining events in the pipeline
 
     When implementing a buffering command, one should either:
     
@@ -33,14 +37,14 @@ class BufferingCommand(AsyncCommand):
     * Define a new class with the following members:
 
       * :meth:`full`:   Returns `True` when the command's buffer is
-                        full, `False` otherwise.
+        full, `False` otherwise
       * :meth:`empty`:  Returns `True` when the command's buffer is
-                        empty, `False` otherwise.
-      * :meth:`store`:  Store an event for future processing.
-      * :meth:`clear`:  Clear the command's buffer.
-      * :meth:`target`: Process the buffered events.
+        empty, `False` otherwise
+      * :meth:`store`:  Store an event for future processing
+      * :meth:`clear`:  Clear the command's buffer
+      * :meth:`target`: Process the buffered events
 
-    :ivar queue_class:  Internal queue class.
+    :ivar queue_class:  Internal queue class
     """
 
     queue_class = asyncio.Queue
@@ -49,17 +53,23 @@ class BufferingCommand(AsyncCommand):
         super().__init__(*args, **kwargs)
         self.maxsize = 0
 
-    async def setup(self, event: Event, pipeline: 'Pipeline', maxsize: int):
+    async def setup(self, event: Event, pipeline: Pipeline, maxsize: int) -> None: # type: ignore[override]
+        """
+        :param maxsize:     Internal buffer maximum size
+        """
         if maxsize < 0:
-            raise Exception(f'invalid buffer size: maxsize="{maxsize}", reason="Size should be >= 1"')
-        self.queue = self.queue_class(maxsize=maxsize)
+            raise Exception((
+                f'invalid buffer size: maxsize="{maxsize}", '
+                f'reason="Size should be >= 1"'
+            ))
+        self.queue: asyncio.Queue = self.queue_class(maxsize=maxsize)
 
     async def remain(self) -> int:
         """Returns the amount of remaining events.
         """
         return self.queue.qsize()
 
-    async def __call__(self, event: Event, pipeline: 'Pipeline',
+    async def __call__(self, event: Event, pipeline: Pipeline,
                         ending: bool = False, remain: int = 0, 
                         *args, **kwargs) -> AsyncGenerator[Event, None]:
         """Receives, stores and process events in accordance with the
@@ -68,7 +78,7 @@ class BufferingCommand(AsyncCommand):
         :param event:       Current event
         :param pipeline:    Current pipeline instance
         :param ending:      `True` if the pipeline is ending,
-                            `False` otherwise
+            `False` otherwise
         :param remain:      Amount of remaining events
         """
         try:
@@ -97,7 +107,7 @@ class BufferingCommand(AsyncCommand):
         """
         return not (await self.full())
     
-    async def store(self, event: Event, pipeline: 'Pipeline') -> None:
+    async def store(self, event: Event, pipeline: Pipeline) -> None:
         """Stores the received `event`.
 
         The method takes care of copying the event before storing it to
@@ -116,7 +126,7 @@ class BufferingCommand(AsyncCommand):
         """
         pass
 
-    async def target(self, pipeline: 'Pipeline') -> AsyncGenerator[Event, None]:
+    async def target(self, pipeline: Pipeline) -> AsyncGenerator[Event, None]:
         """Yields the received event.
 
         :param pipeline:    Current pipeline instance

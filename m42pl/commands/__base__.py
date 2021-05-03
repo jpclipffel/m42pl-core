@@ -1,3 +1,10 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, AsyncGenerator, Tuple
+
+if TYPE_CHECKING:
+    from m42pl.pipeline import Pipeline
+
 import re
 import logging
 from collections import OrderedDict
@@ -220,7 +227,7 @@ class Command():
     _name_ = ''
 
     @classmethod
-    def from_script(cls: type, data: str) -> 'Command':
+    def from_script(cls, data: str) -> Command:
         """Returns a new :class:`Command` from a M42PL command.
 
         The new :class:`Command` instance is built by parsing the given
@@ -238,24 +245,26 @@ class Command():
             return cls()
 
     @classmethod
-    def from_dict(cls: type, data: dict) -> 'Command':
+    def from_dict(cls, data: dict) -> Command:
         """Returns a new :class:`Command` from a :class:`dict`.
         
         The source map :param:`data` must match with the following map:
+
+        .. code-block:: Python
 
             {
                 'args': [],     # Command's arguments list
                 'kwargs': {}    # Command's keyword arguments map
             }
         
-        :param data:    :class:`dict` instance.
+        :param data:    :class:`dict` instance
         """
         return object.__new__(cls).__init__(
             *data.get('args', []), 
             **data.get('kwargs', {})
         )
 
-    def __init_subclass__(cls, **kwargs) -> None:
+    def __init_subclass__(cls, **kwargs):
         """Initializes a command inheriting from this class.
         """
         super().__init_subclass__(**kwargs)
@@ -310,6 +319,8 @@ class Command():
         The returned :attr:`dict` must be understandable by 
         attr:`from_dict` and match with the following mapping:
 
+        .. code-block:: Python
+
             {
                 'alias': ''     # Command's name / alias
                 'args': [],     # Command's arguments list
@@ -323,26 +334,28 @@ class Command():
         }
 
     @property
-    def chunk(self) -> tuple[int, int]:
+    def chunk(self) -> Tuple[int, int]:
         """Returns the current chunk number and total chunks number.
         """
         return self._chunk, self._chunks
     
     @chunk.setter
-    def chunk(self, value: tuple[int, int]) -> None:
+    def chunk(self, value: Tuple[int, int]) -> None:
         """Sets the current chunk number and total chunks number.
         """
         self._chunk, self._chunks = value
 
     @property
     def first_chunk(self) -> bool:
-        """Returns `True` we are in the first chunk, `False` otherwise.
+        """Returns `True` if we are in the first chunk,
+        `False` otherwise.
         """
         return self._chunk == 0
     
     @property
     def last_chunk(self) -> bool:
-        """Returns `True` we are in the last chunk, `False` otherwise.
+        """Returns `True` if we are in the last chunk,
+        `False` otherwise.
         """
         return self._chunk == (self._chunks - 1)
     
@@ -352,16 +365,6 @@ class Command():
         `False` otherwise.
         """
         return not self.first_chunk and not self.last_chunk
-
-    # def set_chunk(self, chunk: int = 1, chunks: int = 1):
-    #     """Specialize command into a single chunk.
-
-    #     This method *should* be implemented by generating commands.
-    #     Streaming commands may use this default implementation.
-    #     """
-    #     self.logger.info(f'setting command chunk: chunk={chunk}, chunks={chunks}')
-    #     self._chunk = chunk
-    #     self._chunks = chunks
 
 
 class AsyncCommand(Command):
@@ -383,7 +386,7 @@ class AsyncCommand(Command):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-    async def remain(self):
+    async def remain(self) -> int:
         """Returns the amount of remaining events in the instance.
 
         This method should be overridden by generating commands and
@@ -391,7 +394,7 @@ class AsyncCommand(Command):
         """
         return 0
 
-    async def setup(self, event: Event, pipeline: 'Pipeline'):
+    async def setup(self, event: Event, pipeline: Pipeline, *args, **kwargs):
         """Finishes command initialization.
 
         Unlike :meth:`__init__`, :meth:`setup` is a coroutine and thus
@@ -405,18 +408,18 @@ class AsyncCommand(Command):
         A command's :meth:`setup` should call it's parent's
         :meth:`setup` after its own initialization:
 
-        ```
-        async def setup(self, event, pipeline):
-            # <your own setup goes here>
-            await super().setup(event, piepeline)
-        ```
+        .. code-block:: Python
+
+            async def setup(self, event, pipeline):
+                # <your own setup goes here>
+                await super().setup(event, piepeline)
 
         :param event:       Latest generated event (may be empty)
         :param pipeline:    Current pipeline
         """
         return
 
-    async def __aenter__(self):
+    async def __aenter__(self) -> AsyncCommand:
         """Enters the command context.
 
         Most commands may use this default implementation.
@@ -426,7 +429,7 @@ class AsyncCommand(Command):
         self.logger.info('entering command context')
         return self
     
-    async def __aexit__(self, *args, **kwargs):
+    async def __aexit__(self, *args, **kwargs) -> None:
         """Exits the command context.
 
         A command which *allocates* external resources such as sockets,

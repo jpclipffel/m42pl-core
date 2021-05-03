@@ -1,4 +1,9 @@
-from typing import AsyncGenerator
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, AsyncGenerator
+
+if TYPE_CHECKING:
+    from m42pl.pipeline import Pipeline
 
 from m42pl.errors import CommandError
 
@@ -10,11 +15,11 @@ class MetaCommand(AsyncCommand):
     """Controls the events pipeline.
     """
 
-    async def __call__(self, event: Event, pipeline: 'Pipeline',
+    async def __call__(self, event: Event, pipeline: Pipeline,
                         *args, **kwargs) -> AsyncGenerator[Event, None]:
         """Runs the command.
         
-        Always yield back the received event.
+        Always yields the received event.
         
         :param event:       Current event
         :param pipeline:    Current pipeline instance
@@ -25,8 +30,10 @@ class MetaCommand(AsyncCommand):
             raise CommandError(command=self, message=str(error)) from error
         yield event
 
-    async def target(self, event: Event, pipeline: 'Pipeline') -> None:
-        """Dummy MetaCommand target method.
+    async def target(self, event: Event, pipeline: Pipeline) -> None:
+        """MetaCommand target method.
+
+        Always yields the received event.
 
         :param event:       Current event
         :param pipeline:    Current pipeline instance

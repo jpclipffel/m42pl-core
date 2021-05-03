@@ -1,4 +1,9 @@
-from typing import AsyncGenerator
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, AsyncGenerator
+
+if TYPE_CHECKING:
+    from m42pl.pipeline import Pipeline
 
 from m42pl.errors import CommandError
 
@@ -10,7 +15,7 @@ class StreamingCommand(AsyncCommand):
     """Receives, process and yields events.
     """
 
-    async def __call__(self, event: Event, pipeline: 'Pipeline',
+    async def __call__(self, event: Event, pipeline: Pipeline,
                         *args, **kwargs) -> AsyncGenerator[Event, None]:
         """Runs the command.
         
@@ -26,7 +31,8 @@ class StreamingCommand(AsyncCommand):
         else:
             yield event
 
-    async def target(self, event: Event, pipeline: 'Pipeline') -> AsyncGenerator[Event, None]:
+    async def target(self, event: Event,
+                        pipeline: Pipeline) -> AsyncGenerator[Event, None]:
         """Process and yields events.
 
         :param event:       Current event
