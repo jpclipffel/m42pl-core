@@ -1,3 +1,7 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, List
+
 from m42pl.context import Context
 import re
 import sys
@@ -40,7 +44,7 @@ class Dispatcher:
     :ivar _aliases_:  List of dispatcher names.
     """
 
-    _aliases_ = []
+    _aliases_: List[str]  = []
 
     @staticmethod
     def flatten_commands(commands: list) -> list:
@@ -72,7 +76,7 @@ class Dispatcher:
         return _commands
 
     def __init_subclass__(cls, **kwargs) -> None:
-        super().__init_subclass__(**kwargs)
+        super().__init_subclass__(**kwargs) # type: ignore
         module = f'{cls.__module__}.{cls.__name__}'
         # Register dispatcher aliases
         for alias in cls._aliases_:
