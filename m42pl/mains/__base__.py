@@ -1,3 +1,5 @@
+import json
+
 import m42pl
 
 
@@ -30,14 +32,20 @@ class Action:
         Each command (i.e. child class of `Action`) **should** call
         their parent's :meth:`__call__`, e.g.:
 
-        ```
-        def __call__(self, args):
-            super().__call__(args)
-        ```
+        .. code-block:: Python
 
-        :param args:    Command arguments.
+            def __call__(self, args):
+                super().__call__(args)
+
+        :param args:    Command arguments
         """
+        # Load modules
         m42pl.load_modules(names=args.module)
+        # Parse initial event
+        args.event = json.loads(args.event)
+        # Parses dispatcher and kvstore kwargs
+        args.dispatcher_kwargs = json.loads(args.dispatcher_kwargs)
+        args.kvstore_kwargs = json.loads(args.kvstore_kwargs)
 
 
 class DebugAction(Action):
@@ -74,14 +82,20 @@ class RunAction(Action):
         self.parser.add_argument('-m', '--module', action='append',
             default=[], help='External module name (may be specified multiple times)')
         # Optional - Generator timeout
-        self.parser.add_argument('-t', '--timeout', type=float, default=0.0,
-            help='Pipelines timeout')
+        # self.parser.add_argument('-t', '--timeout', type=float, default=0.0,
+        #     help='Pipelines timeout')
         # Optional - Dispatcher
         self.parser.add_argument('-d', '--dispatcher', type=str,
             default=self.dispatcher_alias, help='Dispatcher name')
+        # Optional - Dispatcher kwargs
+        self.parser.add_argument('--dispatcher-kwargs', type=str,
+            default='{}', help='Dispatcher keyword arguments as JSON string')
         # Optional - KVStore
         self.parser.add_argument('-k', '--kvstore', type=str,
             default='local', help='KVStore name')
+        # Optional - KVStore kwargs
+        self.parser.add_argument('--kvstore-kwargs', type=str,
+            default='{}', help='KVStore keyword arguments as JSON string')
         # Optional - Initial event data as a JSON stirng
         self.parser.add_argument('-e', '--event', type=str,
             default='{}', help='Initial event (JSON)')
