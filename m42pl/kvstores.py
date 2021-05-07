@@ -1,7 +1,9 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Any, List
+
 import logging
 import regex
-
-from typing import Any
 
 import m42pl.commands
 
@@ -40,10 +42,10 @@ class KVStore:
     :ivar _aliases_:  List of KVStores names.
     """
 
-    _aliases_ = []
+    _aliases_: List[str] = []
 
     def __init_subclass__(cls, **kwargs) -> None:
-        super().__init_subclass__(**kwargs)
+        super().__init_subclass__(**kwargs) # type: ignore
         module = f'{cls.__module__}.{cls.__name__}'
         # Register kvstore aliases
         for alias in cls._aliases_:
