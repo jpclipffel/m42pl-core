@@ -14,7 +14,6 @@ import itertools
 import m42pl
 from m42pl import errors
 from m42pl.event import Event
-# from m42pl.context import Context
 from m42pl.commands import (
     Command,
     GeneratingCommand,
