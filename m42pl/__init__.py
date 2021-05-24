@@ -1,6 +1,7 @@
 import importlib
 import importlib.util
 import logging
+import regex
 import glob
 import sys
 import os
@@ -10,6 +11,8 @@ from typing import List, Dict, Any
 import m42pl.commands
 import m42pl.dispatchers
 import m42pl.kvstores
+import m42pl.encoders
+
 from m42pl.errors import *
 
 
@@ -21,9 +24,10 @@ modules = {} # type: Dict[str, Any]
 
 # List of modules to import by their names.
 BUILTINS_MODULES_NAMES = [
-    "m42pl_commands",
-    "m42pl_dispatchers",
-    "m42pl_kvstores"
+    'm42pl_commands',
+    'm42pl_dispatchers',
+    'm42pl_kvstores',
+    'm42pl_encoders'
 ]
 
 # List of modules imported by their names.
@@ -67,6 +71,18 @@ def kvstore(alias: str = 'local') -> Any:
         return m42pl.kvstores.ALIASES[alias]
     except KeyError:
         raise M42PLError(f'KVStore not found: name="{alias}"')
+
+
+def encoder(alias: str = 'json') -> Any:
+    """Returns the requested :class:`Encoder` class.
+
+    :param alias:   encoder alias
+    """
+    logger.info(f'requesting encoder: name="{alias}"')
+    try:
+        return m42pl.encoders.ALIASES[alias]
+    except KeyError:
+        raise M42PLError(f'Encoder not found: name="{alias}"')
 
 
 def load_module_path(namespace: str, path: str) -> None:
@@ -139,9 +155,36 @@ def load_modules(search_paths: list = [], paths: list = [],
         load_module_name(name=name)
 
 
-# def reload_modules():
-#     """Reloads previously imported modules.
+def reload_modules():
+    """Reloads previously imported modules.
 
-#     Returns the name of reloaded modules.
-#     """
-#     # Reload modules loaded by name.
+    Returns the name of reloaded modules.
+    """
+    global IMPORTED_MODULES_NAMES
+
+    # Build modules selection regex from imported modules list
+    modules_rx = regex.compile(f'({"|".join(IMPORTED_MODULES_NAMES)}).*')
+
+    # List of modules to delete
+    deletable = []
+
+    # Build list of modules to unload
+    for name, module in sys.modules.items():
+        if modules_rx.match(name):
+            deletable.append(name)
+
+    # Delete modules
+    for name in deletable:
+        # logger.warning(f'unloading module: {name}')
+        del sys.modules[name]
+    
+    # Delete remaining modules reference
+    for name in IMPORTED_MODULES_NAMES:
+        # logger.warning(f'unloading module: {name}')
+        del modules[name]
+    IMPORTED_MODULES_NAMES = []
+
+    # Reload modules
+    for name in BUILTINS_MODULES_NAMES:
+        # logger.warning(f'reloading module: {name}')
+        load_module_name(name)
