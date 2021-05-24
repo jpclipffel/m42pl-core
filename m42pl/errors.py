@@ -4,7 +4,10 @@ from inspect import cleandoc
 
 class M42PLError(Exception):
     """Base class for M42PL error.
+
+    :ivar short_desc:   Exception short description
     """
+
     short_desc = 'An error occured'
 
     def __init__(self, message: str = '', *args, **kwargs):
@@ -18,6 +21,7 @@ class ScriptError(M42PLError):
     :ivar column:   Error column number in source script
     :ivar offset:   Error offset in source script
     """
+
     short_desc = 'An error occured while parsing the source script'
 
     def __init__(self, line: int = -1, column: int = -1, offset: int = -1,
@@ -36,6 +40,7 @@ class CommandError(M42PLError):
     :ivar column:   Error column number in source script
     :ivar offset:   Error offset in source script
     """
+
     short_desc = 'An error occured during a command execution'
 
     def __init__(self, command, *args, **kwargs):
@@ -60,8 +65,45 @@ class FieldInitError(FieldError):
 class DispatcherError(M42PLError):
     """Base class for errors happening in dispatchers init or run.
     """
+
     short_desc = 'A dispatcher error occured'
 
     def __init__(self, dispatcher, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.instance = dispatcher
+
+
+class EncodingError(M42PLError):
+    short_desc = 'An encoding error occured'
+
+    def __init__(self, encoder, message, *args, **kwargs):
+        """
+        :param encoder:     Encoder instance
+        """
+        super().__init__(
+            (
+                f'''Encoder "{encoder._aliases_[0]}" failed to '''
+                f'''encode data: {message}'''
+            ),
+            *args,
+            **kwargs
+        )
+        self.encoder = encoder
+
+
+class DecodingError(M42PLError):
+    short_desc = 'An decoding error occured'
+
+    def __init__(self, encoder, message, *args, **kwargs):
+        """
+        :param encoder:     Encoder instance
+        """
+        super().__init__(
+            (
+                f'''Encoder "{encoder._aliases_[0]}" failed to '''
+                f'''decode data: {message}'''
+            ),
+            *args,
+            **kwargs
+        )
+        self.encoder = encoder
