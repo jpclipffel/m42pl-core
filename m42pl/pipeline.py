@@ -10,6 +10,7 @@ from contextlib import ExitStack, AsyncExitStack
 import asyncio
 import inspect
 import itertools
+import signal
 
 import m42pl
 from m42pl import errors
@@ -80,12 +81,10 @@ class Pipeline:
             else:
                 yield command
 
-    def __init__(self, commands: list = [], name: str = 'lambda',
-                    timeout: float = 0.0) -> None:
+    def __init__(self, commands: list = [], name: str = 'lambda') -> None:
         """
         :param commands:        Commands list
         :param name:            Pipeline name
-        :param timeout:         Generator timeout
 
         :ivar logger:           Logger instance
         :ivar chunk:            Current chunk number
@@ -96,7 +95,6 @@ class Pipeline:
         """
         self.commands = commands
         self.name = name
-        self.timeout = timeout
         self.logger = logging.getLogger(name=f'm42pl.pipeline.{name}')
         self.chunk, self.chunks = 1, 1
         # Build
@@ -122,14 +120,13 @@ class Pipeline:
         :meth:`from_dict`.
         """
         return {
+            'name': self.name,
             'commands': [
                 command.to_dict()
                 for command
                 in self.commands
                 if command is not None
-            ],
-            'name': self.name,
-            'timeout': self.timeout
+            ]
         }
 
     def build(self):
@@ -235,13 +232,14 @@ class Pipeline:
                     elif event:
                         yield event
 
-    def stop(self):
+    def stop(self, *args, **kwargs):
         """Stops the pipeline.
         """
         self._ready = False
+        raise StopAsyncIteration('SINGINT')
 
     async def __call__(self, context: Context = None, event: Event = None,
-                        infinite: bool = False):
+                        infinite: bool = False, timeout: float = 0.0):
         """Runs the pipeline.
 
         The pipeline is ran in two or more iterations:
@@ -255,12 +253,16 @@ class Pipeline:
         :param event:       Initial event
         :param infinite:    Run in infinite mode (continuously receives
                             next event from calling function)
+        :param timeout:     Timeout; Defaults to 0
         
         :ivar metas:        Meta commands
         :ivar generator:    Generator command
         :ivar processors:   Processing commands
         :ivar iterator:     Generator's iterator
         """
+        # Setup signal handler
+        signal.signal(signal.SIGINT, self.stop)
+
         # Setup context
         self.context = context
         # ---
@@ -284,16 +286,16 @@ class Pipeline:
             # If the pipeline run in infinite mode, the initial event will
             # be received later, and the iterator will be set at the same time.
             if infinite:
-                # self.trace(1, 'inifite mode: set iterator to None')
+                # self.trace(1, 'infinite mode: set iterator to None')
                 iterator = None
             # Otherwise, set the iterator immediately.
             else:
-                # self.trace(1, 'standard more: set iterator from generator')
+                # self.trace(1, 'standard mode: set iterator from generator')
                 iterator = generator and generator(event=event, pipeline=self).__aiter__() or None
             # ---
             # Start pipeline loop
             next_event = event
-            while True:
+            while self._ready:
                 # self.trace(2, 'looping')
                 try:
                     # ---
@@ -314,9 +316,10 @@ class Pipeline:
                     # iterator, it retrieves its next event from this iterator.
                     if iterator:
                         # self.trace(3, f'iterator is set, await next event')
-                        if self.timeout > 0.0:
+                        if timeout > 0.0:
                             task = asyncio.create_task(iterator.__anext__())
-                            next_event = await asyncio.wait_for(asyncio.shield(task), self.timeout)
+                            # self.trace(4, f'task shiedled: {task}')
+                            next_event = await asyncio.wait_for(asyncio.shield(task), timeout)
                         else:
                             next_event = await iterator.__anext__()
                     # ---
@@ -332,9 +335,10 @@ class Pipeline:
                 # buffering commands and process the buffered events.
                 except asyncio.TimeoutError:
                     self.logger.debug(f'generator timeout, forcing pipeline wakeup: pipeline="{self.name}"')
+                    # self.trace(4, f'shielded task {task} -> wake up !')
                     async for e in self._run_commands(commands=processors, event=None, ending=False, remain=0):
                         yield e
-                    next_event = await next_event() # type: ignore
+                    next_event = await task # type: ignore
                 # ---
                 # StopAsyncIteration occurs when either the iterator or the
                 # calling function have finished to produce events.
@@ -364,7 +368,8 @@ class Pipeline:
                 # ---
                 # Process the received event.
                 if len(processors):
-                    # self.trace(3, f'running processor on event {next_event and next_event.signature or None}')
+                    # self.trace(3, f'running processors on event {next_event and next_event.signature or None}')
+                    # self.trace(3, f'processors: {processors}')
                     async for _event in self._run_commands(commands=processors, event=next_event, ending=False, remain=0):
                         # self.trace(4, f'yield event from processors: {_event.signature}')
                         yield _event
