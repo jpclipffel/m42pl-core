@@ -1,6 +1,7 @@
+from typing import List
+
 from textwrap import dedent
 from dataclasses import dataclass, field
-import json
 
 import m42pl
 from m42pl.event import Event
@@ -17,7 +18,7 @@ class TestScript:
     :param fields_in:   Filter out all fields but these ones from
                         the results
     :param fields_out:  Filter out these specific fields
-    :param first_event: Initial event payload as a dict
+    :param first_event: Initial event; Defaults to an empty event
     """
 
     name: str
@@ -52,8 +53,8 @@ class Command:
     command_alias = ''
     script_begin = ''
     script_end = ''
-    expected_success = []
-    expected_failure = []
+    expected_success: List[Event] = []
+    expected_failure: List[Event] = []
 
     def __init_subclass__(cls):
 
@@ -116,11 +117,8 @@ class Command:
                         if len(fields_out):
                             for field in fields_out:
                                 dataset.data.pop(field)
-                    # Assert JSON dumps of result and expected match
-                    self.assertEqual(
-                        json.dumps(res.data, sort_keys=True), 
-                        json.dumps(exp.data, sort_keys=True)
-                    )
+                    # Assert equality between result and expected
+                    self.assertDictEqual(res.data, exp.data)
             # ---
             # Return the generated test case function `testcase`
             return testcase
