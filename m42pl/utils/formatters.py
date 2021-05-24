@@ -41,12 +41,43 @@ class Json(Formatter):
     This formatter implements a simple custom JSON encoder, which
     will handle non-json-serializable fields by returning a three
     fields dict instead, to inform the user about the data type,
-    size (if bytes) and why its is not presented as expected.
+    textual representation and why its is not shown as expected.
     """
 
     class Encoder(json.JSONEncoder):
         """JSON encoder for :class:`Event`.
         """
+
+        def __init__(self, *args, **kwargs):
+            super().__init__(*args, **kwargs)
+        
+        def default(self, o):
+            return {
+                'type': str(type(o)),
+                'repr': str(repr(o)),
+                'info': 'Data type not suitable for Json formatter'
+            }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.dumper = partial(
+            json.dumps,
+            *args, 
+            **{
+                **kwargs,
+                **{'cls': self.Encoder}
+            }
+        )
+
+    def __call__(self, event: Event):
+        return self.dumper(event.data) # pylint: disable=too-many-function-args
+
+
+class JsonText(Json):
+    """Formats event as a JSON string with binary fields replaced.
+    """
+
+    class Encoder(json.JSONEncoder):
 
         def __init__(self, *args, **kwargs):
             super().__init__(*args, **kwargs)
@@ -65,22 +96,8 @@ class Json(Formatter):
                     'info': 'Data type not suitable for Json formatter'
                 }
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.dumper = partial(
-            json.dumps,
-            *args, 
-            **{
-                **kwargs,
-                **{'cls': self.Encoder}
-            }
-        )
 
-    def __call__(self, event: Event):
-        return self.dumper(event.data) # pylint: disable=too-many-function-args
-
-
-class HJson(Json):
+class JsonTextColor(JsonText):
     """Format event as a highlighted JSON string.
     """
     
