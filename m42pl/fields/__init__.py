@@ -22,7 +22,7 @@ def Field(name, *args, **kwargs):
     try:
         # List or tuple
         if isinstance(name, (list, tuple)):
-            return SeqnField([Field(f) for f in name])
+            return SeqnField([Field(f) for f in name], *args, **kwargs)
         # Number
         elif isinstance(name, (bool, int, float)):
             return LiteralField(name, *args, **kwargs)
@@ -66,14 +66,22 @@ class FieldsMap:
     def __init__(self, **fields):
         self.fields = OrderedDict(fields)
 
+    def update(self, **fields):
+        self.fields.update(fields)
+
     async def read(self, event, pipeline) -> SimpleNamespace:
-        return SimpleNamespace(**type({})([
+        # Using `type({})` (resolve to `dict`) instead of `dict`
+        # because `dict` is overloaded bu the `dict.py` module.
+        # No comment; TODO: Make this cleaner.
+        return SimpleNamespace(**type({})([ #type: ignore
             (name, field)
             for name, field
             in zip(
                 self.fields.keys(),
                 await asyncio.gather(*[
-                    field.read(event, pipeline) for _, field in self.fields.items()
+                    field.read(event, pipeline)
+                    for _, field
+                    in self.fields.items()
                 ])
             )
         ]))

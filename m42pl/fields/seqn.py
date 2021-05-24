@@ -10,8 +10,11 @@ class SeqnField(BaseField):
         super().__init__(*args, **kwargs)
 
     async def _read(self, *args, **kwargs):
-        return [
+        values = [
             (await field.read(*args, **kwargs))
             for field
             in self.name
         ]
+        if len(values):
+            return values
+        return self.default

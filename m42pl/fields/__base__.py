@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing import Union, Collection
 
 from m42pl.event import Event
@@ -74,7 +76,7 @@ class BaseField:
         self.seqn = seqn
         self.literal = True
 
-    async def _read(self, event: Event, pipeline: Pipeline):
+    async def _read(self, event: Event, pipeline: Pipeline|None):
         """Gets the configured field.
 
         This method should be implemented by a child class.
@@ -85,7 +87,7 @@ class BaseField:
         """
         raise NotImplementedError()
 
-    async def read(self, event: Event, pipeline: Pipeline = None):
+    async def read(self, event: Event, pipeline: Pipeline|None = None):
         """Normalizes and returns the configured field's value.
 
         :param event:       Event from which the field must be read
