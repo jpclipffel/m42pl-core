@@ -110,7 +110,11 @@ class BaseField:
                     raise Exception(f'Invalid type for field {self.name}')
             return items
 
-        return enlist(check(await self._read(event, pipeline)))
+        if self.name is not None:
+            return enlist(check(await self._read(event, pipeline)))
+        elif self.seqn:
+            return []
+        return None
 
     async def _write(self, event: Event, value: FieldValue) -> Event:
         """Sets the configured field.
