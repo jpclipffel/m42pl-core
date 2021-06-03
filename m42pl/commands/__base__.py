@@ -84,7 +84,8 @@ class Command():
             NAME        : /[a-zA-Z_]+[a-zA-Z0-9_-]*/
             STRING      : /"(?:[^"\\\\]|\\\\.|\n)*"/xs | /'(?:[^'\\\\]|\\\\.|\n)*'/xs
             EVAL        : /`(?:[^`\\\\]|\\\\.)*`/
-            JSPATH      : /\{.*\}/
+            //JSPATH      : /\{.*\}/
+            JSPATH      : /\{(?:[^\{\\\\]|\\\\.)*\}/
             DOTPATH     : NAME ( "." NAME )+
             PIPEREF     : /@[a-zA-Z0-9_-]+/
         '''),
