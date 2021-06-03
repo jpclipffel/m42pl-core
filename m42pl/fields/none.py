@@ -5,6 +5,9 @@ class NoneField(BaseField):
     """Dummy field solver class.
     """
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
     async def _read(self, *args, **kwargs):
         return None
 
