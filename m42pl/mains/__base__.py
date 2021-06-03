@@ -19,12 +19,13 @@ class Action:
     def __init__(self, name: str, subparser):
         self.parser = subparser.add_parser(name)
         self.parser.set_defaults(func=self)
-        # # Log level
-        # self.parser.add_argument('-l', '--log-level', type=str.lower,
-        #     default='warning', choices=self.log_levels, help='Log level')
-        # # Extra modules
-        # self.parser.add_argument('-m', '--module', action='append',
-        #     default=[], help='External module name (may be specified multiple times)')
+        # Log level
+        self.parser.add_argument('-l', '--log-level', type=str.lower,
+            default='warning', choices=self.log_levels, help='Log level')
+        # Extra modules
+        self.parser.add_argument('-m', '--module', action='append',
+            default=[], help='External module name (may be specified multiple times)')
+
 
     def __call__(self, args):
         """Runs the command line action.
@@ -42,10 +43,10 @@ class Action:
         # Load modules
         m42pl.load_modules(names=args.module)
         # Parse initial event
-        args.event = json.loads(args.event)
-        # Parses dispatcher and kvstore kwargs
-        args.dispatcher_kwargs = json.loads(args.dispatcher_kwargs)
-        args.kvstore_kwargs = json.loads(args.kvstore_kwargs)
+        # args.event = json.loads(args.event)
+        # # Parses dispatcher and kvstore kwargs
+        # args.dispatcher_kwargs = json.loads(args.dispatcher_kwargs)
+        # args.kvstore_kwargs = json.loads(args.kvstore_kwargs)
 
 
 class DebugAction(Action):
@@ -54,12 +55,12 @@ class DebugAction(Action):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # Log level
-        self.parser.add_argument('-l', '--log-level', type=str.lower,
-            default='warning', choices=self.log_levels, help='Log level')
-        # Extra modules
-        self.parser.add_argument('-m', '--module', action='append',
-            default=[], help='External module name (may be specified multiple times)')
+        # # Log level
+        # self.parser.add_argument('-l', '--log-level', type=str.lower,
+        #     default='warning', choices=self.log_levels, help='Log level')
+        # # Extra modules
+        # self.parser.add_argument('-m', '--module', action='append',
+        #     default=[], help='External module name (may be specified multiple times)')
     
     def __call__(self, args):
         super().__call__(args)
@@ -75,12 +76,12 @@ class RunAction(Action):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # Log level
-        self.parser.add_argument('-l', '--log-level', type=str.lower,
-            default='warning', choices=self.log_levels, help='Log level')
-        # Extra modules
-        self.parser.add_argument('-m', '--module', action='append',
-            default=[], help='External module name (may be specified multiple times)')
+        # # Log level
+        # self.parser.add_argument('-l', '--log-level', type=str.lower,
+        #     default='warning', choices=self.log_levels, help='Log level')
+        # # Extra modules
+        # self.parser.add_argument('-m', '--module', action='append',
+        #     default=[], help='External module name (may be specified multiple times)')
         # Optional - Generator timeout
         # self.parser.add_argument('-t', '--timeout', type=float, default=0.0,
         #     help='Pipelines timeout')
@@ -105,3 +106,8 @@ class RunAction(Action):
     
     def __call__(self, args):
         super().__call__(args)
+        # Parse initial event
+        args.event = json.loads(args.event)
+        # Parses dispatcher and kvstore kwargs
+        args.dispatcher_kwargs = json.loads(args.dispatcher_kwargs)
+        args.kvstore_kwargs = json.loads(args.kvstore_kwargs)
