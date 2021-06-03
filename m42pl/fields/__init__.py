@@ -38,10 +38,10 @@ def Field(name, *args, **kwargs):
                 return LiteralField(name[1:-1], *args, **kwargs)
             # Json path
             elif name[0] == '{' and name[-1] == '}':
-                return JsonField(name[1:-1])
+                return JsonField(name[1:-1], *args, **kwargs)
             # Eval field
             elif name[0] == '`' and name[-1] == '`':
-                return EvalField(name[1:-1])
+                return EvalField(name[1:-1], *args, **kwargs)
             # Pipeline reference
             elif name[0] == '@':
                 return PipeField(name[1:], *args, **kwargs)
@@ -53,7 +53,7 @@ def Field(name, *args, **kwargs):
                 return DictField(name, *args, **kwargs) # type: ignore
         # Invalid or empty field
         else:
-            return NoneField(name) # type: ignore
+            return NoneField(name, *args, **kwargs) # type: ignore
     # Field creation error
     except Exception as error:
         raise FieldInitError(name, str(error))
