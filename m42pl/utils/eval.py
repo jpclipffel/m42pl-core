@@ -187,8 +187,8 @@ class Evaluator:
         'coalesce':     lambda *fields: next(filter(None, [solve(field) for field in fields]), None),
         # Time
         'now':          lambda: now().timestamp(),
-        'reltime':      lambda expression: reltime(expression).timestamp(),
-        'strftime':     lambda expression, format = '%c': strftime(expression, format),
+        'reltime':      lambda field: reltime(solve(field)).timestamp(),
+        'strftime':     lambda field, format = '%c': strftime(solve(field), format),
         # Cast
         'tostring':     lambda field: str(solve(field)),
         'toint':        lambda field: int(solve(field)),
@@ -201,6 +201,8 @@ class Evaluator:
         'slice':        lambda field, start, *end: len(end) and solve(field, (str, list, tuple), None)[start:end[0]] or solve(field, (str, list, tuple), None)[start:],
         'index':        lambda field, position: solve(field, (str, list, tuple), None)[position],
         'length':       lambda field: len(solve(field, (str, list, tuple), '')),
+        # Map
+        'keys':         lambda field: list(solve(field, (dict,), {}).keys()),
         # Math
         'round':        lambda field, x: round(solve(field, (float, int), 0), x),
         'even':         lambda field: solve(field, (int, float), 0) % 2 == 0,
