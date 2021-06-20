@@ -5,8 +5,6 @@ from pygments import highlight
 from pygments.lexers import JsonLexer
 from pygments.formatters import TerminalFormatter
 
-from m42pl.event import Event
-
 
 class Formatter:
     """Base event formatter.
@@ -15,7 +13,7 @@ class Formatter:
     def __init__(self, *args, **kwargs):
         pass
 
-    def __call__(self, event: Event):
+    def __call__(self, event: dict):
         return None
 
 
@@ -31,8 +29,8 @@ class Raw(Formatter):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-    def __call__(self, event: Event):
-        return str(event.data)
+    def __call__(self, event: dict):
+        return str(event['data'])
 
 
 class Json(Formatter):
@@ -69,8 +67,8 @@ class Json(Formatter):
             }
         )
 
-    def __call__(self, event: Event):
-        return self.dumper(event.data) # pylint: disable=too-many-function-args
+    def __call__(self, event: dict):
+        return self.dumper(event['data']) # pylint: disable=too-many-function-args
 
 
 class JsonText(Json):
@@ -106,7 +104,7 @@ class JsonTextColor(JsonText):
         self.lexer = JsonLexer()
         self.formatter = TerminalFormatter()
 
-    def __call__(self, event: Event):
+    def __call__(self, event: dict):
         return highlight(
             super().__call__(event),
             self.lexer,

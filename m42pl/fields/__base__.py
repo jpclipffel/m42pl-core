@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from typing import Union, Collection
 
-from m42pl.event import Event
 from m42pl.pipeline import Pipeline
 
 
@@ -76,21 +75,21 @@ class BaseField:
         self.seqn = seqn
         self.literal = True
 
-    async def _read(self, event: Event, pipeline: Pipeline|None):
+    async def _read(self, event: dict, pipeline: Pipeline|None = None):
         """Gets the configured field.
 
         This method should be implemented by a child class.
 
-        :param event:       Event from which the field must be read
+        :param event:       dict from which the field must be read
         :param pipeline:    Current pipeline
         :return:            Read field value
         """
         raise NotImplementedError()
 
-    async def read(self, event: Event, pipeline: Pipeline|None = None):
+    async def read(self, event: dict, pipeline: Pipeline|None = None):
         """Normalizes and returns the configured field's value.
 
-        :param event:       Event from which the field must be read
+        :param event:       dict from which the field must be read
         :param pipeline:    Current pipeline
         :return:            Read field value
         """
@@ -116,40 +115,40 @@ class BaseField:
             return []
         return None
 
-    async def _write(self, event: Event, value: FieldValue) -> Event:
+    async def _write(self, event: dict, value: FieldValue) -> dict:
         """Sets the configured field.
 
         This method should be implemented by a child class.
 
-        :param event:   Event to which the file must be write
+        :param event:   dict to which the file must be write
         :param value:   Field value
         :return:        Updated event
         """
         raise NotImplementedError()
 
-    async def write(self, event: Event, value: FieldValue) -> Event:
+    async def write(self, event: dict, value: FieldValue) -> dict:
         """Sets the configured field.
 
-        :param event:   Event to which the file must be write
+        :param event:   dict to which the file must be write
         :param value:   Field value
         :return:        Updated event
         """
         return await self._write(event, value)
     
-    async def _delete(self, event: Event) -> Event:
+    async def _delete(self, event: dict) -> dict:
         """Removes the configured field.
 
         This method should be implemented by a child class.
 
-        :param event:   Event from which the field must be removed
+        :param event:   dict from which the field must be removed
         :return:        Updated event
         """
         raise NotImplementedError()
 
-    async def delete(self, event: Event) -> Event:
+    async def delete(self, event: dict) -> dict:
         """Removes the configured field.
 
-        :param event:   Event from which the field must be removed
+        :param event:   dict from which the field must be removed
         :return:        Updated event
         """
         return await self._delete(event)

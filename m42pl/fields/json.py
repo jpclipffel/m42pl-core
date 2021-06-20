@@ -1,6 +1,7 @@
+from __future__ import annotations
+
 import jsonpath_ng
 
-from m42pl.event import Event
 from m42pl.pipeline import Pipeline
 
 from .__base__ import BaseField, FieldValue
@@ -29,12 +30,12 @@ class JsonField(BaseField):
         self.literal = False
         self.matcher = jsonpath_ng.parse(self.name)
     
-    async def _read(self, event: Event, pipeline: Pipeline = None):
+    async def _read(self, event: dict, pipeline: Pipeline|None = None):
         if event:
             matched =  [
                 match.value
                 for match
-                in self.matcher.find(event.data)
+                in self.matcher.find(event['data'])
             ]
             if len(matched):
                 if len(matched) > 1:
@@ -43,12 +44,12 @@ class JsonField(BaseField):
                     return matched[0]
         return self.default
     
-    async def _write(self, event: Event, value: FieldValue):
+    async def _write(self, event: dict, value: FieldValue):
         # First, attempt to match then update field.
-        matched = self.matcher.find(event.data)
+        matched = self.matcher.find(event['data'])
         if len(matched):
             for match in matched:
-                match.full_path.update(event.data, value)
+                match.full_path.update(event['data'], value)
         # If no field is matched, create a new one using a `DictField`.
         # This solution does not handle complex structure such as
         # arrays.
@@ -58,6 +59,6 @@ class JsonField(BaseField):
         # Done, return event.
         return event
     
-    async def _delete(self, event: Event):
-        self.matcher.filter(lambda _: True, event.data)
+    async def _delete(self, event: dict):
+        self.matcher.filter(lambda _: True, event['data'])
         return event

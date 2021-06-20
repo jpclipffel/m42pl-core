@@ -55,8 +55,8 @@ def round(dt, unit: str) -> datetime.datetime:
     return dt.replace(**ROUND_VALUES.get(unit, {}))
 
 
-def reltime(expression: str) -> datetime.datetime:
-    """Evaluates a relative time expression adn returns its time.
+def reltime(expression: str, dt = None) -> datetime.datetime:
+    """Evaluates a relative time expression and returns its time.
 
     :param expression:  Relative time expression
                         Format is "(+|-)<value><unit>@<precision>"
@@ -64,7 +64,7 @@ def reltime(expression: str) -> datetime.datetime:
     # Parse relative time expression
     rx = RELTIME_REGEX.match(expression)
     # Round reference time (== current time) to reference unit
-    ref_time = round(datetime.datetime.now(), rx.group("ref_unit"))
+    ref_time = round(dt or datetime.datetime.now(), rx.group("ref_unit"))
     # Extract relative time value and unit
     req_value, req_unit = float(rx.group("req_value")), rx.group("req_unit")
     # Return reference time - relative time
@@ -86,3 +86,10 @@ def strftime(expression: Union[float, str], format: str) -> str:
         if expression.lower() == 'now':
             return datetime.datetime.now().strftime(format)
         return reltime(expression).strftime(format)
+
+
+def strptime(expression, format: str):
+    """
+    """
+    print(f'strptime --> {expression}, {format}')
+    return datetime.datetime.strptime(expression, format)

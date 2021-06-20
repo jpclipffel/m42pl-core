@@ -14,7 +14,6 @@ import signal
 
 import m42pl
 from m42pl import errors
-from m42pl.event import Event
 from m42pl.commands import (
     Command,
     GeneratingCommand,
@@ -193,7 +192,7 @@ class Pipeline:
                 )
                 # Setup command
                 try:
-                    await command.setup(event=Event(), pipeline=self)
+                    await command.setup(event=dict(), pipeline=self)
                 except Exception as error:
                     if not isinstance(error, errors.M42PLError):
                         raise errors.CommandError(command, message=str(error))
@@ -238,7 +237,7 @@ class Pipeline:
         self._ready = False
         raise StopAsyncIteration('SINGINT')
 
-    async def __call__(self, context: Context = None, event: Event = None,
+    async def __call__(self, context: Context = None, event: dict|None = None,
                         infinite: bool = False, timeout: float = 0.0):
         """Runs the pipeline.
 

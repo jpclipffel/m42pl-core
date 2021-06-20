@@ -120,7 +120,7 @@ class REPL(RunAction):
                         if not self.dispatcher:
                             self.dispatcher = m42pl.dispatcher(args.dispatcher)(**args.dispatcher_kwargs)
                         readline.write_history_file(self.history_file)
-                        self.dispatcher(source, kvstore, Event(args.event))
+                        self.dispatcher(source, kvstore, Event(data=args.event))
             except Exception as error:
                 print(CLIErrorRender(error, source).render())
                 if args.raise_errors:

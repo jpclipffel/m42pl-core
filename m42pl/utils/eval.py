@@ -4,7 +4,7 @@ import os
 
 from typing import Any
 
-from .time import now, reltime, strftime
+from .time import now, reltime, strftime, strptime
 
 
 class Undefined:
@@ -188,13 +188,15 @@ class Evaluator:
         # Time
         'now':          lambda: now().timestamp(),
         'reltime':      lambda field: reltime(solve(field)).timestamp(),
-        'strftime':     lambda field, format = '%c': strftime(solve(field), format),
+        'strftime':     lambda field, format = '%c': strftime(solve(field), solve(format)),
+        'strptime':     lambda field, format: strptime(solve(field), solve(format)),
         # Cast
         'tostring':     lambda field: str(solve(field)),
         'toint':        lambda field: int(solve(field)),
         'tofloat':      lambda field: float(solve(field)),
         # String
         'clean':        lambda field: ''.join(solve(field, (str,), '').split()),
+        'split':        lambda field, needle: solve(field, (str,), '').split(solve(needle, (str,), '')),
         # List
         'list':         lambda *args: [solve(i) for i in args],
         'join':         lambda field, delimiter='': delimiter.join(solve(field, (list, tuple, str))),
@@ -249,8 +251,7 @@ class Evaluator:
     def __call__(self, data: dict = {}) -> Any:
         """Runs evaluation and returns its result.
 
-        :param data:    Events fields (`event.data`).
-                        Will be used as eval's `global`.
+        :param data:    Event's data used as eval's globals
         """
         # Build environement (functions map and globals)
         env = EvalNS(name='', functions=self.functions, fields=data)

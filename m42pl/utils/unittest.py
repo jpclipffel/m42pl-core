@@ -26,7 +26,7 @@ class TestScript:
     expected: list
     fields_in: list = field(default_factory=list)
     fields_out: list = field(default_factory=list)
-    first_event: Event = field(default_factory=Event)
+    first_event: dict = field(default_factory=dict)
 
 
 class Command:
@@ -53,8 +53,8 @@ class Command:
     command_alias = ''
     script_begin = ''
     script_end = ''
-    expected_success: List[Event] = []
-    expected_failure: List[Event] = []
+    expected_success: List[dict] = []
+    expected_failure: List[dict] = []
 
     def __init_subclass__(cls):
 
@@ -111,14 +111,14 @@ class Command:
                     for dataset in (res, exp):
                         # Keep only fields named in fields_in
                         if len(fields_in):
-                            for field in [k for k, v in dataset.data.items() if k not in fields_in]:
-                                dataset.data.pop(field)
+                            for field in [k for k, v in dataset['data'].items() if k not in fields_in]:
+                                dataset['data'].pop(field)
                         # Remove fields named in fields_out
                         if len(fields_out):
                             for field in fields_out:
-                                dataset.data.pop(field)
+                                dataset['data'].pop(field)
                     # Assert equality between result and expected
-                    self.assertDictEqual(res.data, exp.data)
+                    self.assertDictEqual(res['data'], exp['data'])
             # ---
             # Return the generated test case function `testcase`
             return testcase

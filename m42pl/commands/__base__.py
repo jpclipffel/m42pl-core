@@ -11,8 +11,6 @@ from collections import OrderedDict
 from textwrap import dedent
 from lark import Lark, Transformer as _Transformer, Discard
 
-from m42pl.event import Event
-
 from . import ALIASES
 
 
@@ -395,7 +393,7 @@ class AsyncCommand(Command):
         """
         return 0
 
-    async def setup(self, event: Event, pipeline: Pipeline, *args, **kwargs):
+    async def setup(self, event: dict, pipeline: Pipeline, *args, **kwargs):
         """Finishes command initialization.
 
         Unlike :meth:`__init__`, :meth:`setup` is a coroutine and thus

@@ -9,9 +9,9 @@ import asyncio
 from copy import deepcopy
 from collections import OrderedDict
 
+from m42pl.event import signature
 from m42pl.errors import CommandError
 
-from ..event import Event
 from .__base__ import AsyncCommand
 
 
@@ -53,7 +53,7 @@ class BufferingCommand(AsyncCommand):
         super().__init__(*args, **kwargs)
         self.maxsize = 0
 
-    async def setup(self, event: Event, pipeline: Pipeline, maxsize: int) -> None: # type: ignore[override]
+    async def setup(self, event: dict, pipeline: Pipeline, maxsize: int) -> None: # type: ignore[override]
         """
         :param maxsize:     Internal buffer maximum size
         """
@@ -69,9 +69,9 @@ class BufferingCommand(AsyncCommand):
         """
         return self.queue.qsize()
 
-    async def __call__(self, event: Event, pipeline: Pipeline,
+    async def __call__(self, event: dict, pipeline: Pipeline,
                         ending: bool = False, remain: int = 0, 
-                        *args, **kwargs) -> AsyncGenerator[Event, None]:
+                        *args, **kwargs) -> AsyncGenerator[dict, None]:
         """Receives, stores and process events in accordance with the
         pipeline state and buffer limits.
 
@@ -107,7 +107,7 @@ class BufferingCommand(AsyncCommand):
         """
         return not (await self.full())
     
-    async def store(self, event: Event, pipeline: Pipeline) -> None:
+    async def store(self, event: dict, pipeline: Pipeline) -> None:
         """Stores the received `event`.
 
         The method takes care of copying the event before storing it to
@@ -126,7 +126,7 @@ class BufferingCommand(AsyncCommand):
         """
         pass
 
-    async def target(self, pipeline: Pipeline) -> AsyncGenerator[Event, None]:
+    async def target(self, pipeline: Pipeline) -> AsyncGenerator[dict, None]:
         """Yields the received event.
 
         :param pipeline:    Current pipeline instance
@@ -155,8 +155,8 @@ class DequeBufferingCommand(BufferingCommand):
             self._queue = OrderedDict()
             self._maxsize = maxsize
         
-        def _put(self, item):
-            self._queue[item.signature] = item
+        def _put(self, event):
+            self._queue[signature(event)] = event
 
         def _get(self):
             return self._queue.popitem(last=False)[1]

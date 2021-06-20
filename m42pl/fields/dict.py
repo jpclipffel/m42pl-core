@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 from typing import Any
-from m42pl.event import Event
+
 from m42pl.pipeline import Pipeline
 
 from .__base__ import BaseField, FieldValue
@@ -26,12 +28,12 @@ class DictField(BaseField):
             in filter(None, self.name.split('.'))
         ]
     
-    async def _read(self, event: Event, pipeline: Pipeline = None):
+    async def _read(self, event: dict, pipeline: Pipeline|None = None):
         if event:
             if len(self.path) == 1:
-                return event.data.get(self.path[0], self.default)
+                return event.get('data', {}).get(self.path[0], self.default)
             elif len(self.path) > 1:
-                _dc = event.data
+                _dc = event.get('data', {})
                 try:
                     for _name in self.path[0:-1]:
                         _dc = _dc[_name]
@@ -43,11 +45,11 @@ class DictField(BaseField):
         else:
             return self.default
 
-    async def _write(self, event: Event, value: FieldValue) -> Any:
+    async def _write(self, event: dict, value: FieldValue) -> Any:
         if len(self.path) == 1:
-            event.data[self.path[0]] = value
+            event.get('data', {})[self.path[0]] = value
         else:
-            _dc = event.data
+            _dc = event.get('data', {})
             for _name in self.path[0:-1]:
                 if _name not in _dc or not isinstance(_dc[_name], dict):
                     _dc[_name] = {}
@@ -55,11 +57,11 @@ class DictField(BaseField):
             _dc[self.path[-1]] = value
         return event
 
-    async def _delete(self, event: Event) -> Event:
+    async def _delete(self, event: dict) -> dict:
         if len(self.path) == 1:
-            event.data.pop(self.path[0], None)
+            event.get('data', {}).pop(self.path[0], None)
         else:
-            _dc = event.data
+            _dc = event.get('data', {})
             for _name in self.path[0:-1]:
                 if _name in _dc:
                     _dc = _dc[_name]

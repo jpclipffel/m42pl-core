@@ -1,4 +1,5 @@
-from m42pl.event import Event
+from __future__ import annotations
+
 from m42pl.pipeline import Pipeline
 
 from .__base__ import BaseField, FieldValue
@@ -27,13 +28,13 @@ class PipeField(BaseField):
         self.literal = False
         self.results = []
 
-    async def _read(self, event: Event, pipeline: Pipeline):
+    async def _read(self, event: dict, pipeline: Pipeline|None = None):
         if not pipeline:
             return self.default
         # ---
         # Select and run the sub pipeline.
         results = []
-        _pipeline = pipeline.context.pipelines.get(self.name, None)
+        _pipeline = pipeline and pipeline.context.pipelines.get(self.name, None) or None
         if _pipeline:
             async for _event in _pipeline(pipeline.context, event):
                 results.append(_event)

@@ -9,7 +9,6 @@ import logging
 
 import m42pl
 import m42pl.commands
-from m42pl.event import Event
 from m42pl.kvstores import KVStore
 
 
@@ -91,7 +90,7 @@ class Dispatcher:
         self.script = m42pl.command('script')
         self.logger = logger.getChild(self.__class__.__name__)
 
-    def target(self, context: Context, event: Event):
+    def target(self, context: Context, event: dict):
         """Runs the dispatcher.
 
         This method must be implemented by the actual dispatcher class,
@@ -105,7 +104,7 @@ class Dispatcher:
         """
         pass
 
-    def __call__(self, source: str, kvstore: KVStore, event: Event = None):
+    def __call__(self, source: str, kvstore: KVStore, event: dict|None = None):
         """Prepares to runs the dispatcher.
 
         :param source:  Script source
@@ -117,5 +116,5 @@ class Dispatcher:
                 pipelines=self.script(source)(),
                 kvstore=kvstore
             ),
-            event=event or Event()
+            event=event or dict()
         )

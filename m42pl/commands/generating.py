@@ -14,16 +14,16 @@ from .__base__ import AsyncCommand
 class GeneratingCommand(AsyncCommand):
     """Generates events.
 
-    A generating command also receives an :class:`Event` instance when
+    A generating command also receives an :class:`dict` instance when
     started. This event may:
     
     * Contains the latest event generated in the parent pipeline
-    * Be empty (i.e. with no data fields, e.g. `Event(data={})`)
+    * Be empty (i.e. with no data fields, e.g. `dict(data={})`)
     * Be `None` (then an empty event is generated and used in place)
     """
 
-    async def __call__(self, event: Event, pipeline: Pipeline,
-                        *args, **kwargs) -> AsyncGenerator[Event|None, None]:
+    async def __call__(self, event: dict, pipeline: Pipeline,
+                        *args, **kwargs) -> AsyncGenerator[dict|None, None]:
         """Runs the command.
 
         :param event:       Latest generated event or `None`
@@ -35,8 +35,8 @@ class GeneratingCommand(AsyncCommand):
         except Exception as error:
             raise CommandError(command=self, message=str(error)) from error
 
-    async def target(self, event: Event, pipeline: Pipeline,
-                        *args, **kwargs) -> AsyncGenerator[Event|None, None]:
+    async def target(self, event: dict, pipeline: Pipeline,
+                        *args, **kwargs) -> AsyncGenerator[dict|None, None]:
         """Generates and yields events.
 
         :param event:       Latest generated event

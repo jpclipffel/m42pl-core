@@ -5,7 +5,6 @@ from typing import TYPE_CHECKING, Any, Union
 import logging
 import regex
 
-from m42pl.event import Event
 from m42pl.errors import EncodingError, DecodingError
 
 

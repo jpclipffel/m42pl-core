@@ -7,7 +7,6 @@ if TYPE_CHECKING:
 
 from m42pl.errors import CommandError
 
-from ..event import Event
 from .__base__ import AsyncCommand
 
 
@@ -15,8 +14,8 @@ class StreamingCommand(AsyncCommand):
     """Receives, process and yields events.
     """
 
-    async def __call__(self, event: Event, pipeline: Pipeline,
-                        *args, **kwargs) -> AsyncGenerator[Event, None]:
+    async def __call__(self, event: dict, pipeline: Pipeline,
+                        *args, **kwargs) -> AsyncGenerator[dict, None]:
         """Runs the command.
         
         :param event:       Current event
@@ -31,8 +30,8 @@ class StreamingCommand(AsyncCommand):
         else:
             yield event
 
-    async def target(self, event: Event,
-                        pipeline: Pipeline) -> AsyncGenerator[Event, None]:
+    async def target(self, event: dict,
+                        pipeline: Pipeline) -> AsyncGenerator[dict, None]:
         """Process and yields events.
 
         :param event:       Current event

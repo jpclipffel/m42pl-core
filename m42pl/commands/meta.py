@@ -7,7 +7,6 @@ if TYPE_CHECKING:
 
 from m42pl.errors import CommandError
 
-from ..event import Event
 from .__base__ import AsyncCommand
 
 
@@ -15,8 +14,8 @@ class MetaCommand(AsyncCommand):
     """Controls the events pipeline.
     """
 
-    async def __call__(self, event: Event, pipeline: Pipeline,
-                        *args, **kwargs) -> AsyncGenerator[Event, None]:
+    async def __call__(self, event: dict, pipeline: Pipeline,
+                        *args, **kwargs) -> AsyncGenerator[dict, None]:
         """Runs the command.
         
         Always yields the received event.
@@ -30,7 +29,7 @@ class MetaCommand(AsyncCommand):
             raise CommandError(command=self, message=str(error)) from error
         yield event
 
-    async def target(self, event: Event, pipeline: Pipeline) -> None:
+    async def target(self, event: dict, pipeline: Pipeline) -> None:
         """MetaCommand target method.
 
         Always yields the received event.
