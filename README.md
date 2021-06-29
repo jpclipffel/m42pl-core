@@ -1,25 +1,65 @@
 # M42PL
 
-M42PL is a **data processing language**, inspired by Unix shells and [Splunk][].
+M42PL is a **data processing language**, inspired by Unix shells and
+[Splunk][splunk].
 
-The language is designed to be as easy as possible to use, and to make common 
-scripting and programming tasks even easier. It does not have a tedious syntax
-to learn, and hides advanced programming concepts from the user.
+The language is designed for streams manipulation and provides a wide amount of
+commands to collect and process data. It focuses on simplicity and hides
+advanced programming concepts from the user.
 
-Example:
+Some code examples:
 
-```shell
+**Query an URL**
+
+```
 | url 'https://api.ipify.org'
 | fields response.content, response.status
 | eval message = 'Your external IP is ' + response.content
 | output format=json
 ```
 
+**Run a HTTP server**
+
+```
+| http_server with
+    '*' on '/foo' = [
+        | echo
+        | eval path='foo', mode='infinite+iterator'
+        | fields path, mode
+    ],
+    '*' on '/bar' = [
+        | eval path='bar', mode='infinite+stream'
+        | fields path, mode
+    ],
+    '*' on '/{path}' = []
+```
+
+**Capture and stream a video**
+
+> This requires the installation of the [lab commands][m42pl-git-commands-lab]
+
+```
+| cv2_read
+| cv2_resize ratio=0.5
+| zmq_pub topic='webcam'
+```
+
+**Display a video stream**
+
+> This requires the installation of the [lab commands][m42pl-git-commands-lab]
+
+```
+| zmq_sub topic='webcam'
+| decode {zmq.frames[0]} with 'msgpack'
+| cv2_show cv2.frame
+```
+
+
 You may find more examples in [the examples directory](/examples/README.md).
 
 Nearly all language features are implemented in **commands** which are
 dynamically loaded from **plugins**. The core commands
-[are available here][m42pl-commands]. Some example:
+[are available here][m42pl-git-commands]. Some example:
 
 * `url`: Performs one or more parallel HTTP requests
 * `eval`: Evaluate fields using Python expressions
@@ -43,7 +83,7 @@ dynamically loaded from **plugins**. The core commands
 
 ## Quick introduction
 
-M42PL can executes scripts or can be run in REPL mode. M42PL scripts are
+M42PL can run scripts or can be run in REPL mode. M42PL scripts are
 standard text files, which end with `.mpl` or `.m42pl` by convention.
 
 To start an interpreter (REPL), run the command `m42pl repl`
@@ -95,8 +135,8 @@ Commands **parameters** (aka. **fields**) support various syntax:
 
 | Example                               | Field                 | Description         |
 |---------------------------------------|-----------------------|---------------------|
-| ``` \| make count=2 ```               | `2`                   | Nunber    |
-| ``` \| output format='json' ```       | `'json'`              | String     |
+| ``` \| make count=2 ```               | `2`                   | Nunber              |
+| ``` \| output format='json' ```       | `'json'`              | String              |
 | ``` \| make showinfo=`True` ```       | `` `True` ``          | Eval expression     |
 | ``` \| fields response.items ```      | `response.items`      | Field path variable |
 | ``` \| fields {response.items[0]} ``` | `{response.items[0]}` | JSON path variable  |
@@ -121,13 +161,15 @@ are identical:
 | makeevent | evaluate foo='bar' | print
 ```
 
-Three types of commands exists:
+Five types of commands exists:
 
 * **Generating**: One per pipeline; Generate events (e.g. performs an HTTP
   request, read a file, consume a queue, etc.)
 * **Streaming**: Process events as they arrive. As many as needed per pipeline.
+* **Buffering**: Process events batches. As many as needed per pipeline.
 * **Meta**: Control the pipeline behaviour and parameters. As many as needed
   per pipeline.
+* **Merging**: Indicates that a split pipeline must be merged.
 
 Having a single generating command per pipeline may looks limitating, but M42PL
 supports **sub-pipelines**:
@@ -151,13 +193,17 @@ Commands may also implements their own, custom grammar:
 
 ## Components
 
-M42PL is build on three components:
+M42PL is build on four components:
 
-| Component           | Description                                | Link                                                      |
-|---------------------|--------------------------------------------|-----------------------------------------------------------|
-| `m42pl_core`        | Languages core (base classes, utils, etc.) | [GitHub](https://github.com/jpclipffel/m42pl-core)        |
-| `m42pl_commands`    | Core commands                              | [GitHub](https://github.com/jpclipffel/m42pl-commands)    |
-| `m42pl_dispatchers` | Core dispatchers                           | [GitHub](https://github.com/jpclipffel/m42pl-dispatchers) |
+| Component           | Description                                | Link                            |
+|---------------------|--------------------------------------------|---------------------------------|
+| `m42pl_core`        | Languages core (base classes, utils, etc.) | [GitHub][m42pl-git-core]        |
+| `m42pl_commands`    | Core language commands                     | [GitHub][m42pl-git-commands]    |
+| `m42pl_dispatchers` | Executes M42PL scripts and REPL            | [GitHub][m42pl-git-dispatchers] |
+| `m42pl_encoders`    | Encode and decode data formats             | [GitHub][m42pl-git-encoders]    |
+
+You may find extra components packages such as
+[the lab commands][m42pl-git-commands-lab].
 
 ### Core
 
@@ -170,19 +216,27 @@ Implements the base classes and the language utilities.
 
 Implements most of M42PL functionnalities.
 
-* [Repository link][m42pl-commands]
+* [Repository link][m42pl-git-commands]
+* [Documentation][m42pl-docs-commands]
 
 ### Dispatchers
 
 Implements M42PL execution method (local, multi-processing, Celery, etc.).
 
-* [Repository link][m42pl-dispatchers]
+* [Repository link][m42pl-git-dispatchers]
 
 ### Key/value stores
 
 Implements M42PL key/value stores.
 
-* [Repository link][m42pl-kvstores]
+* [Repository link][m42pl-git-kvstores]
+
+### Encoders
+
+Implements data format casting encoding and decoding (e.g. cast to
+`msgpack`, `JSON`, `bson`, etc.).
+
+* [Repository link][m42pl-git-encoders]
 
 ## Installation
 
@@ -196,25 +250,31 @@ source m42pl/bin/activate
 Install the core language `m42pl_core`:
 ```
 git clone https://github.com/jpclipffel/m42pl-core
-pip install -e m42pl-core
+pip install m42pl-core
 ```
 
 Install the core commands `m42pl_commands`:
 ```
 git clone https://github.com/jpclipffel/m42pl-commands
-pip install -e m42pl-commands
+pip install m42pl-commands
 ```
 
 Install the core dispatchers `m42pl_dispatchers`:
 ```
 git clone https://github.com/jpclipffel/m42pl-dispatchers
-pip install -e m42pl-dispatchers
+pip install m42pl-dispatchers
 ```
 
 Install the core kvstores `m42pl_kvsotres`:
 ```
 git clone https://github.com/jpclipffel/m42pl-kvstores
-pip install -e m42pl-kvstores
+pip install m42pl-kvstores
+```
+
+Install the core encoders `m42pl_encoders`:
+```
+git clone https://github.com/jpclipffel/m42pl-encoders
+pip install m42pl-encoders
 ```
 
 ## FAQ
@@ -237,11 +297,15 @@ I loved both products, but I always had the feeling that Elastic Search's DSL
 syntax was too tedious and Splunk's SPL was too limitating.
 
 I initially wanted to write a tool to query Elastic Search with the same
-language as Splunk, but I quickly drifted from my goal.
+language as Splunk, but I quickly drifted from my original goal.
 
 ---
 
-[Splunk]: https://splunk.com
-[m42pl-commands]: https://github.com/jpclipffel/m42pl-commands
-[m42pl-dispatchers]: https://github.com/jpclipffel/m42pl-dispatchers
-[m42pl-kvstores]: https://github.com/jpclipffel/m42pl-kvstores
+[splunk]: https://splunk.com
+[m42pl-git-core]: https://github.com/jpclipffel/m42pl-core
+[m42pl-git-commands]: https://github.com/jpclipffel/m42pl-commands
+[m42pl-git-commands-lab]: https://github.com/jpclipffel/m42pl-commands-lab
+[m42pl-git-dispatchers]: https://github.com/jpclipffel/m42pl-dispatchers
+[m42pl-git-kvstores]: https://github.com/jpclipffel/m42pl-kvstores
+[m42pl-git-encoders]: https://github.com/jpclipffel/m42pl-encoders
+[m42pl-docs-commands]: https://mine42.io/m42pl/m42pl-commands
