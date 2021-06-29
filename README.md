@@ -200,6 +200,7 @@ M42PL is build on four components:
 | `m42pl_core`        | Languages core (base classes, utils, etc.) | [GitHub][m42pl-git-core]        |
 | `m42pl_commands`    | Core language commands                     | [GitHub][m42pl-git-commands]    |
 | `m42pl_dispatchers` | Executes M42PL scripts and REPL            | [GitHub][m42pl-git-dispatchers] |
+| `m42pl_kvstores`    | Key/values stores support                  | [GitHub][m42pl-git-kvstores] |
 | `m42pl_encoders`    | Encode and decode data formats             | [GitHub][m42pl-git-encoders]    |
 
 You may find extra components packages such as
