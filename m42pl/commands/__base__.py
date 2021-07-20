@@ -40,6 +40,7 @@ class Command():
     :ivar _about_:          Command short description
     :ivar _syntax_:         Command syntax
     :ivar _aliases_:        List of command names
+    :ivar _schema_:         Command's output JSON schema
     :ivar _grammar_:        Command grammar blocks
     :ivar Transformer:      Lark transformer class
     :ivar logger:           Logger instance
@@ -57,6 +58,7 @@ class Command():
     _about_     = ''
     _syntax_    = ''
     _aliases_   = [] # type: list[str]
+    _schema_    = {} # type: dict
     # pylint: disable=anomalous-backslash-in-string
     _grammar_   = OrderedDict({
         # ---
