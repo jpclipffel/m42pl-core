@@ -4,6 +4,7 @@ import regex
 import sys
 import os
 from pathlib import Path
+from textwrap import dedent
 
 import m42pl
 from m42pl.event import Event
@@ -30,7 +31,10 @@ class REPL(RunAction):
     history_file = Path(os.environ.get('HOME'), '.m42pl_history') # type: ignore
 
     # Builtins command regex
-    regex_builtins = regex.compile(r'^(?P<name>exit|modules|reload)(\s.*)?$', flags=regex.IGNORECASE)
+    regex_builtins = regex.compile(
+        r'^(?P<name>exit|modules|reload|help)(\s.*)?$',
+        flags=regex.IGNORECASE
+    )
 
     def __init__(self, *args, **kwargs):
         super().__init__('repl', *args, **kwargs)
@@ -81,7 +85,24 @@ class REPL(RunAction):
         m42pl.reload_modules()
         self.dispatcher = None
 
-    def stop(self, sig, frame):
+    def builtin_help(self):
+        """Display a help message.
+        """
+        print(dedent('''\
+            Welcome to M42PL !
+
+            Builtins commands:
+            * exit      : Quit the interpreter
+            * modules   : Print the list of imported modules
+            * reload    : Reload the imported modules
+            * help      : Display this help message
+
+            Snippets:
+            * Type 'exit' or Ctrl+D to leave the interpreter
+            * Type 'commands' to generate the list of commands
+        '''))
+
+    def stop(self, sig = None, frame = None):
         sys.exit(-1)
 
     def __call__(self, args):
@@ -107,7 +128,7 @@ class REPL(RunAction):
             try:
                 # Register SINGINT (note the underlying pipelines will also
                 # register it; thats why we need regsiter it after each loop)
-                signal.signal(signal.SIGINT, self.stop)
+                signal.signal(signal.SIGINT, signal.SIG_IGN)
                 # Read and cleanup script
                 source = input(self.prompt).lstrip(' ').rstrip(' ')
                 if len(source):
@@ -121,6 +142,8 @@ class REPL(RunAction):
                             self.dispatcher = m42pl.dispatcher(args.dispatcher)(**args.dispatcher_kwargs)
                         readline.write_history_file(self.history_file)
                         self.dispatcher(source, kvstore, Event(data=args.event))
+            except EOFError:
+                self.stop()
             except Exception as error:
                 print(CLIErrorRender(error, source).render())
                 if args.raise_errors:
