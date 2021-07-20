@@ -3,6 +3,10 @@
 M42PL is a **data processing language**, inspired by Unix shells and
 [Splunk][splunk].
 
+Online documentation: [docs.mine42.io](https://docs.mine42.io/m42pl)
+
+---
+
 The language is designed for streams manipulation and provides a wide amount of
 commands to collect and process data. It focuses on simplicity and hides
 advanced programming concepts from the user.
