@@ -22,6 +22,7 @@ from m42pl.commands import (
     MetaCommand,
     MergingCommand
 )
+from m42pl.event import Event
 
 
 class Pipeline:
@@ -171,7 +172,7 @@ class Pipeline:
             # command.set_chunk(chunk, chunks)
             command.chunk = (chunk, chunks)
 
-    async def _setup_commands(self):
+    async def _setup_commands(self, event):
         """Setup the commands list (commands post-initialization).
 
         Some commands' internals (e.g. fields) may requires access to
@@ -192,7 +193,7 @@ class Pipeline:
                 )
                 # Setup command
                 try:
-                    await command.setup(event=dict(), pipeline=self)
+                    await command.setup(event=event, pipeline=self)
                 except Exception as error:
                     if not isinstance(error, errors.M42PLError):
                         raise errors.CommandError(command, message=str(error))
@@ -266,7 +267,7 @@ class Pipeline:
         self.context = context
         # ---
         # Setup commands
-        await self._setup_commands()
+        await self._setup_commands(event or Event())
         # ---
         # Enter pipeline context
         async with AsyncExitStack() as stack:
@@ -404,6 +405,13 @@ class Pipeline:
 class InfiniteRunner:
 
     def __init__(self, pipeline, context, event):
+        """
+        :param pipeline:    Pipeline instance (already initialized)
+        :param context:     Pipeline context
+        :param event:       Pipeline source event
+        """
+        # Run the pipeline in infinite mode; this will not yield
+        # any event but properly init the pipeline loop.
         self.pipeline = pipeline(context, event, infinite=True)
 
     async def setup(self):
