@@ -6,6 +6,12 @@ import uuid
 
 
 def Event(data: dict|None = None, meta: dict|None = None, sign = None):
+    """Event factory.
+
+    :param data:    Event data
+    :param meta:    Event meta
+    :param sign:    Event signature
+    """
     return {
         'data': data or {},
         'meta': meta or {},
