@@ -41,7 +41,8 @@ class Action:
         :param args:    Command arguments
         """
         # Load modules
-        m42pl.load_modules(names=args.module)
+        # m42pl.load_modules(names=args.module)
+        m42pl.find_modules(args.module)
         # Parse initial event
         # args.event = json.loads(args.event)
         # # Parses dispatcher and kvstore kwargs

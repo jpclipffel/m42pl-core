@@ -155,6 +155,29 @@ def load_modules(search_paths: list = [], paths: list = [],
         load_module_name(name=name)
 
 
+def find_modules(items: list = []):
+    """Find modules to load.
+
+    :param items:   List of modules name, path or paths.
+    """
+    search_paths = []
+    paths = []
+    names = []
+    # ---
+    for item in items:
+        # Add item to search path
+        if os.path.isdir(item):
+            search_paths.append(item)
+        # Add item to paths
+        elif os.path.isfile(item):
+            paths.append(item)
+        # Add item to names
+        else:
+            names.append(item)
+    # ---
+    load_modules(search_paths, paths, names)
+
+
 def reload_modules():
     """Reloads previously imported modules.
 
@@ -175,16 +198,18 @@ def reload_modules():
 
     # Delete modules
     for name in deletable:
-        # logger.warning(f'unloading module: {name}')
+        logger.warning(f'unloading module: {name}')
         del sys.modules[name]
     
     # Delete remaining modules reference
     for name in IMPORTED_MODULES_NAMES:
-        # logger.warning(f'unloading module: {name}')
+        logger.warning(f'unloading module: {name}')
         del modules[name]
     IMPORTED_MODULES_NAMES = []
 
     # Reload modules
     for name in BUILTINS_MODULES_NAMES:
-        # logger.warning(f'reloading module: {name}')
+        logger.warning(f'reloading module: {name}')
         load_module_name(name)
+
+
