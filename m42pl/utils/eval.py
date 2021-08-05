@@ -58,11 +58,8 @@ class EvalNS(dict):
         self_name = super().__getattribute__('name')
         self_functions = super().__getattribute__('functions')
         self_fields = super().__getattribute__('fields')
-        # Returns the requested functions
-        if name in self_functions:
-            return self_functions[name]
         # Returns the requested nested fields
-        elif isinstance(self_fields, dict) and name in self_fields:
+        if isinstance(self_fields, dict) and name in self_fields:
             return EvalNS(
                 name=name,
                 functions=self_functions,
@@ -71,6 +68,9 @@ class EvalNS(dict):
         # Returns the requested fields
         elif name == self_name:
             return self_fields
+        # Returns the requested functions
+        elif name in self_functions:
+            return self_functions[name]
         else:
             return Undefined()
 
@@ -201,7 +201,7 @@ class Evaluator:
         'list':         lambda *args: [solve(i) for i in args],
         'join':         lambda field, delimiter='': delimiter.join(solve(field, (list, tuple, str))),
         'slice':        lambda field, start, *end: len(end) and solve(field, (str, list, tuple), None)[start:end[0]] or solve(field, (str, list, tuple), None)[start:],
-        'index':        lambda field, position: solve(field, (str, list, tuple), None)[position],
+        'idx':          lambda field, position: solve(field, (str, list, tuple), None)[position],
         'length':       lambda field: len(solve(field, (str, list, tuple), '')),
         # Map
         'keys':         lambda field: list(solve(field, (dict,), {}).keys()),
@@ -228,7 +228,7 @@ class Evaluator:
         'str':          functions['tostring'],
         'string':       functions['tostring'],
         # List
-        'at':           functions['index'],
+        'at':           functions['idx'],
         'len':          functions['length'],
         # Path
         'makepath':     functions['joinpath'],
