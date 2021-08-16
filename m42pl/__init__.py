@@ -106,15 +106,18 @@ def load_module_path(namespace: str, path: str) -> None:
     # ---
     # Load module
     logger.debug(f'spec_from_file_location: module_name="{module_name}"')
-    module_spec = importlib.util.spec_from_file_location(module_name, module_entrypoint)
+    module_spec = importlib.util.spec_from_file_location(
+        module_name, 
+        module_entrypoint
+    )
     logger.debug(f'module_from_spec: module_name="{module_name}"')
-    module = importlib.util.module_from_spec(module_spec)
+    module = importlib.util.module_from_spec(module_spec) # type: ignore
     logger.debug(f'exec_module: module_name="{module_name}"')
     module_spec.loader.exec_module(module) # type: ignore
     # ---
     # Register module
     logger.info(f'registering module: module_name="{module_name}"')
-    sys.modules[module_spec.name] = module
+    sys.modules[module_spec.name] = module # type: ignore
     IMPORTED_MODULES_PATHS.append(path)
     modules[module_name] = module
 
