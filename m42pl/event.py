@@ -1,8 +1,14 @@
 from __future__ import annotations
 
-from copy import deepcopy
-# from inspect import signature
 import uuid
+
+
+# Events are the fundamental unit of information procuded and shared by M42PL
+# commands. They are simple `dict` instances with three root fields:
+#
+# * `data`: stores the event's fields, accessible to users
+# * `meta`: stores the internal-only fields, not accessible to users
+# * `sign`: stores the event hash, read-only for the users
 
 
 def Event(data: dict|None = None, meta: dict|None = None, sign = None):
@@ -33,7 +39,6 @@ def signature(event: dict):
 def derive(event: dict, data: dict = {}, meta: dict = {}, sign = None):
     """Copies the given event.
     """
-    # return deepcopy(event)
     return {
         'data': {**event['data'], **data},
         'meta': {**event['meta'], **meta},
