@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import ntpath
 import regex
 import os
@@ -12,6 +14,9 @@ class Undefined:
 
     To be returned by EvalNS when no matching field is found.
     """
+
+    def __init__(self, *args, **kwargs):
+        pass
 
     def __getitem__(self, *args):
         return self
@@ -135,7 +140,7 @@ class EvalNS(dict):
         return super().__getattribute__('__cast__')(other) >= other
 
 
-def solve(attr, types: tuple = (), *args):
+def solve(attr, types: tuple|list = (), *args):
     """Resolves an attribute returned by :class:`EvalNS`.
 
     :param attr:    Attribute to resolve
@@ -150,7 +155,7 @@ def solve(attr, types: tuple = (), *args):
     # Otherwise, return the default value `args[0]` or `None` if no
     # default is given.
     elif len(types):
-        if isinstance(attr, types):
+        if isinstance(attr, types): # type: ignore
             return attr
         elif len(args):
             return args[0]
@@ -182,8 +187,8 @@ class Evaluator:
     functions = {
         # Misc.
         'field':        lambda field, default = None: solve(field, (type(default),), default),
-        'isnull':       lambda field: solve(field, [], None) is None,
-        'isnotnull':    lambda field: solve(field, [], None),
+        'isnull':       lambda field: solve(field, (), None) is None,
+        'isnotnull':    lambda field: solve(field, (), None),
         'coalesce':     lambda *fields: next(filter(None, [solve(field) for field in fields]), None),
         # Time
         'now':          lambda: now().timestamp(),
@@ -197,6 +202,7 @@ class Evaluator:
         # String
         'clean':        lambda field: ''.join(solve(field, (str,), '').split()),
         'split':        lambda field, needle: solve(field, (str,), '').split(solve(needle, (str,), '')),
+        'strip':        lambda field, pattern = '"': solve(field, (str,), '').strip(solve(pattern, (str,), '"')),
         # List
         'list':         lambda *args: [solve(i) for i in args],
         'join':         lambda field, delimiter='': delimiter.join(solve(field, (list, tuple, str))),
