@@ -70,7 +70,7 @@ def reltime(expression: str, dt = None) -> datetime.datetime:
     # Return reference time - relative time
     if req_unit == "ms":
         return ref_time - datetime.timedelta()
-    return ref_time - datetime.timedelta(**{DELTA_VALUES[req_unit]: req_value})
+    return ref_time - datetime.timedelta(**{DELTA_VALUES[req_unit]: req_value}) # type: ignore
 
 
 # pylint: disable=unsubscriptable-object
