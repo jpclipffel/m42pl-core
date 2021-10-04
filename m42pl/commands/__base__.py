@@ -171,10 +171,13 @@ class Command():
         integer     = lambda self, items: int(items[0])
         boolean     = lambda self, items: str(items[0].lower()) in ['true', 'yes']
         name        = lambda self, items: str(items[0])
-        string      = lambda self, items: str(items[0])
+        # string      = lambda self, items: str(items[0])
         eval        = lambda self, items: str(items[0])
         jspath      = lambda self, items: str(items[0])
         dotpath     = lambda self, items: str(items[0])
+
+        def string(self, items):
+            return str(items[0]).replace('\\\n', '')
 
         # eval_rules
         symbol      = lambda self, items: str(items[0])
