@@ -6,7 +6,7 @@ from .__base__ import BaseField, FieldValue
 
 
 class PipeField(BaseField):
-    """M42PL sub pipeline field solver.
+    """M42PL sub-pipeline field solver.
 
     This field solver targets M42PL pipelines:
 
@@ -46,11 +46,11 @@ class PipeField(BaseField):
             # Single event:
             if len(results) == 1:
                 # Single event && single field:
-                if len(results[0].data) == 1:
-                    return list(results[0].data.items())[0][1]
+                if len(results[0].get('data', {})) == 1:
+                    return list(results[0].get('data', {}).items())[0][1]
                 # Single event && multiple fields
-                return results[0].data
+                return results[0].get('data', {})
             # Multiple events
-            return [result.data for result in results]
+            return [result.get('data', {}) for result in results]
         # No event at all:
         return self.default
