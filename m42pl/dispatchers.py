@@ -1,22 +1,24 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, List
+from typing import TYPE_CHECKING, List, Any
 
 from m42pl.context import Context
 import re
 import sys
 import logging
+from enum import Enum, auto
 
 import m42pl
 import m42pl.commands
 from m42pl.kvstores import KVStore
+from m42pl.utils import time
 
 
 # Dispatchers aliases map
 ALIASES = dict() # type: dict[str, object]
 
 # Module-level logger
-logger = logging.getLogger("m42pl.dispatchers")
+logger = logging.getLogger('m42pl.dispatchers')
 
 
 class Dispatcher:
@@ -40,10 +42,20 @@ class Dispatcher:
     This base class is responsible for the dispatchers's *registration*
     (:meth:`__init_subclass__`).
 
-    :ivar _aliases_:  List of dispatcher names.
+    :ivar _aliases_:  List of dispatcher names
     """
 
     _aliases_: List[str]  = []
+
+    kvstore_prefix = 'dispatchers'
+
+    class State(Enum):
+        """Pipelines status, as returned by `status()`.
+        """
+        UNKNOWN     = auto()
+        RUNNING     = auto()
+        FINISHED    = auto()
+        CRASHED     = auto()
 
     @staticmethod
     def flatten_commands(commands: list) -> list:
@@ -105,7 +117,7 @@ class Dispatcher:
         pass
 
     def __call__(self, source: str, kvstore: KVStore, event: dict|None = None):
-        """Prepares to runs the dispatcher.
+        """Prepares to run and runs the dispatcher.
 
         :param source:  Script source
         :param kvstore: KVStore instance
@@ -118,3 +130,54 @@ class Dispatcher:
             ),
             event=event or dict()
         )
+
+    async def status(self, kvstore, identifier: str|int|None) -> list:
+        """Return the status of an underlying pipeline.
+
+        :param identifier:  Pipeline identifier (type is
+            implementation-specific)
+        """
+        async with kvstore:
+            if identifier is not None:
+                return [await kvstore.read(
+                    f'{self.kvstore_prefix}:{identifier}'),
+                ]
+            else:
+                processes = []
+                async for _, p in kvstore.items(f'{self.kvstore_prefix}:'):
+                    # if p.get('dispatcher', '') == self.__class__.__name__:
+                    processes.append(p)
+                return processes
+
+    async def register(self, kvstore, identifier):
+        """Registers a pipeline process into a KVStore.
+
+        :param kvstore:     KVStore instance (must be ready)
+        :param identifier:  Pipeline process identifier
+        """
+        await kvstore.write(
+            f'{self.kvstore_prefix}:{identifier}',
+            {
+                'name': str(identifier),
+                'dispatcher': self.__class__.__name__,
+                'start_time': time.now().timestamp(),
+                'end_time': None,
+                'status': self.State.RUNNING.value
+            }
+        )
+
+    async def unregister(self, kvstore, identifier):
+        """Unregisters a pipeline process form a KVStore.
+
+        :param kvstore:     KVStore instance (must be ready)
+        :param identifier:  Pipeline process identifier
+        """
+        await kvstore.delete(f'{self.kvstore_prefix}:{identifier}')
+
+    async def cleanup(self, kvstore):
+        """Cleanup all dead pipeline processes from a KVStore.
+        """
+        processes = await kvstore.read(self.kvstore_prefix, default=[])
+        for process in processes:
+            # if process.get('dispacther') == self.__class.__name__:
+            print(process)
