@@ -98,7 +98,7 @@ class RunAction(Action):
         # Optional - KVStore kwargs
         self.parser.add_argument('--kvstore-kwargs', type=str,
             default='{}', help='KVStore keyword arguments as JSON string')
-        # Optional - Initial event data as a JSON stirng
+        # Optional - Initial event data as a JSON string
         self.parser.add_argument('-e', '--event', type=str,
             default='{}', help='Initial event (JSON)')
         # Debug - Raise errors
