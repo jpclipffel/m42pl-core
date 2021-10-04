@@ -100,6 +100,7 @@ class REPL(RunAction):
             Snippets:
             * Type 'exit' or Ctrl+D to leave the interpreter
             * Type 'commands' to generate the list of commands
+            * Type 'command <command name>' to show a command help
         '''))
 
     def stop(self, sig = None, frame = None):
@@ -141,7 +142,12 @@ class REPL(RunAction):
                         if not self.dispatcher:
                             self.dispatcher = m42pl.dispatcher(args.dispatcher)(**args.dispatcher_kwargs)
                         readline.write_history_file(self.history_file)
-                        self.dispatcher(source, kvstore, Event(data=args.event))
+                        self.dispatcher(
+                            source=source,
+                            kvstore=kvstore,
+                            # event=len(args.event) > 0 and Event(data=args.event) or None
+                            event=Event(args.event)
+                        )
             except EOFError:
                 self.stop()
             except Exception as error:
