@@ -34,7 +34,7 @@ def Field(name, *args, **kwargs):
             elif name in ['no', 'false']:
                 return LiteralField(False, *args, **kwargs)
             # Literal
-            elif name[0] == '\'' and name[-1] == '\'':
+            elif name[0] == "'" and name[-1] == "'":
                 return LiteralField(name[1:-1], *args, **kwargs)
             # Json path
             elif name[0] == '{' and name[-1] == '}':
