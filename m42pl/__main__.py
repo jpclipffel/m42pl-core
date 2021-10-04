@@ -16,7 +16,8 @@ def main():
     # Parse arguments
     args = parser.parse_args()
     # Setup logging
-    logger = logging.getLogger('m42pl')
+    # logger = logging.getLogger('m42pl')
+    logger = logging.getLogger()
     logger.setLevel(args.log_level.upper())
     handler = logging.StreamHandler()
     handler.setLevel(args.log_level.upper())
