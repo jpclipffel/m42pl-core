@@ -4,6 +4,10 @@ from .__base__ import BaseField, FieldValue
 
 
 class SeqnField(BaseField):
+    """M42PL sequence fields solver.
+
+    This field solver targets a sequence (list or tuple) of fields.
+    """
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
