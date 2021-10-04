@@ -210,7 +210,7 @@ class Evaluator:
         'idx':          lambda field, position: solve(field, (str, list, tuple), None)[position],
         'length':       lambda field: len(solve(field, (str, list, tuple), '')),
         # Map
-        'keys':         lambda field: list(solve(field, (dict,), {}).keys()),
+        'keys':         lambda field = None: list(solve(field, (dict,), {}).keys()),
         # Math
         'round':        lambda field, x: round(solve(field, (float, int), 0), x),
         'even':         lambda field: solve(field, (int, float), 0) % 2 == 0,
