@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, List
+from typing import TYPE_CHECKING, Any, AsyncGenerator, List
 
 import logging
 import regex
@@ -136,5 +136,13 @@ class KVStore:
         """Deletes a key from the KV Store.
 
         :param key:     Key name
+        """
+        pass
+
+    async def items(self, key: str|None = None) -> AsyncGenerator:
+        """Returns items from the KVStore.
+
+        :param key:     Returns only items whose name starts with the
+                        given key.
         """
         pass
