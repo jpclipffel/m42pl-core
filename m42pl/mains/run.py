@@ -1,5 +1,3 @@
-import json
-
 import m42pl
 from m42pl.event import Event
 from m42pl.utils.errors import CLIErrorRender
@@ -27,7 +25,6 @@ class Run(RunAction):
                 m42pl.dispatcher(args.dispatcher)(**args.dispatcher_kwargs)(
                     source=source,
                     kvstore=m42pl.kvstore(args.kvstore)(**args.kvstore_kwargs),
-                    # event=len(args.event) and Event(args.event) or None
                     event=Event(args.event)
                 )
             except Exception as error:
