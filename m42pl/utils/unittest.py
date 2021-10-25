@@ -165,7 +165,21 @@ class Command:
                 (or docopt-like) syntax.
             ''')
         )
-    
+
+    def test_schema(self):
+        """Tests if the command has a valid `_schema_` attribute.
+        """
+        # pylint: disable=no-member
+        self.assertGreater(
+            len(self.command._schema_),
+            0,
+            dedent('''\
+                Command's `_schema_` field must not be empty and 
+                should provide a JSON schema of the command output.
+                '''
+            )
+        )
+
     def test_type(self):
         """Tests if the command inherits from a supported base command.
 
