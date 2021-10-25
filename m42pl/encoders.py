@@ -25,7 +25,7 @@ class Encoder:
     to / from a given format, such as JSON, MessagePack, BSON, etc.
 
     As for :class:`m42pl.Command`, the :class:`Formater`s are
-    implemented  as plugins modules:
+    implemented as plugins modules:
 
     * They are loaded by `m42pl.load_modules()` (or 
       `m42pl.load_module_name()` or `m42pl.load_module_path()`)
@@ -42,6 +42,7 @@ class Encoder:
     """
 
     _aliases_: list[str] = []
+    _about_: str = ''
 
     def __init_subclass__(cls, **kwargs) -> None:
         super().__init_subclass__(**kwargs) # type: ignore
@@ -69,7 +70,7 @@ class Encoder:
     def _encode(self, data: Data) -> bytes|str:
         return bytes()
 
-    def encode(self, data: dict) -> bytes|str:
+    def encode(self, data: dict|Any, key: str = 'data') -> bytes|str:
         """Encodes :param:`data`.
 
         This method wraps the encoder's `_encode()`:
@@ -78,13 +79,15 @@ class Encoder:
         * Raise proper exception if an error occurs
 
         :param data:    Data to encode
+        :param key:     Key name if `data` is not a `dict`
         """
         try:
             if not isinstance(data, dict):
+                # return self._encode({key: data})
                 raise EncodingError(
                     encoder=self,
                     message=(
-                        f'Invalid data type: expected {type(dict)}, '
+                        f'Invalid data type: expected {dict}, '
                         f'got {type(data)}'
                     )
                 )
@@ -112,7 +115,7 @@ class Encoder:
                 raise DecodingError(
                     encoder=self,
                     message=(
-                        f'Invalid data type: expected {type(dict)}, '
+                        f'Invalid data type: expected {dict}, '
                         f'got {type(data)}'
                     )
                 )
