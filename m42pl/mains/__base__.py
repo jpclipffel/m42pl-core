@@ -90,13 +90,13 @@ class RunAction(Action):
         self.parser.add_argument('-d', '--dispatcher', type=str,
             default=self.dispatcher_alias, help='Dispatcher name')
         # Optional - Dispatcher kwargs
-        self.parser.add_argument('--dispatcher-kwargs', type=str,
+        self.parser.add_argument('-D', '--dispatcher-kwargs', type=str,
             default='{}', help='Dispatcher keyword arguments as JSON string')
         # Optional - KVStore
         self.parser.add_argument('-k', '--kvstore', type=str,
             default='local', help='KVStore name')
         # Optional - KVStore kwargs
-        self.parser.add_argument('--kvstore-kwargs', type=str,
+        self.parser.add_argument('-K', '--kvstore-kwargs', type=str,
             default='{}', help='KVStore keyword arguments as JSON string')
         # Optional - Initial event data as a JSON string
         self.parser.add_argument('-e', '--event', type=str,
