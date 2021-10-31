@@ -52,8 +52,9 @@ class BufferingCommand(AsyncCommand):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.maxsize = 0
+        self.hits = 0
 
-    async def setup(self, event: dict, pipeline: Pipeline, maxsize: int) -> None: # type: ignore[override]
+    async def setup(self, event: dict, pipeline: Pipeline, maxsize: int = 1) -> None: # type: ignore[override]
         """
         :param maxsize:     Internal buffer maximum size
         """
@@ -63,11 +64,28 @@ class BufferingCommand(AsyncCommand):
                 f'reason="Size should be >= 1"'
             ))
         self.queue: asyncio.Queue = self.queue_class(maxsize=maxsize)
+        self.maxsize = maxsize
 
     async def remain(self) -> int:
         """Returns the amount of remaining events.
         """
         return self.queue.qsize()
+
+    async def ready(self, event, pipeline, ending, remain) -> bool:
+        """Returns True if the queue is ready to be empited and yielded.
+
+        Queue is ready when:
+        * no event has been received (this indicates a pipeline wakeup)
+        * the pipeline is ending
+        * the internal buffer is full
+        """
+        if (
+            not event                       # No event is received
+            or (ending and remain == 0)     # Pipeline is ending
+            or await self.full()            # Queue is full
+        ):
+            return True
+        return False
 
     async def __call__(self, event: dict, pipeline: Pipeline,
                         ending: bool = False, remain: int = 0, 
@@ -85,14 +103,18 @@ class BufferingCommand(AsyncCommand):
             # Always stores the new event if it is not None
             if event:
                 await self.store(event, pipeline)
+                self.hits += 1
             # Process buffered events when:
             # * no event has been received (this indicates a pipeline wakeup)
             # * the pipeline is ending
             # * the internal buffer is full
-            if not event or (ending and remain == 0) or await self.full():
+            # * the maximum count of event is reached
+            # If queue should be emptied, do it
+            if await self.ready(event, pipeline, ending, remain):
                 async for event in self.target(pipeline):
                     yield event
                 await self.clear()
+                self.hits = 0
         except Exception as error:
             raise CommandError(command=self, message=str(error))
 
