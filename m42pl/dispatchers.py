@@ -6,7 +6,7 @@ from m42pl.context import Context
 import re
 import sys
 import logging
-from enum import Enum, auto
+from enum import IntEnum, auto
 
 import m42pl
 import m42pl.commands
@@ -49,7 +49,7 @@ class Dispatcher:
 
     kvstore_prefix = 'dispatchers'
 
-    class State(Enum):
+    class State(IntEnum):
         """Pipelines status, as returned by `status()`.
         """
         UNKNOWN     = auto()
@@ -71,7 +71,7 @@ class Dispatcher:
             else:
                 _commands.append(command)
         return _commands
-    
+
     @staticmethod
     def split_commands(commands) -> list:
         _commands = [] # type: list
