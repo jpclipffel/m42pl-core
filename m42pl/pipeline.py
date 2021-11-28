@@ -81,7 +81,7 @@ class Pipeline:
             else:
                 yield command
 
-    def __init__(self, commands: list = [], name: str = 'lambda') -> None:
+    def __init__(self, commands: list = [], name: str = 'main') -> None:
         """
         :param commands:        Commands list
         :param name:            Pipeline name
@@ -89,6 +89,7 @@ class Pipeline:
         :ivar logger:           Logger instance
         :ivar chunk:            Current chunk number
         :ivar chunks:           Total chunks count
+        :ivar pipeline_refs:    Sub-pipelines references
         :ivar metas:            Leading meta commands
         :ivar generator:        Generating command
         :ivar processors:       Processing commands (any but generator)
@@ -97,6 +98,7 @@ class Pipeline:
         self.name = name
         self.logger = logging.getLogger(name=f'm42pl.pipeline.{name}')
         self.chunk, self.chunks = 1, 1
+        self.pipelines_ref: list[str] = []
         # Build
         self.build()
         # ---
@@ -115,7 +117,7 @@ class Pipeline:
     def to_dict(self) -> Dict:
         """Serializes the pipeline as a :class:`dict`.
 
-        Ther eturned :class:`dict` is JSON-serializable and a new
+        Ther returned :class:`dict` is JSON-serializable and a new
         :class:`Pipeline` instance can be created from it using
         :meth:`from_dict`.
         """
