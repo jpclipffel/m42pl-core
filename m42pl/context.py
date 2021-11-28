@@ -34,7 +34,7 @@ class Context:
         self.kvstore = kvstore
 
     def to_dict(self):
-        """Serializes the pipeline as a :class:`dict`.
+        """Serializes the context as a :class:`dict`.
         """
         return {
             'pipelines': dict([(name, pipeline.to_dict()) for name, pipeline in self.pipelines.items()]),
