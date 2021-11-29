@@ -2,6 +2,7 @@ import importlib
 import importlib.util
 import logging
 import regex
+import copy
 import glob
 import sys
 import os
@@ -183,36 +184,29 @@ def find_modules(items: list = []):
 
 def reload_modules():
     """Reloads previously imported modules.
-
-    Returns the name of reloaded modules.
     """
     global IMPORTED_MODULES_NAMES
-
     # Build modules selection regex from imported modules list
     modules_rx = regex.compile(f'({"|".join(IMPORTED_MODULES_NAMES)}).*')
-
+    # List of modules to reload
+    to_reload = copy.deepcopy(IMPORTED_MODULES_NAMES)
     # List of modules to delete
     deletable = []
-
     # Build list of modules to unload
     for name, module in sys.modules.items():
         if modules_rx.match(name):
             deletable.append(name)
-
     # Delete modules
     for name in deletable:
         logger.warning(f'unloading module: {name}')
         del sys.modules[name]
-    
     # Delete remaining modules reference
     for name in IMPORTED_MODULES_NAMES:
         logger.warning(f'unloading module: {name}')
         del modules[name]
     IMPORTED_MODULES_NAMES = []
-
     # Reload modules
-    for name in BUILTINS_MODULES_NAMES:
+    # for name in BUILTINS_MODULES_NAMES:
+    for name in to_reload:
         logger.warning(f'reloading module: {name}')
         load_module_name(name)
-
-
