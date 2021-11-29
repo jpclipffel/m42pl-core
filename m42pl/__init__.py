@@ -14,6 +14,8 @@ import m42pl.dispatchers
 import m42pl.kvstores
 import m42pl.encoders
 
+from m42pl.commands import script
+
 from m42pl.errors import *
 
 
