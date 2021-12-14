@@ -138,7 +138,7 @@ class Command:
             m42pl.load_modules()
             cls.command = m42pl.command(cls.command_alias)
 
-    def test_about(self):
+    def _test_about(self):
         """Tests if the command has a valid `_about_` attribute.
         """
         # pylint: disable=no-member
@@ -152,7 +152,7 @@ class Command:
             )
         )
     
-    def test_syntax(self):
+    def _test_syntax(self):
         """Tests if the command has a valid `_syntax_` attribute.
         """
         # pylint: disable=no-member
@@ -166,7 +166,7 @@ class Command:
             ''')
         )
 
-    def test_schema(self):
+    def _test_schema(self):
         """Tests if the command has a valid `_schema_` attribute.
         """
         # pylint: disable=no-member
@@ -201,7 +201,7 @@ class Command:
             ''')
         )
     
-    def test_initsuper(self):
+    def _test_initsuper(self):
         """Tests if the command `init` its parent class.
         """
         # pylint: disable=no-member
