@@ -20,5 +20,7 @@ setup(
     'jsonpath-ng',
     'lark-parser[regex]',
     'types-setuptools',
+    'tabulate',
+    'flask'
   ],
 )
