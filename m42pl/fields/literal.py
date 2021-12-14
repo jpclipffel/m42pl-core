@@ -19,7 +19,7 @@ class LiteralField(BaseField):
         super().__init__(*args, **kwargs)
         self.literal = True
 
-    async def _read(self, event: dict, pipeline: Pipeline|None = None):
+    async def _read(self, *args, **kwargs):
         """Returns (get) the configured field :attr:`self.name` from
         the given :param:`event`.
 

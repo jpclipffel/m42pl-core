@@ -1,50 +1,62 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Generator, AsyncGenerator, Tuple, Dict, List
+from typing import TYPE_CHECKING, Generator, Union
+
+from m42pl.commands.__base__ import Command
 
 if TYPE_CHECKING:
     from m42pl.context import Context
 
 import logging
-from contextlib import ExitStack, AsyncExitStack
+from contextlib import AsyncExitStack
 import asyncio
-import inspect
-import itertools
 import signal
 
 import m42pl
 from m42pl import errors
+from m42pl.event import Event
+from m42pl.utils.log import LoggerAdapter
 from m42pl.commands import (
-    Command,
+    MetaCommand,
     GeneratingCommand,
     StreamingCommand,
-    BufferingCommand,
-    MetaCommand,
-    MergingCommand
+    BufferingCommand
 )
-from m42pl.event import Event
 
+
+# Any command type
+AnyCommmand = Union[
+    MetaCommand,
+    GeneratingCommand,
+    StreamingCommand,
+    BufferingCommand
+]
 
 class Pipeline:
     """Holds a list of commands.
 
-    :ivar mode:     'iterator' or 'event'
+    :ivar logger: Logger instance
+    :ivar metas: Leading meta commands
+    :ivar generator: Generating command
+    :ivar processors: Processing commands
     """
 
     @classmethod
     def from_dict(cls, data: dict) -> object:
         """Returns a new :class:`Pipeline` from a :class:`dict`.
 
-        The source map :param:`data` must match with the following map:
+        The source map ``data`` must match with the following map:
+
+        .. code-block:: python
 
             {
                 'commands': [               # Commands list
                     {
-                        'alias': '...',     #       Command alias
-                        'args': [],         #       Command arguments
-                        'kwargs': {}        #       Command kwarg
+                        'alias': '...',     # Name (alias)
+                        'args': [],         # Arguments
+                        'kwargs': {}        # Keyword arguments
                     },
-                    # ...
+                    # ...                   # Other attrs are ignored
                 ]
             }
 
@@ -70,9 +82,9 @@ class Pipeline:
 
     @staticmethod
     def flatten_commands(commands) -> Generator:
-        """Flatten the list of commands.
+        """Flatten the commands list.
 
-        This is necessary as some commands `__new__` may returns more
+        This is necessary as some commands ``__new__`` may returns more
         than one class instance.
         """
         for command in commands:
@@ -83,22 +95,19 @@ class Pipeline:
 
     def __init__(self, commands: list = [], name: str = 'main') -> None:
         """
-        :param commands:        Commands list
-        :param name:            Pipeline name
-
-        :ivar logger:           Logger instance
-        :ivar chunk:            Current chunk number
-        :ivar chunks:           Total chunks count
-        :ivar pipeline_refs:    Sub-pipelines references
-        :ivar metas:            Leading meta commands
-        :ivar generator:        Generating command
-        :ivar processors:       Processing commands (any but generator)
+        :param commands: Commands list
+        :param name: Pipeline name
         """
         self.commands = commands
         self.name = name
-        self.logger = logging.getLogger(name=f'm42pl.pipeline.{name}')
-        self.chunk, self.chunks = 1, 1
-        self.pipelines_ref: list[str] = []
+        # self.logger = logging.getLogger(name=f'm42pl.pipeline.{name}')
+        # self.logger = self.Logger(pipeline_name=self.name, name=f'm42pl.pipeline')
+        self.logger = LoggerAdapter(
+            defaults={'pipeline_name': name},
+            logger=logging.getLogger('m42pl.pipeline')
+        )
+        # self.chunk, self.chunks = 1, 1
+        # self.pipelines_ref: list[str] = []
         # Build
         self.build()
         # ---
@@ -106,15 +115,15 @@ class Pipeline:
         self._commands_set = False
         self._ready = True
 
-    def trace(self, memo: int, message: str):
-        """Debug method.
+    # def trace(self, memo: int, message: str):
+    #     """Debug method.
 
-        TODO: Remove.
-        """
-        print(f'{"." * memo * 2} {self.name}: {message}')
-        return memo
+    #     TODO: Remove.
+    #     """
+    #     print(f'{"." * memo * 2} {self.name}: {message}')
+    #     return memo
 
-    def to_dict(self) -> Dict:
+    def to_dict(self) -> dict:
         """Serializes the pipeline as a :class:`dict`.
 
         Ther returned :class:`dict` is JSON-serializable and a new
@@ -131,15 +140,22 @@ class Pipeline:
             ]
         }
 
-    def build(self):
+    def build(self) -> None:
         """(Re)builds the pipeline.
+
+        Building the pipeline means:
+        * Ensuring there is at most one (1) generating command
+        * Differenciating generating, meta and processing commands
+
+        This method should be called each time the pipeline commands
+        list is modified.
         """
         self.logger.info(f'building pipeline: pipeline="{self.name}"')
         # ---
         # Initialize commands sets
-        self.metas = []
-        self.generator = None
-        self.processors = []
+        self.metas: list[AnyCommmand] = []
+        self.generator: GeneratingCommand|None = None
+        self.processors: list[AnyCommmand] = []
         # ---
         # Build commands sets
         self.commands = list(Pipeline.flatten_commands(self.commands))
@@ -164,38 +180,81 @@ class Pipeline:
         self.commands = list(filter(None, self.metas + [self.generator,] + self.processors))
 
     def set_chunk(self, chunk: int = 0, chunks: int = 1) -> None:
-        """Set pipeline and pipeline's commands chunk and chunks count.
+        """Set the pipeline's commands chunk number and chunks count.
         
-        :param chunk:   Current chunk number. Starts at `0`.
-        :param chunks:  Total chunks count. Minimum is `1`.
+        :param chunk: Current chunk number (starts at ``0``)
+        :param chunks: Total chunks count (minimum is ``1``)
         """
-        self.chunk, self.chunks = chunk, chunks
+        # self.chunk, self.chunks = chunk, chunks
         for command in self.commands:
             # command.set_chunk(chunk, chunks)
             command.chunk = (chunk, chunks)
 
-    async def _setup_commands(self, event):
-        """Setup the commands list (commands post-initialization).
+
+class PipelineRunner:
+    """Runs a pipeline.
+
+    :ivar pipeline: Pipeline instance
+    :ivar tracing: ``True`` if execution is traced, ``False`` otherwise
+    :ivar logger: Logger instance
+    :ivar _ready: ``True`` if the runner is ready, ``False`` otherwise
+    :ivar _commands_set: ``True`` if the ``pipeline`` commands have
+        been set, ``False`` otherwise
+    """
+
+    def __init__(self, pipeline: Pipeline, tracing: bool = False) -> None:
+        """
+        :param pipeline: Pipeline instance
+        :param tracing: ``True`` to enable tracing, ``False`` otherwise
+        """
+        self.pipeline = pipeline
+        self.tracing = tracing
+        self.logger = LoggerAdapter(
+            defaults={'pipeline_name': pipeline.name},
+            logger=logging.getLogger('m42pl.pipeline.PipelineRunner')
+        )
+        self._ready = True
+        self._commands_set = False
+
+    def trace(self, level: int, message: str) -> None:
+        """Traces (print...) a pipeline state.
+
+        :param level: Current depth
+        :param message: Message to print
+        """
+        if self.tracing:
+            print(f'{"." * level * 2} {self.pipeline.name}: {message}')
+
+    def stop(self, *args, **kwargs) -> None:
+        """Stops the pipeline.
+        """
+        self.logger.warning('forcefully stopping the pipeline')
+        self._ready = False
+        raise StopAsyncIteration('SINGINT')
+
+    async def setup_commands(self, event: dict|None) -> None:
+        """Setups the commands list (commands post-initialization).
 
         Some commands' internals (e.g. fields) may requires access to
         the pipeline (and nested objects such as context or parents
         and children pipelines) to finish their initialization.
 
-        Once set, the commands are **not** set again event if this
+        Once set, the commands are **not** set again even if this
         method is called more than once.
 
-        :param event:       Latest received event (may be `None`).
+        :param event: Last received event (may be ``None``).
         """
         if not self._commands_set:
-            self.logger.debug(f'setting-up pipeline commands: pipeline="{self.name}"')
-            for command in self.commands:
+            self.logger.debug(f'setting-up pipeline commands')
+            for command in self.pipeline.commands:
                 # Override command logger
-                command.logger = self.logger.getChild(
-                    command.__class__.__name__
+                command.logger = LoggerAdapter(
+                    {'pipeline_name': self.pipeline.name},
+                    logging.getLogger(f'm42pl.commands.{command.__module__}.{command.__class__.__name__}')
                 )
                 # Setup command
                 try:
-                    await command.setup(event=event, pipeline=self)
+                    await command.setup(event=event, pipeline=self.pipeline, context=self.context)
                 except Exception as error:
                     if not isinstance(error, errors.M42PLError):
                         raise errors.CommandError(command, message=str(error))
@@ -204,83 +263,65 @@ class Pipeline:
             # Do not re-setup commands (needed for sub pipelines)
             self._commands_set = True
         else:
-            self.logger.debug(f'pipeline commands already set: pipeline="{self.name}"')
+            self.logger.debug(f'pipeline commands already set')
 
-    async def _run_commands(self, commands, event, ending, remain):
+    async def run_commands(self, commands, event, ending, remain):
         """Runs a commands list.
 
-        :param commands:    Commands list
-        :param event:       Current event
-        :param ending:      `True` if the pipeline is ending,
-                            `False` otherwise
-        :param remain:      Amount or remaining events in the previous
-                            command
+        :param commands: Commands list
+        :param event: Current event
+        :param ending: ``True`` if the pipeline is ending, ``False``
+            otherwise
+        :param remain: Amount or remaining events in the previous
+            command
         """
         if len(commands):
             # Current command instance and children commands
             command, has_further_commands = commands[0], len(commands) > 1
             # Run command and children commands
-            async for _event in command(event=event, pipeline=self, ending=ending, remain=remain):
+            async for _event in command(event=event, pipeline=self.pipeline, context=self.context, ending=ending, remain=remain):
                 if has_further_commands:
-                    async for __event in self._run_commands(commands[1:], _event, ending, (remain + await command.remain())):
+                    async for __event in self.run_commands(commands[1:], _event, ending, (remain + await command.remain())):
                         yield __event
                 elif _event:
                     yield _event
             else:
                 if ending:
                     if has_further_commands:
-                        async for _event in self._run_commands(commands[1:], None, ending, remain):
+                        async for _event in self.run_commands(commands[1:], None, ending, remain):
                             yield _event
                     elif event:
                         yield event
 
-    def stop(self, *args, **kwargs):
-        """Stops the pipeline.
-        """
-        self._ready = False
-        raise StopAsyncIteration('SINGINT')
-
-    async def __call__(self, context: Context = None, event: dict|None = None,
-                        infinite: bool = False, timeout: float = 0.0):
+    async def __call__(self, context: Context|None = None,
+                        event: dict|None = None, infinite: bool = False,
+                        timeout: float = 0.0):
         """Runs the pipeline.
 
-        The pipeline is ran in two or more iterations:
-
-        * At first, events are processed as they are generated
-        * At last AND when the pipeline's generating command times out,
-          the pipeline's commands are *awakened* to force them to yield
-          their buffered events.
-
-        :param context:     Pipeline context
-        :param event:       Initial event
-        :param infinite:    Run in infinite mode (continuously receives
-                            next event from calling function)
-        :param timeout:     Timeout; Defaults to 0
-        
-        :ivar metas:        Meta commands
-        :ivar generator:    Generator command
-        :ivar processors:   Processing commands
-        :ivar iterator:     Generator's iterator
+        :param context: Current context
+        :param event: Initial event
+        :param infinite: ``True`` if the pipeline should run forever,
+            ``False`` otherwise
+        :param timeout: Generator timeout to force pipeline wakeup
         """
-        # Setup signal handler
-        signal.signal(signal.SIGINT, self.stop)
-
         # Setup context
         self.context = context
+        # Setup signal handler
+        signal.signal(signal.SIGINT, self.stop)
         # ---
         # Setup commands
-        await self._setup_commands(event or Event())
+        await self.setup_commands(event or Event())
         # ---
         # Enter pipeline context
         async with AsyncExitStack() as stack:
-            self.logger.debug(f'entering commands contexts: pipeline="{self.name}"')
+            self.logger.debug(f'entering commands contexts')
             # Enter commands context
-            metas = [await stack.enter_async_context(cmd) for cmd in self.metas]
-            generator = self.generator and await stack.enter_async_context(self.generator) or None
-            processors = [await stack.enter_async_context(cmd) for cmd in self.processors]
+            metas = [await stack.enter_async_context(cmd) for cmd in self.pipeline.metas]
+            generator = self.pipeline.generator and await stack.enter_async_context(self.pipeline.generator) or None
+            processors = [await stack.enter_async_context(cmd) for cmd in self.pipeline.processors]
             # Run pipeline metas
-            self.logger.info(f'running pipeline metas: pipeline="{self.name}"')
-            async for _ in self._run_commands(commands=metas, event=event, ending=False, remain=0):
+            self.logger.info(f'running pipeline metas')
+            async for _ in self.run_commands(commands=metas, event=event, ending=False, remain=0):
                 pass
             # ---
             # Setup the events iterator, i.e. the pipeline generator
@@ -288,39 +329,40 @@ class Pipeline:
             # If the pipeline run in infinite mode, the initial event will
             # be received later, and the iterator will be set at the same time.
             if infinite:
-                # self.trace(1, 'infinite mode: set iterator to None')
+                self.trace(1, 'infinite mode: set iterator to None')
                 iterator = None
             # Otherwise, set the iterator immediately.
             else:
-                # self.trace(1, 'standard mode: set iterator from generator')
-                iterator = generator and generator(event=event, pipeline=self).__aiter__() or None
+                self.trace(1, 'standard mode: set iterator from generator')
+                iterator = generator and generator(event=event, pipeline=self.pipeline, context=self.context).__aiter__() or None
             # ---
             # Start pipeline loop
             next_event = event
+            # while self._ready:
             while self._ready:
-                # self.trace(2, 'looping')
+                self.trace(2, 'looping')
                 try:
                     # ---
                     # If pipeline runs in infinite mode and, it receive its
                     # next event from the calling function. The iterator is
                     # (re)set right after.
                     if infinite and not iterator:
-                        # self.trace(3, f'pipeline is infinite, iterator is None: yield for initial event')
+                        self.trace(3, f'pipeline is infinite, iterator is None: yield for initial event')
                         next_event = yield
-                        # self.trace(3, f'initial event: {next_event and next_event.signature or None}')
+                        self.trace(3, f'initial event: {next_event and next_event["sign"] or None}')
                         if next_event:
                             # self.trace(4, f'initial event is not None, reset iterator on it')
-                            iterator = generator and generator(event=next_event, pipeline=self).__aiter__() or None
-                        # else:
-                        #     self.trace(4, f'initial event is None, pipeline should raise StopAsyncIteration right after')
+                            iterator = generator and generator(event=next_event, pipeline=self.pipeline, context=self.context).__aiter__() or None
+                        else:
+                            self.trace(4, f'initial event is None, pipeline should raise StopAsyncIteration right after')
                     # ---
                     # If the pipeline has a generating command derived into an
                     # iterator, it retrieves its next event from this iterator.
                     if iterator:
-                        # self.trace(3, f'iterator is set, await next event')
+                        self.trace(3, f'iterator is set, await next event')
                         if timeout > 0.0:
                             task = asyncio.create_task(iterator.__anext__())
-                            # self.trace(4, f'task shiedled: {task}')
+                            self.trace(4, f'task shiedled: {task}')
                             next_event = await asyncio.wait_for(asyncio.shield(task), timeout)
                         else:
                             next_event = await iterator.__anext__()
@@ -328,17 +370,17 @@ class Pipeline:
                     # If neither the calling function nor the generator had 
                     # yield an event, stop the iteration.
                     if next_event is None:
-                        self.logger.info(f'next_event is None, breaking: pipeline="{self.name}"')
-                        # self.trace(3, f'next event is None, raise StopAsyncIteration')
+                        self.logger.info(f'next_event is None, breaking')
+                        self.trace(3, f'next event is None, raise StopAsyncIteration')
                         raise StopAsyncIteration()
                 # ---
                 # Timeout occurs when the iterator took too long to yield an
                 # event. Send None to the processors to 'wake-up' the
                 # buffering commands and process the buffered events.
                 except asyncio.TimeoutError:
-                    self.logger.debug(f'generator timeout, forcing pipeline wakeup: pipeline="{self.name}"')
-                    # self.trace(4, f'shielded task {task} -> wake up !')
-                    async for e in self._run_commands(commands=processors, event=None, ending=False, remain=0):
+                    self.logger.debug(f'generator timeout, forcing pipeline wakeup')
+                    self.trace(4, f'shielded task {task} -> wake up !')
+                    async for e in self.run_commands(commands=processors, event=None, ending=False, remain=0):
                         yield e
                     next_event = await task # type: ignore
                 # ---
@@ -348,60 +390,37 @@ class Pipeline:
                     # self.trace(3, 'catched StopAsyncIteration')
                     # Always empty the buffered events
                     if len(processors):
-                        self.logger.info(f'received StopAsyncIteration, running pipeline processors in end mode: pipeline="{self.name}"')
+                        self.logger.info(f'received StopAsyncIteration, running pipeline processors in end mode')
                         # self.trace(4, f'running processors in end mode')
-                        async for _event in self._run_commands(commands=processors, event=None, ending=True, remain=0):
+                        async for _event in self.run_commands(commands=processors, event=None, ending=True, remain=0):
                             # self.trace(5, f'yield event from processors in end mode: {_event.signature}')
                             yield _event
                     # If the pipeline runs in infinte mode, reset its iterator
                     # and yield None to indicate the end of the current loop.
                     # The iterator will be reset in the new loop.
                     if infinite:
-                        self.logger.debug(f'received StopAsyncIteration, reset pipeline loop: pipeline="{self.name}"')
-                        # self.trace(4, 'inifite mote, reset iterator and yield None')
+                        self.logger.debug(f'received StopAsyncIteration, reset pipeline loop')
+                        self.trace(4, 'inifite mote, reset iterator and yield None')
                         iterator = None
                         next_event = None
                         # yield None
                     # Otherwise, simply break the pipeline loop.
                     else:
-                        self.logger.debug(f'received StopAsyncIteration, breaking pipeline loop: pipeline="{self.name}"')
-                        # self.trace(4, 'standard mode, return')
+                        self.logger.debug(f'received StopAsyncIteration, breaking pipeline loop')
+                        self.trace(4, 'standard mode, return')
                         return
                 # ---
                 # Process the received event.
                 if len(processors):
-                    # self.trace(3, f'running processors on event {next_event and next_event.signature or None}')
-                    # self.trace(3, f'processors: {processors}')
-                    async for _event in self._run_commands(commands=processors, event=next_event, ending=False, remain=0):
-                        # self.trace(4, f'yield event from processors: {_event.signature}')
+                    self.trace(3, f'running processors on event {next_event and next_event["sign"] or None}')
+                    self.trace(3, f'processors: {processors}')
+                    async for _event in self.run_commands(commands=processors, event=next_event, ending=False, remain=0):
+                        self.trace(4, f'yield event from processors: {_event["sign"]}')
                         yield _event
                     # Reinitialize next event
                     next_event = None
                 elif next_event:
                     yield next_event
-            #     # ---
-            #     # Control state
-            #     if not self._ready:
-            #         self.logger.debug(f'pipeline state switched to not ready, breaking pipeline loop: pipeline="{self.name}')
-            #         break
-            # # ---
-            # # Process buffered events
-            # self.logger.debug(f'terminating pipeline: pipeline="{self.name}"')
-            # # self.ending = True
-            # if len(processors):
-            #     self.logger.info(f'running pipeline processors in end mode: pipeline="{self.name}"')
-            #     async for _event in self._run_commands(commands=processors, event=None, ending=True, remain=0):
-            #         yield _event
-        # ---
-        # Done
-        # self.logger.debug(f'finished pipeline: pipeline="{self.name}"')
-        # # If we're in an infinite pipeline, yield None to indicate
-        # # that the loop has been ran.
-        # if infinite:
-        #     yield None
-        # # If we're in a finite pipeline, simply return.
-        # else:
-        #     return
 
 
 class InfiniteRunner:
@@ -414,17 +433,18 @@ class InfiniteRunner:
         """
         # Run the pipeline in infinite mode; this will not yield
         # any event but properly init the pipeline loop.
-        self.pipeline = pipeline(context, event, infinite=True)
+        self.pipeline = pipeline
+        self.iter = pipeline(context, event, infinite=True)
 
     async def setup(self):
-        await self.pipeline.__anext__()
+        await self.iter.__anext__()
 
     async def __call__(self, event):
         try:
-            next_event = await self.pipeline.asend(event)
+            next_event = await self.iter.asend(event)
             while next_event:
                 yield next_event
-                next_event = await self.pipeline.asend(None)
+                next_event = await self.iter.asend(None)
             return
         except StopAsyncIteration:
             yield

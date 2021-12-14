@@ -30,7 +30,7 @@ class JsonField(BaseField):
         self.literal = False
         self.matcher = jsonpath_ng.parse(self.name)
     
-    async def _read(self, event: dict, pipeline: Pipeline|None = None):
+    async def _read(self, event: dict, *args, **kwargs):
         if event:
             matched =  [
                 match.value

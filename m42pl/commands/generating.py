@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING, AsyncGenerator
 
 if TYPE_CHECKING:
     from m42pl.pipeline import Pipeline
+    from m42pl.context import Context
 
 from m42pl.event import Event
 from m42pl.errors import CommandError
@@ -22,7 +23,7 @@ class GeneratingCommand(AsyncCommand):
     * Be `None` (then an empty event is generated and used in place)
     """
 
-    async def __call__(self, event: dict, pipeline: Pipeline,
+    async def __call__(self, event: dict, pipeline: Pipeline, context: Context,
                         *args, **kwargs) -> AsyncGenerator[dict|None, None]:
         """Runs the command.
 
@@ -30,12 +31,12 @@ class GeneratingCommand(AsyncCommand):
         :param pipeline:    Current pipeline instance
         """
         try:
-            async for _event in self.target(event or Event(), pipeline):
+            async for _event in self.target(event or Event(), pipeline, context):
                 yield _event
         except Exception as error:
             raise CommandError(command=self, message=str(error)) from error
 
-    async def target(self, event: dict, pipeline: Pipeline,
+    async def target(self, event: dict, pipeline: Pipeline, context: Context,
                         *args, **kwargs) -> AsyncGenerator[dict|None, None]:
         """Generates and yields events.
 

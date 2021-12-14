@@ -19,7 +19,7 @@ class EvalField(BaseField):
         super().__init__(*args, **kwargs)
         self.expr = Evaluator(self.name)
         
-    async def _read(self, event: dict, pipeline: Pipeline|None = None):
+    async def _read(self, event: dict, *args, **kwargs):
         try:
             return self.expr(event and event.get('data', {}) or {})
         except Exception:

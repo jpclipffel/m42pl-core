@@ -138,7 +138,7 @@ class PipelineScript(Script):
 
         def __init__(self, *args, **kwargs):
             super().__init__(*args, **kwargs)
-            self.pipelines_ref = []
+            # self.pipelines_refs = []
 
         def command(self, items):
 
@@ -180,17 +180,19 @@ class PipelineScript(Script):
         def pipeline(self, items):
             """Process the main pipeline.
 
-            The main pipeline is the 'enclosing' pipeline.
+            The main pipeline is a script's 'root' pipeline.
             """
             # print(f'MAIN PIPELINE !')
             # pipeline_name = str(uuid.uuid4())
-            pipeline_name = 'main'
-            self.pipelines[pipeline_name] = Pipeline(
+            # pipeline_name = 'main'
+            self.pipelines['main'] = Pipeline(
                 commands=items[0],
-                name=pipeline_name
+                name='main'
             )
+            # Add children pipelines
+            # self.pipelines['main'].children = self.pipelines
             # Add sub-pipelines references
-            self.pipelines[pipeline_name].pipelines_ref = self.pipelines_ref
+            # self.pipelines['main'].sub_pipelines = self.pipelines_refs
 
         def block(self, items):
             """Process a sub-pipeline.
@@ -204,7 +206,7 @@ class PipelineScript(Script):
                 commands=len(items) > 0 and items[0] or [], 
                 name=pipeline_name
             )
-            self.pipelines_ref.append(f'@{pipeline_name}')
+            # self.pipelines_refs.append(f'@{pipeline_name}')
             return f'@{pipeline_name}'
         
         def blocks(self, items):

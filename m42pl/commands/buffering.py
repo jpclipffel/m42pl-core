@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING, AsyncGenerator
 
 if TYPE_CHECKING:
     from m42pl.pipeline import Pipeline
+    from m42pl.context import Context
 
 import asyncio
 from copy import deepcopy
@@ -54,7 +55,7 @@ class BufferingCommand(AsyncCommand):
         self.maxsize = 0
         self.hits = 0
 
-    async def setup(self, event: dict, pipeline: Pipeline, maxsize: int = 1) -> None: # type: ignore[override]
+    async def setup(self, event: dict, pipeline: Pipeline, context: Context, maxsize: int = 1) -> None: # type: ignore[override]
         """
         :param maxsize:     Internal buffer maximum size
         """
@@ -88,7 +89,8 @@ class BufferingCommand(AsyncCommand):
         return False
 
     async def __call__(self, event: dict, pipeline: Pipeline,
-                        ending: bool = False, remain: int = 0, 
+                        context: Context, ending: bool = False,
+                        remain: int = 0,
                         *args, **kwargs) -> AsyncGenerator[dict, None]:
         """Receives, stores and process events in accordance with the
         pipeline state and buffer limits.

@@ -1,9 +1,10 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, AsyncGenerator, Tuple
+from typing import TYPE_CHECKING, AsyncGenerator, ClassVar, Tuple
 
 if TYPE_CHECKING:
     from m42pl.pipeline import Pipeline
+    from m42pl.context import Context
 
 import re
 import logging
@@ -58,7 +59,7 @@ class Command():
     _about_     = ''
     _syntax_    = ''
     _aliases_   = [] # type: list[str]
-    _schema_    = {} # type: dict
+    _schema_: ClassVar[dict[str, str|bool|dict]]    = {}
     # pylint: disable=anomalous-backslash-in-string
     _grammar_   = OrderedDict({
         # ---
@@ -398,7 +399,7 @@ class AsyncCommand(Command):
         """
         return 0
 
-    async def setup(self, event: dict, pipeline: Pipeline, *args, **kwargs):
+    async def setup(self, event: dict, pipeline: Pipeline, context: Context, *args, **kwargs):
         """Finishes command initialization.
 
         Unlike :meth:`__init__`, :meth:`setup` is a coroutine and thus

@@ -69,7 +69,7 @@ class FieldsMap:
     def update(self, **fields):
         self.fields.update(fields)
 
-    async def read(self, event, pipeline) -> SimpleNamespace:
+    async def read(self, event, pipeline, context) -> SimpleNamespace:
         # Using `type({})` (resolve to `dict`) instead of `dict`
         # because `dict` is overloaded bu the `dict.py` module.
         # No comment; TODO: Make this cleaner.
@@ -79,7 +79,7 @@ class FieldsMap:
             in zip(
                 self.fields.keys(),
                 await asyncio.gather(*[
-                    field.read(event, pipeline)
+                    field.read(event, pipeline, context)
                     for _, field
                     in self.fields.items()
                 ])

@@ -28,7 +28,7 @@ class DictField(BaseField):
             in filter(None, self.name.split('.'))
         ]
     
-    async def _read(self, event: dict, pipeline: Pipeline|None = None):
+    async def _read(self, event: dict, *args, **kwargs):
         if event:
             if len(self.path) == 1:
                 return event.get('data', {}).get(self.path[0], self.default)

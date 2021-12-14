@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import Union, Collection
 
 from m42pl.pipeline import Pipeline
+from m42pl.context import Context
 
 
 # pylint: disable=unsubscriptable-object
@@ -75,22 +76,24 @@ class BaseField:
         self.seqn = seqn
         self.literal = True
 
-    async def _read(self, event: dict, pipeline: Pipeline|None = None):
+    async def _read(self, event: dict, pipeline: Pipeline|None = None, context: Context|None = None):
         """Gets the configured field.
 
         This method should be implemented by a child class.
 
         :param event:       dict from which the field must be read
         :param pipeline:    Current pipeline
+        :param context:     Current context
         :return:            Read field value
         """
         raise NotImplementedError()
 
-    async def read(self, event: dict, pipeline: Pipeline|None = None):
+    async def read(self, event: dict, pipeline: Pipeline|None = None, context: Context|None = None):
         """Normalizes and returns the configured field's value.
 
         :param event:       dict from which the field must be read
         :param pipeline:    Current pipeline
+        :param context:     Current context
         :return:            Read field value
         """
 
