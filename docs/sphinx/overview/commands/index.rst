@@ -10,6 +10,11 @@ defined in the module :mod:`m42pl.commands`:
 * :class:`m42pl.commands.MergingCommand`
 * :class:`m42pl.commands.MetaCommand`
 
+Each command type specializes in a way to generate, gather and process events.
+
+Inheritance diagram
+-------------------
+
 .. inheritance-diagram:: m42pl.commands.GeneratingCommand 
                          m42pl.commands.StreamingCommand
                          m42pl.commands.MergingCommand
@@ -17,14 +22,24 @@ defined in the module :mod:`m42pl.commands`:
                          m42pl.commands.BufferingCommand
    :parts: 1
 
-Each command type specializes in a way to generate, gather and process events.
+---
+
+Command classes
+---------------
 
 .. toctree::
-   :caption: Command types
    :maxdepth: 2
 
-   generating
-   streaming
-   buffering
-   merging
-   meta
+   classes/generating
+   classes/streaming
+   classes/buffering
+   classes/merging
+   classes/meta
+
+Patterns
+--------
+
+.. toctree::
+   :maxdepth: 1
+   
+   composition

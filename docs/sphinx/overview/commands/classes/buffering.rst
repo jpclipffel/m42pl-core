@@ -1,2 +1,2 @@
-Buffering commands
-==================
+Buffering command
+=================

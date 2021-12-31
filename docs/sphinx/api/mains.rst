@@ -1,7 +1,7 @@
 Mains
 =====
 
-.. automodule:: m42pl.mains.__base__.Action
+.. automodule:: m42pl.mains.__base__
    :members:
    :special-members: __init__, __call__
 

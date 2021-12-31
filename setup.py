@@ -16,11 +16,11 @@ setup(
     ]
   },
   install_requires=[
-    'regex',
-    'jsonpath-ng',
-    'lark-parser[regex]',
+    'regex>=2021.11.10',
+    'jsonpath-ng>=1.5.3',
+    'lark-parser[regex]>=0.12.0',
     'types-setuptools',
-    'tabulate',
-    'flask'
+    'tabulate>=0.8.9',
+    'flask>=2.0.2'
   ],
 )

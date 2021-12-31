@@ -1,2 +1,2 @@
-Generating commands
-===================
+Generating command
+==================

@@ -1,14 +1,14 @@
 Mains
 =====
 
-The module :mod:`m42pl.mains` implements M42PL command line entry points, built
-using `argparse`.
+The module :py:mod:`m42pl.mains` implements M42PL command line entry points,
+built using :py:mod:`argparse`.
 
-The different entry points are referred as *actions* and must derive from one
+The different entry points are referred as `actions` and must derive from one
 of the following classes:
 
-* :class:`m42pl.mains.__base__.RunAction` for actions running M42PL scripts
-* :class:`m42pl.mains.__base__.DebugAction` for debug / hacks actions
+* :py:class:`m42pl.mains.__base__.RunAction` to run M42PL scripts, REPL, ...
+* :py:class:`m42pl.mains.__base__.DebugAction` for debug, hack, ...
 
 Inheritance diagram
 -------------------
@@ -16,18 +16,33 @@ Inheritance diagram
 .. inheritance-diagram:: m42pl.mains.repl.REPL
                          m42pl.mains.run.Run
                          m42pl.mains.grammar.Grammar
+                         m42pl.mains.parse.Parse
    :parts: 1
+
+---
 
 Action class anatomy
 --------------------
 
 An *action* class is a functor which implements at least two methods:
 
+Init
+^^^^
+
+The :py:meth:`__init__` method should always ``init`` the parent class with
+the `action` name.
+
 .. code-block:: Python
 
     def __init__(self, *args, **kwargs) -> None:
         """Initializes the class and its parent(s) class(es).
         """
+        super().__init__('action_name', *args, **kwargs)
+
+Call
+^^^^
+
+The :py:meth:`__call__` method should always ``call`` the parent class first.
 
 .. code-block:: Python
 
@@ -36,12 +51,22 @@ An *action* class is a functor which implements at least two methods:
 
         :param args: Arguments map parsed by argparse
         """
+        super().__call__(args)
 
-The class should be located in `m42pl/mains/`, **preferably** in its own module
-(e.g. `m42pl/mains/myaction.py`).
 
-Action class behaviour
+Implementing an action
 ----------------------
+
+The new `action` module should be located in ``m42pl/mains/``, e.g. 
+``m42pl/mains/myaction.py``).
+
+Do not forget to ``import`` the action in :py:mod:`m42pl.mains.__init__`:
+
+.. code-block:: Python
+
+    from .myaction import MyAction
+
+Boilerplate code:
 
 .. code-block:: Python
 
@@ -79,7 +104,7 @@ Action class behaviour
 
             :param args:    Arguments map parsed by argparse
             """
-            # Mandatory: call the parent(s) class(es)
+            # Mandatory: call the parent class
             super().__call__(args)
             # Action logic is defined here
             # ...

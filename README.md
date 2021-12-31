@@ -5,6 +5,8 @@ M42PL is a **data processing language**, inspired by Unix shells and
 
 Online documentation: [docs.mine42.io](https://docs.mine42.io/m42pl)
 
+<!--p align="center"><img src="/docs/assets/demo.gif?raw=true"/></p-->
+
 ---
 
 The language is designed for streams manipulation and provides a wide amount of

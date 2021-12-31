@@ -1,2 +1,2 @@
-Streaming commands
-==================
+Streaming command
+=================

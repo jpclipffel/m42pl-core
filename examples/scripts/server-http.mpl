@@ -8,4 +8,7 @@
         | eval path='bar', mode='infinite+stream'
         | fields path, mode
     ],
-    '*' on '/{path}' = []
+    '*' on '/{path}' = [
+        | eval path=request.path, mode='default'
+        | fields path, mode
+    ]

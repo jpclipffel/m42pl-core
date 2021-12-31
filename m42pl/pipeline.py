@@ -427,14 +427,16 @@ class InfiniteRunner:
 
     def __init__(self, pipeline, context, event):
         """
-        :param pipeline:    Pipeline instance (already initialized)
-        :param context:     Pipeline context
-        :param event:       Pipeline source event
+        :param pipeline: Pipeline instance (already initialized)
+        :param context: Pipeline context
+        :param event: Pipeline source event
         """
         # Run the pipeline in infinite mode; this will not yield
         # any event but properly init the pipeline loop.
-        self.pipeline = pipeline
-        self.iter = pipeline(context, event, infinite=True)
+        self.runner = PipelineRunner(pipeline)
+        self.iter = self.runner(context, event, infinite=True)
+        # self.pipeline = pipeline
+        # self.iter = pipeline(context, event, infinite=True)
 
     async def setup(self):
         await self.iter.__anext__()
