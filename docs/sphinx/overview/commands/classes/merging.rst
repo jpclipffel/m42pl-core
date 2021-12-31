@@ -1,2 +1,2 @@
-Merging command
-===============
+Merging commands
+================

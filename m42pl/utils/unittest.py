@@ -1,11 +1,10 @@
 from typing import List
 
-import inspect
 from textwrap import dedent
 from dataclasses import dataclass, field
 
 import m42pl
-from m42pl.event import Event, signature
+from m42pl.event import Event
 
 
 @dataclass
@@ -139,7 +138,7 @@ class Command:
             m42pl.load_modules()
             cls.command = m42pl.command(cls.command_alias)
 
-    def test_about(self):
+    def _test_about(self):
         """Tests if the command has a valid `_about_` attribute.
         """
         # pylint: disable=no-member
@@ -153,30 +152,21 @@ class Command:
             )
         )
     
-    def test_syntax(self):
+    def _test_syntax(self):
         """Tests if the command has a valid `_syntax_` attribute.
         """
-        # Get command paramaters beside `self`, `args` and `kwargs`
-        cmd_params = [
-            k for k, _
-            in inspect.signature(self.command.__init__).parameters.items()
-            if k not in ('self', 'args', 'kwargs')
-        ]
-        # Test only if the command's `__init__` takes at least one parameter
-        # beside `self`, `args` and `kwargs`
-        if len(cmd_params) > 0:
-            # pylint: disable=no-member
-            self.assertGreaterEqual(
-                len(self.command._syntax_),
-                2,
-                dedent('''\
-                    Command's `_syntax_` field mut not be empty and
-                    should provide the command syntax in a shell-like
-                    (or docopt-like) syntax.
-                ''')
-            )
+        # pylint: disable=no-member
+        self.assertGreaterEqual(
+            len(self.command._syntax_),
+            2,
+            dedent('''\
+                Command's `_syntax_` field mut not be empty and
+                should provide the command syntax in a shell-like
+                (or docopt-like) syntax.
+            ''')
+        )
 
-    def test_schema(self):
+    def _test_schema(self):
         """Tests if the command has a valid `_schema_` attribute.
         """
         # pylint: disable=no-member

@@ -18,8 +18,8 @@
 # -- Project information -----------------------------------------------------
 
 project = 'M42PL'
-copyright = '2020 - 2021, Jean-Philippe Clipffel'
-author = 'Jean-Philippe Clipffel'
+copyright = '2020 - 2021, @jpclipffel'
+author = '@jpclipffel'
 
 
 # -- General configuration ---------------------------------------------------
@@ -30,7 +30,6 @@ author = 'Jean-Philippe Clipffel'
 extensions = [
     'sphinx.ext.autodoc',
     'sphinx_rtd_theme',
-    'sphinx.ext.autodoc',
     'sphinx_autodoc_typehints',
     'sphinx.ext.inheritance_diagram',
     'sphinx.ext.graphviz'

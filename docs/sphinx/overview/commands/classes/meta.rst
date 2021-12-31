@@ -1,2 +1,2 @@
-Meta command
-============
+Meta commands
+=============

@@ -103,12 +103,6 @@ class REPL(RunAction):
             * Type 'command <command name>' to show a command help
         '''))
 
-    def command_in_path(self, command: str) -> bool:
-        for path in filter(None, os.environ.get('PATH', '').split(':')):
-            if os.path.isfile(f'{path}/{command}'):
-                return True
-        return False
-
     def stop(self, sig = None, frame = None):
         sys.exit(-1)
 
@@ -145,16 +139,9 @@ class REPL(RunAction):
                         getattr(self, f'builtin_{rx.groupdict()["name"]}')()
                     # Otherwise, interpret source as a M42PL pipeline
                     else:
-                        # Parse source as 'process <source>'
-                        command = source.split(' ')[0]
-                        if command not in self.aliases and self.command_in_path(command):
-                            source = f'process {source}'
-                        # Init dispatcher
                         if not self.dispatcher:
                             self.dispatcher = m42pl.dispatcher(args.dispatcher)(**args.dispatcher_kwargs)
-                        # Update history
                         readline.write_history_file(self.history_file)
-                        # Run
                         self.dispatcher(
                             source=source,
                             kvstore=kvstore,
