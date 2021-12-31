@@ -148,7 +148,9 @@ class PipelineScript(Script):
                         configure_command(c, items)
                 else:
                     cmd._lncol_ = items[0].line, items[0].column
-                    cmd._offset_ = items[0].pos_in_stream
+                    # --- Depreciation warning ---
+                    # cmd._offset_ = items[0].pos_in_stream
+                    cmd._offset_ = items[0].start_pos
                     cmd._name_ = command_name
 
             # Extract command name and body
@@ -166,7 +168,9 @@ class PipelineScript(Script):
                 raise errors.ScriptError(
                     line=items[0].line,
                     column=items[0].column,
-                    offset=items[0].pos_in_stream,
+                    # --- Depreciation warning ---
+                    # offset=items[0].pos_in_stream,
+                    offset=items[0].start_pos,
                     message=str(error)
                 )
             # Setup command instance
