@@ -1,0 +1,13 @@
+#!/bin/sh
+
+head -n 1 ${1} | egrep -i "^\[(feat(ure)?|fix|ref(actor)?|doc(s)?|style|test(s)?|,)+\] .+" && exit 0 || cat << EOF
+$(basename ${0}): ERROR: Commit 1st line must look like '[<tag>,...] <msg>'
+Where <tag> is one of:
+* feat(ure)     Something new has been added
+* fix           Something has been fixed
+* ref(actor)    Code has been refactored
+* doc(s)        Documentation added
+* style         Code style
+* test(s)       Test(s) has been added, changed, removed
+EOF
+exit 1
