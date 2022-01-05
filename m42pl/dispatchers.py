@@ -12,6 +12,7 @@ import m42pl
 import m42pl.commands
 from m42pl.kvstores import KVStore
 from m42pl.utils import time
+from m42pl.utils.log import LoggerAdapter
 
 
 # Dispatchers aliases map
@@ -100,7 +101,11 @@ class Dispatcher:
 
     def __init__(self) -> None:
         self.script = m42pl.command('script')
-        self.logger = logger.getChild(self.__class__.__name__)
+        # self.logger = logger.getChild(self.__class__.__name__)
+        self.logger = LoggerAdapter(
+            defaults={},
+            logger=logging.getLogger(f'm42pl.dispatcher.{self.__class__.__name__}')
+        )
 
     def target(self, context: Context, event: dict):
         """Runs the dispatcher.
@@ -155,6 +160,7 @@ class Dispatcher:
         :param kvstore:     KVStore instance (must be ready)
         :param identifier:  Pipeline process identifier
         """
+        self.logger.info('registering pipeline process')
         await kvstore.write(
             f'{self.kvstore_prefix}:{identifier}',
             {
@@ -172,6 +178,7 @@ class Dispatcher:
         :param kvstore:     KVStore instance (must be ready)
         :param identifier:  Pipeline process identifier
         """
+        self.logger.info('unregistering pipeline process')
         await kvstore.delete(f'{self.kvstore_prefix}:{identifier}')
 
     async def cleanup(self, kvstore):
@@ -181,3 +188,9 @@ class Dispatcher:
         for process in processes:
             # if process.get('dispacther') == self.__class.__name__:
             print(process)
+
+    async def __aenter__(self):
+        return self
+    
+    async def __aexit__(self, *args, **kwargs):
+        pass
