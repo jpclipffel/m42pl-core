@@ -424,17 +424,24 @@ class PipelineRunner:
 
 
 class InfiniteRunner:
+    """Runs a pipeline forever.
+
+    This runner ensure the pipeline will continue to run even after
+    reaching the last event. This is usefull when the pipeline does not
+    need to be (re)initialized, e.g. when used as a sub-pipeline.
+
+    :ivar iter: Pipeline iterator
+    """
 
     def __init__(self, pipeline, context, event):
         """
-        :param pipeline:    Pipeline instance (already initialized)
-        :param context:     Pipeline context
-        :param event:       Pipeline source event
+        :param pipeline: Pipeline instance (already initialized)
+        :param context: Pipeline context
+        :param event: Pipeline source event
         """
         # Run the pipeline in infinite mode; this will not yield
         # any event but properly init the pipeline loop.
-        self.pipeline = pipeline
-        self.iter = pipeline(context, event, infinite=True)
+        self.iter = PipelineRunner(pipeline)(context, event, infinite=True)
 
     async def setup(self):
         await self.iter.__anext__()
