@@ -76,7 +76,7 @@ def load_grok(path: str):
     before definition: all patterns failed to parse during the first
     cycle are retried a second time.
 
-    :param path:    Path to a file which contains Grok patterns
+    :param path: Path to a file which contains Grok patterns
     """
     failed = []
     with open(path, 'r') as fd:
@@ -97,13 +97,13 @@ def load_grok(path: str):
 
 
 # Load default Grok patterns
-load_grok(pkg_resources.resource_filename('m42pl', "files/grok_patterns"))
+load_grok(pkg_resources.resource_filename('m42pl', 'files/grok_patterns'))
 
 
 class GrokRuleError(Exception):
     """Exception raised when a Grok rule fails or is not found.
     """
-    
+
     def __init__(self, rule: str, message: str = ''):
         super().__init__(f'{rule}: {message}')
 
@@ -111,31 +111,35 @@ class GrokRuleError(Exception):
 class Grok:
     """A simple Grok implementation.
 
-    :ivar rx:       Regular expression built from a Grok expression
-    :ivar groups:   Grok expression's groups rules & misc
+    :ivar rx: Regular expression built from a Grok expression
+    :ivar groups: Grok expression's groups rules & misc
     """
 
     def __init__(self, expression: str, nested_sep: str = '__', keep_nameless: bool = False, ignore_failed: bool = False):
         """
-        :param expression:      Grok expression
-        :param nested_sep:      Nested fields separator (replaces `a.b`
-                                with `a<sep>b`)
-        :param keep_nameless:   Keep the nameless group and name them
-                                after their Grok pattern name
-        :param ignore_failed:   If True, ignore errors and return
-                                as much as possible fields
+        :param expression: Grok expression
+        :param nested_sep: Nested fields separator
+            (replaces `a.b`with `a<sep>b`)
+        :param keep_nameless: Keep the nameless group and name them
+            after their Grok pattern name
+        :param ignore_failed: If True, ignore errors and return as much
+            fields as possible
         """
         self.nested_sep = nested_sep
         self.keep_nameless = keep_nameless
         self.ignore_failed = ignore_failed
         # Parse the Grok expression, set rules and compile regex
-        rx, self.rules = parse_grok(expression, self.nested_sep, self.keep_nameless)
+        rx, self.rules = parse_grok(
+            expression,
+            self.nested_sep,
+            self.keep_nameless
+        )
         self.rx = regex.compile(rx)
 
     def match(self, data: str) -> dict:
         """Matches the given data with the internal Grok expression.
 
-        :param data:    Data to match with the internal Grok expression
+        :param data: Data to match with the internal Grok expression
         """
         res = {}
         matched = self.rx.match(data)
@@ -161,13 +165,3 @@ class Grok:
 
     def __call__(self, data: str) -> dict:
         return self.match(data)
-
-
-if __name__ == '__main__':
-    gk = Grok(
-        '%{USER:user_name:str} is %{INT:user_age:float} and at %{EMAILADDRESS::lower}',
-        keep_nameless=True,
-        ignore_failed=False)
-    print(
-        gk.match('jpc is 27 and at jp.clipffel@protonmail.com')
-    )
