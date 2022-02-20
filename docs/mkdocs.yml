@@ -1,0 +1,28 @@
+# code: language=YAML tabSize=2
+
+site_name: M42PL
+
+theme:
+  name: material
+  palette:
+    - scheme: slate
+      primary: blue
+      accent: blue
+      toggle:
+        icon: material/toggle-switch-off-outline 
+        name: Switch to dark mode
+    - scheme: default
+      primary: blue
+      accent: blue
+      toggle:
+        icon: material/toggle-switch
+        name: Switch to light mode
+
+nav:
+  - 'Home': index.md
+  - 'Quick start': quickstart.md
+  - 'Language':
+      - 'Fields syntax':
+          - 'Overview': fields/index.md
+          - 'Literal': fields/literal.md
+          - 'Eval': fields/eval.md
