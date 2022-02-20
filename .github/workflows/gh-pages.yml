@@ -1,0 +1,46 @@
+name: Build and publish M42PL documention
+
+on:
+  push:
+    branches: [main, master]
+
+jobs:
+
+  userdoc:
+    name: User documentation
+    runs-on: ubuntu-20.04
+    steps:
+
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Setup Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: "3.x"
+
+      - name: Get Pip cache path
+        id: pip_cache
+        run: echo "::set-output name=CACHE_DIR::$(pip cache dir)"
+
+      - name: Setup cache
+        if: ${{ ! env.ACT }}
+        uses: actions/cache@v2
+        with:
+          path: ${{ steps.pip_cache.outputs.CACHE_DIR }}
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      - name: Install requirements
+        run: python3 -m pip install -r ./docs/requirements.txt
+
+      - name: Build site
+        run: python3 -m mkdocs build -f ./docs/mkdocs.yml -d ./site
+
+      - name: Deploy site to GitHub Pages
+        if: ${{ secrets.GITHUB_TOKEN }}
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./docs/site
