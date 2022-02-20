@@ -109,7 +109,7 @@ class BaseField:
             """
             for item in isinstance(items, (list, tuple, set)) and items or [items, ]:
                 if self.type and not isinstance(item, self.type):
-                    raise Exception(f'Invalid type for field {self.name}')
+                    raise Exception(f'Invalid type for field {self.name}: expected {self.type}, got {type(item)}')
             return items
 
         if self.name is not None:
