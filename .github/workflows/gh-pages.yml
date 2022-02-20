@@ -39,7 +39,6 @@ jobs:
         run: python3 -m mkdocs build -f ./docs/mkdocs.yml -d ./site
 
       - name: Deploy site to GitHub Pages
-        if: ${{ secrets.GITHUB_TOKEN }}
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
