@@ -1,4 +1,5 @@
 from .repl import REPL
+from .repl2 import REPL2
 from .run import Run
 from .grammar import Grammar
 from .parse import Parse
@@ -8,6 +9,7 @@ from .serve import Serve
 
 commands = [
     REPL,       # Shell-like CLI
+    REPL2,
     Run,        # Run script from file
     Grammar,    # Dump M42PL grammar
     Parse,      # Parse a M42PL script
