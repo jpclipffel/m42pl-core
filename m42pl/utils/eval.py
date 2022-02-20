@@ -42,9 +42,9 @@ class EvalNS(dict):
     
     def __init__(self, name: str, functions: dict, fields: Any):
         """
-        :param name:        Attribute name (may be empty, e.g. `""`)
-        :param functions:   Functions dict (may be empty, e.g. `{}`)
-        :param fields:      Attributes values dict
+        :param name: Attribute name (may be empty, e.g. `""`)
+        :param functions: Functions dict (may be empty, e.g. `{}`)
+        :param fields: Attributes values dict
         """
         setattr(self, 'name', name)
         setattr(self, 'functions', functions)
@@ -53,11 +53,11 @@ class EvalNS(dict):
     def __getitem__(self, name: str):
         """Returns the attribute :param:`name` from current namespace.
 
-        :param name:                Attribute name
+        :param name: Attribute name
 
-        :ivar str self_name:        Current object's name
-        :ivar dict self_functions:  Current object's functions map
-        :ivar dict self_fields:     Current object's fields map
+        :ivar str self_name: Current object's name
+        :ivar dict self_functions: Current object's functions map
+        :ivar dict self_fields: Current object's fields map
         """
         # Set 'self' attributes
         self_name = super().__getattribute__('name')
@@ -86,6 +86,8 @@ class EvalNS(dict):
         return super().__getattribute__('__getitem__')(name)
     
     def __cast__(self, other):
+        if isinstance(other, EvalNS):
+            return super().__getattribute__('fields')
         return type(other)(super().__getattribute__('fields'))
     
     def __add__(self, other):
@@ -143,9 +145,9 @@ class EvalNS(dict):
 def solve(attr, types: tuple|list = (), *args):
     """Resolves an attribute returned by :class:`EvalNS`.
 
-    :param attr:    Attribute to resolve
-    :param types:   Accepted types list (toptional)
-    :param *args:   Default value to return (optional)
+    :param attr: Attribute to resolve
+    :param types: Accepted types list (optional)
+    :param *args: Default value to return (optional)
     """
     # If the attribute is an EvalNS, continue the evalutation and
     # return the result.
@@ -179,8 +181,8 @@ class Evaluator:
     evaluate a Python expression (e.g. `eval` and `where` commands, or
     the `eval` field type).
 
-    :ivar functions:    Utility functions available to `eval` and
-                        `EvalNS`
+    :ivar functions: Utility functions available to ``eval`` and
+        ``EvalNS``
     """
 
     # Evaluation functions
@@ -243,9 +245,9 @@ class Evaluator:
     
     def __init__(self, expression: str):
         """
-        :param expression:  Python expression to evaluate
-                            This expression may uses the functions
-                            defined in `Evaluator.functions`
+        :param expression: Python expression to evaluate.
+            This expression may uses the functions defined in
+            ``Evaluator.functions``.
         """
         # Pre-compile the expression
         self.compiled = compile(
@@ -257,7 +259,7 @@ class Evaluator:
     def __call__(self, data: dict = {}) -> Any:
         """Runs evaluation and returns its result.
 
-        :param data:    Event's data used as eval's globals
+        :param data: Event fields used as eval globals
         """
         # Build environement (functions map and globals)
         env = EvalNS(name='', functions=self.functions, fields=data)
