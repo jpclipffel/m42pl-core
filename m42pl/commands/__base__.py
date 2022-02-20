@@ -12,7 +12,11 @@ from collections import OrderedDict
 from textwrap import dedent
 
 from lark import Lark, Transformer as _Transformer, Discard
-import lark_cython
+
+try:
+    import lark_cython
+except Exception:
+    pass
 
 from . import ALIASES
 
