@@ -57,10 +57,10 @@ class Script(Command):
             self.pipelines = OrderedDict()
 
         def _discard(self, _):
-            raise Discard
+            return Discard
 
         def space(self, _):
-            raise Discard
+            return Discard
 
         float       = lambda self, items: str(items[0])
         integer     = lambda self, items: str(items[0])

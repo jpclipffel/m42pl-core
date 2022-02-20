@@ -10,7 +10,9 @@ import re
 import logging
 from collections import OrderedDict
 from textwrap import dedent
+
 from lark import Lark, Transformer as _Transformer, Discard
+import lark_cython
 
 from . import ALIASES
 
@@ -162,7 +164,7 @@ class Command():
         """
 
         def _discard(self, _):
-            raise Discard
+            return Discard
         
         # comment_rules
         comment     = _discard
