@@ -27,8 +27,8 @@ class Context:
 
     def __init__(self, pipelines: dict, kvstore: KVStore):
         """
-        :param pipelines:   Pipelines dict (name:instance)
-        :param kvstore:     KVStore instance
+        :param pipelines: Pipelines dict (name:instance)
+        :param kvstore: KVStore instance
         """
         self.pipelines = pipelines
         self.kvstore = kvstore
@@ -41,19 +41,9 @@ class Context:
             'kvstore': self.kvstore.to_dict()
         }
 
-    # @property
-    # def main_pipeline(self):
-    #     """Returns the main pipeline.
-    #     """
-    #     return list(self.pipelines.values())[-1]
-    
-    # @main_pipeline.setter
-    # def main_pipeline(self, value):
-    #     self.pipelines
-
     def add_pipelines(self, pipelines: dict):
         """Add one or more pipelines to the context.
 
-        :param pipelines:   Pipelines to add to the context
+        :param pipelines: Pipelines to add to the context
         """
         self.pipelines.update(pipelines)
