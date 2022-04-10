@@ -1,3 +1,5 @@
+import os
+from pathlib import Path
 import json
 
 import m42pl
@@ -26,7 +28,6 @@ class Action:
         self.parser.add_argument('-m', '--module', action='append',
             default=[], help='External module name (may be specified multiple times)')
 
-
     def __call__(self, args):
         """Runs the command line action.
 
@@ -41,13 +42,7 @@ class Action:
         :param args:    Command arguments
         """
         # Load modules
-        # m42pl.load_modules(names=args.module)
         m42pl.find_modules(args.module)
-        # Parse initial event
-        # args.event = json.loads(args.event)
-        # # Parses dispatcher and kvstore kwargs
-        # args.dispatcher_kwargs = json.loads(args.dispatcher_kwargs)
-        # args.kvstore_kwargs = json.loads(args.kvstore_kwargs)
 
 
 class DebugAction(Action):
@@ -70,22 +65,13 @@ class DebugAction(Action):
 class RunAction(Action):
     """Base command line action to run M42PL scripts.
 
-    :ivar dispatcher_alias:     Dispacther alias (name)
+    :ivar dispatcher_alias: Dispacther alias (name)
     """
 
     dispatcher_alias = 'local_repl'
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # # Log level
-        # self.parser.add_argument('-l', '--log-level', type=str.lower,
-        #     default='warning', choices=self.log_levels, help='Log level')
-        # # Extra modules
-        # self.parser.add_argument('-m', '--module', action='append',
-        #     default=[], help='External module name (may be specified multiple times)')
-        # Optional - Generator timeout
-        # self.parser.add_argument('-t', '--timeout', type=float, default=0.0,
-        #     help='Pipelines timeout')
         # Optional - Dispatcher
         self.parser.add_argument('-d', '--dispatcher', type=str,
             default=self.dispatcher_alias, help='Dispatcher name')
