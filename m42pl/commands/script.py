@@ -1,19 +1,16 @@
-from re import L
-from textwrap import dedent
 import uuid
 import json
+from copy import deepcopy
+from textwrap import dedent
 from collections import OrderedDict
 
 from lark import Transformer as LarkTransformer, Discard
-
 import lark.exceptions
 
 import m42pl
 import m42pl.errors as errors
 from m42pl.commands import Command
 from m42pl.pipeline import Pipeline
-# from m42pl.kvstores import KVStore
-# from m42pl.context import Context
 
 
 class Script(Command):
@@ -34,7 +31,7 @@ class Script(Command):
         # ---
         'script_terminals': dedent('''\
             SYMBOL      : ( "+" | "-" | "*" | "/" | "%" | "^" | ":" | "!" | "<" | ">" | "{" | "}" | "(" | ")" | "," | "=" | "==" | ">=" | "<=" | "!=" )
-            CMD_NAME.3  : /[a-zA-Z_]+[a-zA-Z0-9_-]*/
+            CMD_NAME.3  : /[a-zA-Z_]+[a-zA-Z0-9\._-]*/
         '''),
         # ---
         'fields_rules': Command._grammar_['fields_rules'],
@@ -55,6 +52,7 @@ class Script(Command):
         def __init__(self, *args, **kwargs):
             super().__init__(*args, **kwargs)
             self.pipelines = OrderedDict()
+            self.subrefs = []
 
         def _discard(self, _):
             return Discard
@@ -138,7 +136,6 @@ class PipelineScript(Script):
 
         def __init__(self, *args, **kwargs):
             super().__init__(*args, **kwargs)
-            # self.pipelines_refs = []
 
         def command(self, items):
 
@@ -153,8 +150,8 @@ class PipelineScript(Script):
                     cmd._offset_ = items[0].start_pos
                     cmd._name_ = command_name
 
-            # Extract command name and body
-            command_name = str(items[0])
+            # Extract command module (optional), name and body
+            *command_module, command_name = str(items[0]).split('.')
             command_body = ' '.join(
                 filter(
                     None,
@@ -163,7 +160,17 @@ class PipelineScript(Script):
             )
             # Instanciate new command
             try:
-                cmd = m42pl.command(command_name).from_script(command_body)
+                try:
+                    # First attempt - ignore module
+                    cmd = m42pl.command(command_name).from_script(command_body)
+                except errors.ObjectNotFoundError:
+                    # 2nd attempt - load module once
+                    module_name = next(iter(command_module), None)
+                    if module_name is not None and len(module_name) > 0:
+                        m42pl.load_module_name()
+                        cmd = m42pl.command(command_name).from_script(command_body)
+                    else:
+                        raise
             except Exception as error:
                 raise errors.ScriptError(
                     line=items[0].line,
@@ -186,17 +193,11 @@ class PipelineScript(Script):
 
             The main pipeline is a script's 'root' pipeline.
             """
-            # print(f'MAIN PIPELINE !')
-            # pipeline_name = str(uuid.uuid4())
-            # pipeline_name = 'main'
             self.pipelines['main'] = Pipeline(
                 commands=items[0],
-                name='main'
+                name='main',
+                subrefs=deepcopy(self.subrefs)
             )
-            # Add children pipelines
-            # self.pipelines['main'].children = self.pipelines
-            # Add sub-pipelines references
-            # self.pipelines['main'].sub_pipelines = self.pipelines_refs
 
         def block(self, items):
             """Process a sub-pipeline.
@@ -204,23 +205,19 @@ class PipelineScript(Script):
             A sub-pipeline is enclosed between `[` and `]` (thus the
             'block' appelation).
             """
-            # print(f'SUB PIPELINE !')
             pipeline_name = str(uuid.uuid4())
             self.pipelines[pipeline_name] = Pipeline(
                 commands=len(items) > 0 and items[0] or [], 
-                name=pipeline_name
+                name=pipeline_name,
+                subrefs=deepcopy(self.subrefs)
             )
-            # self.pipelines_refs.append(f'@{pipeline_name}')
+            self.subrefs.append(pipeline_name)
             return f'@{pipeline_name}'
         
         def blocks(self, items):
             return ', '.join(items)
 
         def start(self, items):
-            # Rename main pipeline to 'main'
-            # _, self.pipelines['main'] = self.pipelines.popitem()
-            # self.pipelines['main'].name = 'main'
-            # Done
             return self.pipelines
 
 
