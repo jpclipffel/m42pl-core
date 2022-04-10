@@ -1,3 +1,4 @@
+from email import message
 import importlib
 import importlib.util
 import logging
@@ -41,15 +42,20 @@ IMPORTED_MODULES_PATHS = [] # type: List[str]
 
 
 def command(alias: str) -> Any:
-    """Returns the requested :class:`Command` class.
+    """Returns the requested command's class.
 
-    :param alias:   Command alias
+    :param alias: Command alias
     """
     logger.info(f'requesting command: name="{alias}"')
     try:
         return m42pl.commands.ALIASES[alias]
     except KeyError:
-        raise M42PLError(f'Command not found: name="{alias}"')
+        # raise M42PLError(f'Command not found: name="{alias}"')
+        raise ObjectNotFoundError(
+            kind='command',
+            name=alias,
+            message=f'Command not found: name="{alias}"'
+        )
 
 
 def dispatcher(alias: str = 'local') -> Any:
@@ -61,7 +67,12 @@ def dispatcher(alias: str = 'local') -> Any:
     try:
         return m42pl.dispatchers.ALIASES[alias]
     except KeyError:
-        raise M42PLError(f'Dispatcher not found: name="{alias}"')
+        # raise M42PLError(f'Dispatcher not found: name="{alias}"')
+        raise ObjectNotFoundError(
+            kind='dispatcher',
+            name=alias,
+            message=f'Dispatcher not found: name="{alias}"'
+        )
 
 
 def kvstore(alias: str = 'local') -> Any:
@@ -73,7 +84,12 @@ def kvstore(alias: str = 'local') -> Any:
     try:
         return m42pl.kvstores.ALIASES[alias]
     except KeyError:
-        raise M42PLError(f'KVStore not found: name="{alias}"')
+        # raise M42PLError(f'KVStore not found: name="{alias}"')
+        raise ObjectNotFoundError(
+            kind='KVStore',
+            name=alias,
+            message=f'KVStore not found: name="{alias}"'
+        )
 
 
 def encoder(alias: str = 'json') -> Any:
@@ -85,14 +101,19 @@ def encoder(alias: str = 'json') -> Any:
     try:
         return m42pl.encoders.ALIASES[alias]
     except KeyError:
-        raise M42PLError(f'Encoder not found: name="{alias}"')
+        # raise M42PLError(f'Encoder not found: name="{alias}"')
+        raise ObjectNotFoundError(
+            kind='Encoder',
+            name=alias,
+            message=f'Encoder not found: name="{alias}"'
+        )
 
 
 def load_module_path(namespace: str, path: str) -> None:
     """Loads a module by path.
     
-    :param namespace:   Module namespace (e.g. `m42pl.commands`)
-    :param path:        Module path
+    :param namespace: Module namespace (e.g. `m42pl.commands`)
+    :param path: Module path
     """
     logger.info(f'loading module by path: namespace="{namespace}", path="{path}"')
     # ---
@@ -128,7 +149,7 @@ def load_module_path(namespace: str, path: str) -> None:
 def load_module_name(name: str) -> None:
     """Load a module by name.
     
-    :param name:    Module name.
+    :param name: Module name.
     """
     logger.info(f'loading module by name: name="{name}"')
     module = importlib.import_module(name)
@@ -140,10 +161,10 @@ def load_modules(search_paths: list = [], paths: list = [],
                  names: list = [], namespace: str = "m42pl") -> None:
     """Loads modules.
     
-    :param search_paths:    Modules search paths
-    :param paths:           Modules paths
-    :param names:           Modules names
-    :param namespace:       Modules namespace; Defaults to 'm42pl'
+    :param search_paths: Modules search paths
+    :param paths: Modules paths
+    :param names: Modules names
+    :param namespace: Modules namespace; Defaults to 'm42pl'
     """
     # ---
     # Load modules found in search paths.
@@ -164,7 +185,7 @@ def load_modules(search_paths: list = [], paths: list = [],
 def find_modules(items: list = []):
     """Find modules to load.
 
-    :param items:   List of modules name, path or paths.
+    :param items: List of modules name, path or paths.
     """
     search_paths = []
     paths = []
