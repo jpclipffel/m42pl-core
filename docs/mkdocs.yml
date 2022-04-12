@@ -20,9 +20,12 @@ theme:
 
 nav:
   - 'Home': index.md
-  - 'Quick start': quickstart.md
-  - 'Language':
-      - 'Fields syntax':
-          - 'Overview': fields/index.md
-          - 'Literal': fields/literal.md
-          - 'Eval': fields/eval.md
+  - 'Quick start':
+    - 'Installation': 'quickstart/installation.md'
+    - 'First steps': 'quickstart/firststeps.md'
+  - 'Run pipelines':
+    - 'Overview': 'mains/index.md'
+    - 'REPL (interactive)': 'mains/repl2.md'
+    - 'Script': 'mains/run.md'
+    - 'Grammar debug': 'mains/grammar.md'
+    - 'Parsing debug': 'mains/parse.md'

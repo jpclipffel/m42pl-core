@@ -19,11 +19,11 @@ setup(
     'regex',
     'jsonpath-ng',
     'lark-parser[regex]',
-    # 'lark_cython',
+    'lark_cython',
     'types-setuptools',
+    # Required by the mains
+    # TODO: Remove once mains moved to custom repo/project/...
     'tabulate',
-    'requests',
     'prompt_toolkit',
-    'flask'
   ],
 )

@@ -1,12 +1,62 @@
-# M42PL - A Data Processing Language
+# M42PL - A Data Manipulation Language
 
-M42PL is a *data processing language*, inspired by Unix shells and [Splunk].
+M42PL is a _Data Manipulation Language_, inspired by
+[Unix shells][unixshells] and [Splunk][splunk].
 
-The language is designed to be as easy as possible to use, and to make common 
-scripting and programming tasks even easier. It does not have a tedious syntax
-to learn, and hides advanced programming concepts from the user.
+The language is extremely simple to learn and to use. It is designed to make
+data manipulation trivial, even for non-technical users.
+
+## Examples
+
+**Query an URL**
+
+```
+| url 'https://api.ipify.org'
+| fields response.content, response.status
+| eval message = 'Your external IP is ' + response.content
+```
+
+**Run a HTTP server**
+
+```
+| http_server with
+    '*' on '/foo' = [
+        | echo
+        | eval path='foo', mode='infinite+iterator'
+        | fields path, mode
+    ],
+    '*' on '/bar' = [
+        | eval path='bar', mode='infinite+stream'
+        | fields path, mode
+    ],
+    '*' on '/{path}' = []
+```
+
+**Capture and stream a video**
+
+> This requires the installation of the [m42pl-vision][m42pl-vision] commands
+
+```
+| cv2_read
+| cv2_resize ratio=0.5
+| zmq_pub topic='webcam'
+```
+
+**Display a video stream**
+
+> This requires the installation of the [m42pl-vision][m42pl-vision] commands
+
+```
+| zmq_sub topic='webcam'
+| decode {zmq.frames[0]} with 'msgpack'
+| cv2_show cv2.frame
+```
+
 
 ---
-[Splunk]: https://splunk.com
+
+[unixshells]: https://en.wikipedia.org/wiki/Shell_script
+[splunk]: https://splunk.com
 [m42pl-commands]: https://github.com/jpclipffel/m42pl-commands
 [m42pl-dispatchers]: https://github.com/jpclipffel/m42pl-dispatchers
+[m42pl-vision]: https://github.com/jpclipffel/m42pl-vision

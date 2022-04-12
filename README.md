@@ -1,77 +1,22 @@
+<!-- vim: set ft=Markdown ts=2 -->
+
 # M42PL
 
-M42PL is a **data processing language**, inspired by Unix shells and
-[Splunk][splunk].
+M42PL is a _Data Manipulation Language_, inspired by
+[Unix shells][unixshells] and [Splunk][splunk].
 
-Online documentation: [docs.mine42.io](https://docs.mine42.io/m42pl)
+The language is extremely simple to learn and to use. It is designed to make
+data manipulation trivial, even for non-technical users.
 
----
-
-The language is designed for streams manipulation and provides a wide amount of
-commands to collect and process data. It focuses on simplicity and hides
-advanced programming concepts from the user.
-
-Some code examples:
-
-**Query an URL**
-
-```
-| url 'https://api.ipify.org'
-| fields response.content, response.status
-| eval message = 'Your external IP is ' + response.content
-| output format=json
-```
-
-**Run a HTTP server**
-
-```
-| http_server with
-    '*' on '/foo' = [
-        | echo
-        | eval path='foo', mode='infinite+iterator'
-        | fields path, mode
-    ],
-    '*' on '/bar' = [
-        | eval path='bar', mode='infinite+stream'
-        | fields path, mode
-    ],
-    '*' on '/{path}' = []
-```
-
-**Capture and stream a video**
-
-> This requires the installation of the [lab commands][m42pl-git-commands-lab]
-
-```
-| cv2_read
-| cv2_resize ratio=0.5
-| zmq_pub topic='webcam'
-```
-
-**Display a video stream**
-
-> This requires the installation of the [lab commands][m42pl-git-commands-lab]
-
-```
-| zmq_sub topic='webcam'
-| decode {zmq.frames[0]} with 'msgpack'
-| cv2_show cv2.frame
-```
-
-
-You may find more examples in [the examples directory](/examples/README.md).
-
-Nearly all language features are implemented in **commands** which are
-dynamically loaded from **plugins**. The core commands
-[are available here][m42pl-git-commands]. Some example:
-
-* `url`: Performs one or more parallel HTTP requests
-* `eval`: Evaluate fields using Python expressions
-* `xpath`: Extract fields using an XPath expression
-* `stats`: Performs statistical operations and aggregations
+* [Project documentation][m42pl-core-doc]
+* [Commands documentation][m42pl-commands-doc]
 
 ## M42PL specificities
 
+* M42PL syntax is trivial:
+  * A program / script is a list of _commands_
+  * A command starts with the pipe `|` character
+  * A command may takes _argument(s)_ (also known as _fields_)
 * Commands may implements their own custom grammar (like the `stats` command),
   which means that only the `|` (pipe) and `[]` (sub-pipeline) structures are
   part of the core language
@@ -306,11 +251,16 @@ language as Splunk, but I quickly drifted from my original goal.
 
 ---
 
+[unixshells]: https://en.wikipedia.org/wiki/Shell_script
 [splunk]: https://splunk.com
+
+[m42pl-core-doc]: https://jpclipffel.github.io/m42pl-core/
+[m42pl-commands-doc]: https://jpclipffel.github.io/m42pl-commands/
+
 [m42pl-git-core]: https://github.com/jpclipffel/m42pl-core
 [m42pl-git-commands]: https://github.com/jpclipffel/m42pl-commands
 [m42pl-git-commands-lab]: https://github.com/jpclipffel/m42pl-commands-lab
 [m42pl-git-dispatchers]: https://github.com/jpclipffel/m42pl-dispatchers
 [m42pl-git-kvstores]: https://github.com/jpclipffel/m42pl-kvstores
 [m42pl-git-encoders]: https://github.com/jpclipffel/m42pl-encoders
-[m42pl-docs-commands]: https://mine42.io/m42pl/m42pl-commands
+
