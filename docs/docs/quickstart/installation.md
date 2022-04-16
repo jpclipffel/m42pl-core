@@ -2,9 +2,9 @@
 
 # Installation
 
-## Docker images
+## Container images
 
-Two Docker images are provided:
+Two container images are available:
 
 * `jpclipffel/m42pl`: standard image, comes with everything pre-installed
 

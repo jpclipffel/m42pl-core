@@ -34,7 +34,7 @@ data manipulation trivial, even for non-technical users.
 
 **Capture and stream a video**
 
-> This requires the installation of the [m42pl-vision][m42pl-vision] commands
+> This requires the installation of [m42pl-vision][m42pl-vision]
 
 ```
 | cv2_read
@@ -44,7 +44,7 @@ data manipulation trivial, even for non-technical users.
 
 **Display a video stream**
 
-> This requires the installation of the [m42pl-vision][m42pl-vision] commands
+> This requires the installation of [m42pl-vision][m42pl-vision]
 
 ```
 | zmq_sub topic='webcam'
