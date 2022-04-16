@@ -14,6 +14,21 @@ class M42PLError(Exception):
         super().__init__(message)
 
 
+class ObjectNotFoundError(M42PLError):
+    """Raised when a requested M42PL object cannot be found.
+
+    :ivar kind: Object kind
+    :ivar name: Object name
+    """
+
+    short_desc = 'An requested object has not been found'
+
+    def __init__(self, kind: str, name: str, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.kind = kind
+        self.name = name
+
+
 class ScriptError(M42PLError):
     """Base class for errors happening during script parsing.
 

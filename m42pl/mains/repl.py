@@ -37,7 +37,7 @@ class REPL(RunAction):
     )
 
     def __init__(self, *args, **kwargs):
-        super().__init__('repl', *args, **kwargs)
+        super().__init__('repl-legacy', *args, **kwargs)
         # Optional - History file
         self.parser.add_argument('-H', '--history', type=str, default=None,
             help='History file')

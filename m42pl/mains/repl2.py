@@ -6,16 +6,15 @@ import sys
 import os
 from pathlib import Path
 from textwrap import dedent
+import getpass
 
-import requests
+# import requests
 
 from prompt_toolkit import PromptSession
 from prompt_toolkit.history import FileHistory
 from prompt_toolkit.completion import Completer, Completion
 from prompt_toolkit.key_binding import KeyBindings
 from prompt_toolkit import HTML
-
-import getpass
 
 import m42pl
 from m42pl.event import Event
@@ -48,11 +47,11 @@ class REPLCompleter(Completer):
         # Process
         if matched:
             # Autocomplete command name
+            # TODO: Autocomplete command arguments
             if len(matched.group('command')) > 0 and len(matched.group('arguments')) == 0:
                 for command_name in commands:
                     if command_name.startswith(matched.group('command')):
                         yield Completion(command_name, start_position=-1*(len(matched.group('command'))))
-            # TODO: Autocomplete command arguments
 
 
 class PromptPrefix:
@@ -80,11 +79,14 @@ class Builtins:
         """
         :param repl: REPL instance
         """
-        self.repl: repl
+        self.repl = repl
         self.server_url = None
-        self.session = requests.Session()
+        # self.session = requests.Session()
 
-    def list_builtins(self):
+    def list_builtins(self) -> list[str]:
+        """
+        Returns the list of builtins commands.
+        """
         return [
             k.split('builtin_')[1]
             for k
@@ -120,7 +122,12 @@ class Builtins:
         print(f'{os.linesep}Modules imported by path')
         for name in m42pl.IMPORTED_MODULES_PATHS:
             print(f'* {name}')
-    
+
+    def builtin_import(self, name: str):
+        """Import a M42PL module.
+        """
+        m42pl.load_module_name(name)
+
     def builtin_reload(self):
         """Reload imported modules.
         """
@@ -134,10 +141,13 @@ class Builtins:
             Welcome to M42PL !
 
             Builtins commands:
-            * exit      : Quit the interpreter
-            * modules   : Print the list of imported modules
-            * reload    : Reload the imported modules
-            * help      : Display this help message
+            * exit          : Quit the interpreter
+            * modules       : Print the list of imported modules
+            * reload        : Reload the imported modules
+            * help          : Display this help message
+            * cd <path>     : Change working directory to <path>
+            * pwd           : Prints the current working directory
+            * import <name> : Import the module <name>
 
             Snippets:
             * Type 'exit' or Ctrl+D to leave the interpreter
@@ -151,30 +161,37 @@ class Builtins:
         os.chdir(str(Path(path).absolute()))
 
     def builtin_pwd(self):
+        """
+        Print the current working directory.
+        """
         print(os.getcwdm())
 
-    def builtin_connect(self, url: str = 'http://127.0.0.1:4242'):
-        # Connect to an M42PL server.
-        self.server_url = url.rstrip('/')
-        try:
-            r = self.session.get(f'{self.server_url}/ping')
-            r.raise_for_status()
-            print('Connected')
-        except Exception as error:
-            print(f'Connection error: {str(error)})')
-            self.server_url = None
+    # def builtin_connect(self, url: str = 'http://127.0.0.1:4242'):
+    #     """Connects to a M42PL server.
 
-    def builtin_status(self, pid):
-        if self.server_url:
-            try:
-                r = requests.get(f'{self.server_url}/status/{pid}/')
-                r.raise_for_status()
-                print(r.json())
-            except Exception as error:
-                print(f'Error: {str(error)}')
-        else:
-            print(f'Not connected')
+    #     :param url: M42PL server URL.
+    #     """
+    #     self.server_url = url.rstrip('/')
+    #     try:
+    #         r = self.session.get(f'{self.server_url}/ping')
+    #         r.raise_for_status()
+    #         print('Connected')
+    #     except Exception as error:
+    #         print(f'Connection error: {str(error)})')
+    #         self.server_url = None
 
+    # def builtin_status(self, pid):
+    #     """Gets a remote pipeline status.
+    #     """
+    #     if self.server_url:
+    #         try:
+    #             r = requests.get(f'{self.server_url}/status/{pid}/')
+    #             r.raise_for_status()
+    #             print(r.json())
+    #         except Exception as error:
+    #             print(f'Error: {str(error)}')
+    #     else:
+    #         print(f'Not connected')
 
 
 class REPL2(RunAction):
@@ -210,7 +227,7 @@ class REPL2(RunAction):
         event.current_buffer.transform_current_line(lambda _: '')
 
     def __init__(self, *args, **kwargs):
-        super().__init__('repl2', *args, **kwargs)
+        super().__init__('repl', *args, **kwargs)
         # Optional - History file
         self.parser.add_argument('-H', '--history', type=str, default=None,
             help='History file')
@@ -221,12 +238,6 @@ class REPL2(RunAction):
         self.dispatcher = None
         # Builtins
         self.builtins = Builtins(self)
-        # Named list of builtins commands
-        # self.builtins = dict([
-        #     (k.split('builtin_')[1], getattr(self, k))
-        #     for k
-        #     in dir(self) if k.startswith('builtin_')
-        # ])
 
     def stop(self, sig = None, frame = None):
         sys.exit(-1)

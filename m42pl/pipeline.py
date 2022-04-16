@@ -56,8 +56,8 @@ class Pipeline:
                         'args': [],         # Arguments
                         'kwargs': {}        # Keyword arguments
                     },
-                    # ...                   # Other attrs are ignored
-                ]
+                ],
+                'subrefs': []               # Sub-pipelines references
             }
 
         **Important**: This function does not invoke the commands'
@@ -67,7 +67,7 @@ class Pipeline:
         The underlying reason is that commands may overload their
         `__new__` method to return more than one class instance.
         
-        :param data:  Source pipeline as :class:`dict`
+        :param data: Source pipeline as :class:`dict`
         """
         # Build the commands list
         commands = []
@@ -77,8 +77,7 @@ class Pipeline:
         # Remove original commands list from dict
         data.pop('commands')
         # Builds and returns a new pipeline
-        # return cls( { **{'commands': commands}, **dc} )
-        return cls(commands=commands)
+        return cls(commands=commands, subrefs=data['subrefs'])
 
     @staticmethod
     def flatten_commands(commands) -> Generator:
@@ -86,6 +85,8 @@ class Pipeline:
 
         This is necessary as some commands ``__new__`` may returns more
         than one class instance.
+
+        :param commands: Commands list
         """
         for command in commands:
             if isinstance(command, (tuple, list)):
@@ -93,35 +94,25 @@ class Pipeline:
             else:
                 yield command
 
-    def __init__(self, commands: list = [], name: str = 'main') -> None:
+    def __init__(self, commands: list = [], name: str = 'main',
+                    subrefs: list = []) -> None:
         """
         :param commands: Commands list
         :param name: Pipeline name
+        :param subrefs: Sub-piplines references
         """
         self.commands = commands
         self.name = name
-        # self.logger = logging.getLogger(name=f'm42pl.pipeline.{name}')
-        # self.logger = self.Logger(pipeline_name=self.name, name=f'm42pl.pipeline')
+        self.subrefs = subrefs
         self.logger = LoggerAdapter(
             defaults={'pipeline_name': name},
             logger=logging.getLogger('m42pl.pipeline')
         )
-        # self.chunk, self.chunks = 1, 1
-        # self.pipelines_ref: list[str] = []
         # Build
         self.build()
-        # ---
         # Pipeline state
         self._commands_set = False
         self._ready = True
-
-    # def trace(self, memo: int, message: str):
-    #     """Debug method.
-
-    #     TODO: Remove.
-    #     """
-    #     print(f'{"." * memo * 2} {self.name}: {message}')
-    #     return memo
 
     def to_dict(self) -> dict:
         """Serializes the pipeline as a :class:`dict`.
@@ -137,7 +128,8 @@ class Pipeline:
                 for command
                 in self.commands
                 if command is not None
-            ]
+            ],
+            'subrefs': self.subrefs
         }
 
     def build(self) -> None:
@@ -172,9 +164,6 @@ class Pipeline:
                     self.generator = command
             # Processing commands
             else:
-                # if self.generator is None:
-                #     self.logger.info('Pipeline does not start with a generator: adding "echo" as default generator')
-                #     self.generator = m42pl.command('echo')()
                 self.processors.append(command)
         # Rewrite commands list
         self.commands = list(filter(None, self.metas + [self.generator,] + self.processors))
@@ -185,9 +174,7 @@ class Pipeline:
         :param chunk: Current chunk number (starts at ``0``)
         :param chunks: Total chunks count (minimum is ``1``)
         """
-        # self.chunk, self.chunks = chunk, chunks
         for command in self.commands:
-            # command.set_chunk(chunk, chunks)
             command.chunk = (chunk, chunks)
 
 
@@ -403,7 +390,6 @@ class PipelineRunner:
                         self.trace(4, 'inifite mote, reset iterator and yield None')
                         iterator = None
                         next_event = None
-                        # yield None
                     # Otherwise, simply break the pipeline loop.
                     else:
                         self.logger.debug(f'received StopAsyncIteration, breaking pipeline loop')

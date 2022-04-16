@@ -20,9 +20,11 @@ class Status(RunAction):
     def __init__(self, *args, **kwargs):
         super().__init__('status', *args, **kwargs)
         # Required - Pipeline / process identifier
-        self.parser.add_argument('identifier', type=str, nargs='?', default=None, help='Pipeline identifier')
+        self.parser.add_argument('identifier', type=str, nargs='?',
+            default=None, help='Pipeline identifier')
         # Optional - Output format
-        self.parser.add_argument('-o', '--output', type=str, choices=['json', 'list'], default='list', help='Output format')
+        self.parser.add_argument('-o', '--output', type=str,
+            choices=['json', 'list'], default='list', help='Output format')
 
     def ouptut_json(self, items):
         for process in items:
@@ -34,7 +36,6 @@ class Status(RunAction):
         # ---
         for process in items:
             data.append([process.get(field, '') for field in headers])
-        # ---
         print(tabulate.tabulate(data, headers))
 
     def __call__(self, args):

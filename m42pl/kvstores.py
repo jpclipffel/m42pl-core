@@ -67,7 +67,7 @@ class KVStore:
                 'kwargs': {}    # KVStore's keyword arguments map
             }
         
-        :param data:    :class:`dict` instance.
+        :param data: :class:`dict` instance.
         """
         return object.__new__(cls).__init__(
             *data.get('args', []), 
@@ -76,10 +76,8 @@ class KVStore:
 
     def __init__(self, *args, **kwargs):
         """
-        :param args:        Args list to be automatically
-                            exported using `to_dict()`
-        :param kwargs:      Kwargs map to be automatically
-                            exported using `to_dict()`
+        :param args: Args list to be automatically exported using `to_dict()`
+        :param kwargs: Kwargs map to be automatically exported using `to_dict()`
         
         :ivar logger:       Command instance logger
         :ivar _args:        Automatically exported args list
