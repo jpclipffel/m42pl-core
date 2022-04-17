@@ -1,4 +1,4 @@
-FROM m42pl-core:latest
+FROM jpclipffel/m42pl-core:latest
 
 COPY --chown=m42pl:m42pl m42pl-commands     ./m42pl-commands/
 COPY --chown=m42pl:m42pl m42pl-dispatchers  ./m42pl-dispatchers/
