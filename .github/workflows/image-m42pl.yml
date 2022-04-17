@@ -14,16 +14,34 @@ jobs:
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
     steps:
 
-      - name: Checkout
+      - name: Checkout m42pl-core
         uses: actions/checkout@v2
         with:
           path: m42pl-core
 
-      - name: Checkout
+      - name: Checkout m42pl-commands
         uses: actions/checkout@v2
         with:
           repository: jpclipffel/m42pl-commands
           path: m42pl-commands
+
+      - name: Checkout m42pl-dispatchers
+        uses: actions/checkout@v2
+        with:
+          repository: jpclipffel/m42pl-dispatchers
+          path: m42pl-dispatchers
+
+      - name: Checkout m42pl-kvstores
+        uses: actions/checkout@v2
+        with:
+          repository: jpclipffel/m42pl-kvstores
+          path: m42pl-kvstores
+
+      - name: Checkout m42pl-encoders
+        uses: actions/checkout@v2
+        with:
+          repository: jpclipffel/m42pl-encoders
+          path: m42pl-encoders
 
       - name: Setup Docker Buildx
         uses: docker/setup-buildx-action@v1
