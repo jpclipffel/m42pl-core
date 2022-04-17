@@ -6,7 +6,7 @@ on:
 
 jobs:
 
-  main:
+  image-m42pl-core:
     runs-on: ubuntu-latest
     steps:
 

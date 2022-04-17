@@ -9,7 +9,7 @@ on:
 
 jobs:
 
-  main:
+  image-m42pl:
     runs-on: ubuntu-latest
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
     steps:
@@ -17,7 +17,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
         with:
+          path: m42pl-core
+
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
           repository: jpclipffel/m42pl-commands
+          path: m42pl-commands
 
       - name: Setup Docker Buildx
         uses: docker/setup-buildx-action@v1
@@ -41,7 +47,7 @@ jobs:
         uses: docker/build-push-action@v2
         with:
           context: .
-          file: images/m42pl/Dockerfile
+          file: m42pl-core/images/m42pl/Dockerfile
           push: true
           tags: |
             ${{ secrets.DOCKERHUB_USERNAME }}/m42pl:latest
