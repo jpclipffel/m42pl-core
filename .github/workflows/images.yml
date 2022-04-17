@@ -35,6 +35,7 @@ jobs:
         uses: docker/build-push-action@v2
         with:
           context: .
+          file: images/m4p2l-core/Dockerfile
           push: true
           tags: |
             ${{ secrets.DOCKERHUB_USERNAME }}/m42pl-core:latest
@@ -72,6 +73,7 @@ jobs:
         uses: docker/build-push-action@v2
         with:
           context: .
+          file: images/m4p2l-core/Dockerfile
           push: true
           tags: |
             ${{ secrets.DOCKERHUB_USERNAME }}/m42pl:latest
