@@ -1,14 +1,29 @@
-FROM jpclipffel/m42pl-core:latest
+FROM m42pl-core:latest as build
 
-COPY --chown=m42pl:m42pl m42pl-commands     ./m42pl-commands/
-COPY --chown=m42pl:m42pl m42pl-dispatchers  ./m42pl-dispatchers/
-COPY --chown=m42pl:m42pl m42pl-kvstores     ./m42pl-kvstores/
-COPY --chown=m42pl:m42pl m42pl-encoders     ./m42pl-encoders/
+USER root
+
+ENV PATH="/opt/m42pl/bin:$PATH"
+
+RUN apt-get update
+RUN apt-get install -y --no-install-recommends build-essential gcc
+
+COPY m42pl-commands     ./m42pl-commands/
+COPY m42pl-dispatchers  ./m42pl-dispatchers/
+COPY m42pl-kvstores     ./m42pl-kvstores/
+COPY m42pl-encoders     ./m42pl-encoders/
 
 RUN \
-        pip install --user --no-warn-script-location -e  ./m42pl-commands    \
-    &&  pip install --user --no-warn-script-location -e  ./m42pl-dispatchers \
-    &&  pip install --user --no-warn-script-location -e  ./m42pl-kvstores    \
-    &&  pip install --user --no-warn-script-location -e  ./m42pl-encoders
+        pip install ./m42pl-commands    \
+    &&  pip install ./m42pl-dispatchers \
+    &&  pip install ./m42pl-kvstores    \
+    &&  pip install ./m42pl-encoders
 
-ENTRYPOINT ["python3", "-m", "m42pl"]
+
+FROM m42pl-core:latest as runtime
+
+USER m42pl
+
+COPY --from=build --chown=m42pl /opt/m42pl /opt/m42pl
+
+ENV PATH="/opt/m42pl/bin:$PATH"
+CMD ["python3", "-m", "m42pl"]
