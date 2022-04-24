@@ -26,7 +26,7 @@ RUN \
 # ---
 
 
-FROM m42pl-core:latest as runtime
+FROM jpclipffel/m42pl-core:latest as runtime
 
 # Swicth back to M42PL user
 USER m42pl
