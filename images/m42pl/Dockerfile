@@ -1,4 +1,4 @@
-FROM m42pl-core:latest as build
+FROM jpclipffel/m42pl-core:latest as build
 
 # Switch to root for packages installation
 USER root
