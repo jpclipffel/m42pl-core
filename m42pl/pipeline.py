@@ -2,8 +2,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Generator, Union
 
-from m42pl.commands.__base__ import Command
-
 if TYPE_CHECKING:
     from m42pl.context import Context
 
