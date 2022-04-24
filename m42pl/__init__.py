@@ -1,4 +1,3 @@
-from email import message
 import importlib
 import importlib.util
 import logging

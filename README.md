@@ -8,7 +8,7 @@ M42PL is a _Data Manipulation Language_, inspired by
 The language is extremely simple to learn and to use. It is designed to make
 data manipulation trivial, even for non-technical users.
 
-* [Project documentation][m42pl-core-doc]
+* [M42PL documentation][m42pl-core-doc]
 * [Commands documentation][m42pl-commands-doc]
 
 ## M42PL specificities

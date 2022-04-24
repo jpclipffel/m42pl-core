@@ -1,4 +1,4 @@
-name: Build and publish M42PL documention
+name: MKDocs - M42PL - Core
 
 on:
   push:
@@ -6,8 +6,7 @@ on:
 
 jobs:
 
-  userdoc:
-    name: User documentation
+  mkdocs-m42pl-core:
     runs-on: ubuntu-20.04
     steps:
 
