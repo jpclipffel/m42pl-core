@@ -78,7 +78,7 @@ class Script(Command):
 
     def __init__(self, source: str):
         """
-        :param source:      Source script
+        :param source: Source script
         """
         self.source = source
 
@@ -138,6 +138,8 @@ class PipelineScript(Script):
             super().__init__(*args, **kwargs)
 
         def command(self, items):
+            """Process a command.
+            """
 
             def configure_command(cmd, items):
                 if isinstance(cmd, (list, tuple)):
