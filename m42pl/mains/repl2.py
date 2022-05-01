@@ -77,7 +77,7 @@ class Builtins:
 
     def __init__(self, repl):
         """
-        :param repl: REPL instance
+        :param repl: REPL2 instance
         """
         self.repl = repl
         self.server_url = None
@@ -105,12 +105,22 @@ class Builtins:
         except Exception as error:
             raise error
 
-    def builtin_exit(self):
+    def builtin_help(self, *args):
+        """Display this help.
+        """
+        for name in self.list_builtins():
+            doc = next(iter(getattr(self, f'builtin_{name}').__doc__.splitlines()), '').rstrip('.')
+            print(dedent(f'''\
+                {name}
+                {doc}
+            '''))
+
+    def builtin_exit(self, *args):
         """Exits the REPL.
         """
         sys.exit(0)
 
-    def builtin_modules(self):
+    def builtin_modules(self, *args):
         """Prints the imported modules.
         """
         print(f'{os.linesep}Imported modules')
@@ -128,43 +138,62 @@ class Builtins:
         """
         m42pl.load_module_name(name)
 
-    def builtin_reload(self):
+    def builtin_reload(self, *args):
         """Reload imported modules.
         """
         m42pl.reload_modules()
         self.repl.dispatcher = None
 
-    def builtin_help(self):
-        """Display a help message.
-        """
-        print(dedent('''\
-            Welcome to M42PL !
+        # print(dedent('''\
+        #     Welcome to M42PL !
 
-            Builtins commands:
-            * exit          : Quit the interpreter
-            * modules       : Print the list of imported modules
-            * reload        : Reload the imported modules
-            * help          : Display this help message
-            * cd <path>     : Change working directory to <path>
-            * pwd           : Prints the current working directory
-            * import <name> : Import the module <name>
+        #     Builtins commands:
+        #     * exit          : Quit the interpreter
+        #     * modules       : Print the list of imported modules
+        #     * reload        : Reload the imported modules
+        #     * help          : Display this help message
+        #     * cd <path>     : Change working directory to <path>
+        #     * pwd           : Prints the current working directory
+        #     * import <name> : Import the module <name>
 
-            Snippets:
-            * Type 'exit' or Ctrl+D to leave the interpreter
-            * Type 'commands' to generate the list of commands
-            * Type 'command <command name>' to show a command help
-        '''))
+        #     Snippets:
+        #     * Type 'exit' or Ctrl+D to leave the interpreter
+        #     * Type 'commands' to generate the list of commands
+        #     * Type 'command <command name>' to show a command help
+        # '''))
 
-    def builtin_cd(self, path: str):
+    def builtin_cd(self, path: str = None):
         """Change working directory.
         """
-        os.chdir(str(Path(path).absolute()))
+        if path is None:
+            print('Usage: cd <path>')
+        else:
+            os.chdir(str(Path(path).absolute()))
 
-    def builtin_pwd(self):
-        """
-        Print the current working directory.
+    def builtin_pwd(self, *args):
+        """Print the current working directory.
         """
         print(os.getcwdm())
+
+    def builtin_ml(self, state: str = None):
+        """Switch multiline input on/off.
+        """
+        # Set multiline mode
+        if isinstance(state, str):
+            if state in ['yes', 'true', 'on']:
+                self.repl.prompt.multiline = True
+            elif state in ['no', 'false', 'off']:
+                self.repl.prompt.multiline = False
+            else:
+                print('Usage: ml {yes|no|true|false|on|off}')
+        # Switch mutliline edit mode
+        else:
+            self.repl.prompt.multiline = not self.repl.prompt.multiline
+        # Info
+        print(f"Multiline {self.repl.prompt.multiline and 'enabled' or 'disabled'}")
+        if self.repl.prompt.multiline:
+            print('Type <Esc> <Enter> to execute')
+
 
     # def builtin_connect(self, url: str = 'http://127.0.0.1:4242'):
     #     """Connects to a M42PL server.
