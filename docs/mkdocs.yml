@@ -1,7 +1,33 @@
 # code: language=YAML tabSize=2
 
+# General
 site_name: M42PL
 
+# Navigation
+nav:
+  - "Home": index.md
+  - "Quick start":
+    - "Installation": "quickstart/installation.md"
+    - "First steps": "quickstart/firststeps.md"
+  - "Commands": "https://jpclipffel.github.io/m42pl-commands"
+  - "Run pipelines":
+    - "Overview": "mains/index.md"
+    - "REPL (interactive)": "mains/repl2.md"
+    - "Script": "mains/run.md"
+    - "Grammar debug": "mains/grammar.md"
+    - "Parsing debug": "mains/parse.md"
+
+# Source repository
+repo_url: https://github.com/jpclipffel/m42pl-core
+repo_name: jpclipffel/m42pl-core
+edit_uri: tree/main/docs/docs
+src_uri: tree/main/docs/docs
+
+# Markdown extensions
+markdown_extensions:
+  - admonition
+
+# Theme configuration
 theme:
   name: material
   palette:
@@ -9,7 +35,7 @@ theme:
       primary: blue
       accent: blue
       toggle:
-        icon: material/toggle-switch-off-outline 
+        icon: material/toggle-switch-off-outline
         name: Switch to dark mode
     - scheme: default
       primary: blue
@@ -17,15 +43,5 @@ theme:
       toggle:
         icon: material/toggle-switch
         name: Switch to light mode
-
-nav:
-  - 'Home': index.md
-  - 'Quick start':
-    - 'Installation': 'quickstart/installation.md'
-    - 'First steps': 'quickstart/firststeps.md'
-  - 'Run pipelines':
-    - 'Overview': 'mains/index.md'
-    - 'REPL (interactive)': 'mains/repl2.md'
-    - 'Script': 'mains/run.md'
-    - 'Grammar debug': 'mains/grammar.md'
-    - 'Parsing debug': 'mains/parse.md'
+  logo: "assets/Logo - Text - White.png"
+  favicon: "assets/Logo - Text - White.png"

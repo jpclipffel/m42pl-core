@@ -2,7 +2,12 @@
 
 # Installation
 
-## Container images
+M42PL is divided into several packages and repositories. If you're starting on
+the language, you may prefer to use a [container image](#container-images).
+
+For more experienced users and developers, you may [install the project from source](#from-source).
+
+## <a name="container-images"></a> Container images
 
 Two container images are available:
 
@@ -22,7 +27,7 @@ docker pull jpclipffel/m42pl-core:latest
 docker pull ghcr.io/jpclipffel/m42pl-core:latest
 ```
 
-## From source
+## <a name="from-source"></a> From source
 
 M42PL is built on several components (_core_, _commands_, _dispatchers_, _kvstores_ and _encoders_).
 

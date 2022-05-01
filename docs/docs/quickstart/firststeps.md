@@ -1,11 +1,11 @@
-<!-- vim: set ft=Markdown ts=2 -->
+<!-- vim: set ft=Markdown ts=4 -->
 
 # First Steps
 
 ## Start the command line
 
-Once M42PL is installed ([installation instructions][install]), you may run it
-in REPL (interactive) mode:
+Once M42PL is installed (see the [installation instructions][install]), you may
+run it in REPL (interactive) mode:
 
 If installed locally:
 
@@ -28,10 +28,13 @@ docker run -it jpclipffel/m42pl repl
 
 ## Command line usage
 
-> **Hint**  
-> The M42PL REPL runs in multi-lines edit, which means than pressing
-> `Enter` will literally add a new line. To execute the commands you
-> have typed, press `Esc` then `Enter`.
+!!! note "Multiline input"
+    The M42PL REPL runs in multi-line input mode by default, which means than
+    pressing `Enter` will literally add a new line.
+
+    - To execute commands in multiline, press `Esc` then `Enter`
+    - To disable the multi-line input, type `ml off`
+    - To switch the multi-line input, type `ml` or `ml on` or `ml off`
 
 The M42PL language is extremelly simple:
 
@@ -99,25 +102,25 @@ _Streaming commands_ & _Buffering commands_.
 
 ## Commands
 
-M42PL provides 4 types of commands:
+M42PL support 4 types of commands:
 
 * _Generating commands_ generates events
-  * There is a single _generating command_ per pipeline
-  * _Generating command_ are usually put first in the pipeline
-  * A pipeline may include sub-pipelines, each of them may include a _genrating command_
-  * _Generating commands_ may be _piped_ into _streaming commands_, _buffering commands_ and _meta commands_
+    * There is a single _generating command_ per pipeline
+    * _Generating command_ are usually put first in the pipeline
+    * A pipeline may include sub-pipelines, each of them may include a _genrating command_
+    * _Generating commands_ may be _piped_ into _streaming commands_, _buffering commands_ and _meta commands_
 * _Streaming commands_ process events
-  * Each _streaming command_ may be _piped_ into another _streaming command_, _buffering command_ or _meta command_
+    * Each _streaming command_ may be _piped_ into another _streaming command_, _buffering command_ or _meta command_
 * _Buffering commands_ process block of events
-  * Each _buffering command_ may be _piped_ into another _buffering command_, _streaming command_ or _meta command_
+    * Each _buffering command_ may be _piped_ into another _buffering command_, _streaming command_ or _meta command_
 * _Meta commands_ forwards the data and manipulates the pipeline itself
-  * Each _metacommand_ may be _piped_ into another _meta command_, _streaming command_ or _buffering command_
+    * Each _metacommand_ may be _piped_ into another _meta command_, _streaming command_ or _buffering command_
 
 ## Fields
 
 Fields are both the events _attributes_ and a way to access the given _attributes_.
 
-Commands support 5 type of fields:
+M42PL's commands support 5 type of fields:
 
 * _Literal_: A literal value such as a number, a string or a list of values, e.g. `42`, `'some text'`, `(1, 2, 3)`
 * _Path_: A field name or a doted field name, e.g. `field`, `field.subfield`
