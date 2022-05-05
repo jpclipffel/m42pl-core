@@ -5,7 +5,7 @@ from inspect import cleandoc
 class M42PLError(Exception):
     """Base class for M42PL error.
 
-    :ivar short_desc:   Exception short description
+    :ivar short_desc: Exception short description
     """
 
     short_desc = 'An error occured'
@@ -32,9 +32,9 @@ class ObjectNotFoundError(M42PLError):
 class ScriptError(M42PLError):
     """Base class for errors happening during script parsing.
 
-    :ivar line:     Error line number in source script
-    :ivar column:   Error column number in source script
-    :ivar offset:   Error offset in source script
+    :ivar line: Error line number in source script
+    :ivar column: Error column number in source script
+    :ivar offset: Error offset in source script
     """
 
     short_desc = 'An error occured while parsing the source script'
@@ -50,15 +50,18 @@ class ScriptError(M42PLError):
 class CommandError(M42PLError):
     """Raised when a command fails during its execution.
 
-    :ivar command:  Command instance
-    :ivar line:     Error line number in source script
-    :ivar column:   Error column number in source script
-    :ivar offset:   Error offset in source script
+    :ivar line: Error line number in source script
+    :ivar column: Error column number in source script
+    :ivar offset: Error offset in source script
+    :ivar name: Command name
     """
 
     short_desc = 'An error occured during a command execution'
 
     def __init__(self, command, *args, **kwargs):
+        """
+        :param command: Command instance
+        """
         super().__init__(*args, **kwargs)
         self.line = command._lncol_[0]
         self.column = command._lncol_[1]
@@ -111,7 +114,7 @@ class DecodingError(M42PLError):
 
     def __init__(self, encoder, message, *args, **kwargs):
         """
-        :param encoder:     Encoder instance
+        :param encoder: Encoder instance
         """
         super().__init__(
             (

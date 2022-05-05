@@ -162,18 +162,18 @@ class Builtins:
         #     * Type 'command <command name>' to show a command help
         # '''))
 
-    def builtin_cd(self, path: str = None):
+    def builtin_cd(self, path: str = '~'):
         """Change working directory.
         """
         if path is None:
             print('Usage: cd <path>')
         else:
-            os.chdir(str(Path(path).absolute()))
+            os.chdir(str(Path(path).expanduser().absolute()))
 
     def builtin_pwd(self, *args):
         """Print the current working directory.
         """
-        print(os.getcwdm())
+        print(os.getcwd())
 
     def builtin_ml(self, state: str = None):
         """Switch multiline input on/off.
