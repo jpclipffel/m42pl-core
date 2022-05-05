@@ -113,7 +113,7 @@ class BaseField:
             return items
 
         if self.name is not None:
-            return enlist(check(await self._read(event, pipeline)))
+            return enlist(check(await self._read(event, pipeline, context)))
         elif self.seqn:
             return []
         return None

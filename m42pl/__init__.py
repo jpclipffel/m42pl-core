@@ -60,7 +60,7 @@ def command(alias: str) -> Any:
 def dispatcher(alias: str = 'local') -> Any:
     """Returns the requested :class:`Dispatcher` class.
 
-    :param alias:   Dispatcher alias
+    :param alias: Dispatcher alias
     """
     logger.info(f'requesting dispatcher: name="{alias}"')
     try:
@@ -77,7 +77,7 @@ def dispatcher(alias: str = 'local') -> Any:
 def kvstore(alias: str = 'local') -> Any:
     """Returns the requested :class:`KVStore` class.
 
-    :param alias:   KVStore alias
+    :param alias: KVStore alias
     """
     logger.info(f'requesting kvstore: name="{alias}"')
     try:
@@ -94,7 +94,7 @@ def kvstore(alias: str = 'local') -> Any:
 def encoder(alias: str = 'json') -> Any:
     """Returns the requested :class:`Encoder` class.
 
-    :param alias:   encoder alias
+    :param alias: encoder alias
     """
     logger.info(f'requesting encoder: name="{alias}"')
     try:
@@ -148,12 +148,16 @@ def load_module_path(namespace: str, path: str) -> None:
 def load_module_name(name: str) -> None:
     """Load a module by name.
     
-    :param name: Module name.
+    :param name: Module name
     """
     logger.info(f'loading module by name: name="{name}"')
-    module = importlib.import_module(name)
-    IMPORTED_MODULES_NAMES.append(name)
-    modules[name] = module
+    try:
+        module = importlib.import_module(name)
+        IMPORTED_MODULES_NAMES.append(name)
+        modules[name] = module
+    except Exception as error:
+        logger.error(f'error while loading module: name="{name}", error="{str(error)}"')
+        logger.exception(error)
 
 
 def load_modules(search_paths: list = [], paths: list = [],

@@ -264,19 +264,25 @@ class PipelineRunner:
             # Current command instance and children commands
             command, has_further_commands = commands[0], len(commands) > 1
             # Run command and children commands
-            async for _event in command(event=event, pipeline=self.pipeline, context=self.context, ending=ending, remain=remain):
-                if has_further_commands:
-                    async for __event in self.run_commands(commands[1:], _event, ending, (remain + await command.remain())):
-                        yield __event
-                elif _event:
-                    yield _event
-            else:
-                if ending:
+            try:
+                async for _event in command(event=event, pipeline=self.pipeline, context=self.context, ending=ending, remain=remain):
                     if has_further_commands:
-                        async for _event in self.run_commands(commands[1:], None, ending, remain):
-                            yield _event
-                    elif event:
-                        yield event
+                        async for __event in self.run_commands(commands[1:], _event, ending, (remain + await command.remain())):
+                            yield __event
+                    elif _event:
+                        yield _event
+                else:
+                    if ending:
+                        if has_further_commands:
+                            async for _event in self.run_commands(commands[1:], None, ending, remain):
+                                yield _event
+                        elif event:
+                            yield event
+            # Command errors handling
+            except errors.CommandError as error:
+                print(error.name, error.line, error.column, error.offset)
+                print(str(error))
+                print()
 
     async def __call__(self, context: Context|None = None,
                         event: dict|None = None, infinite: bool = False,
