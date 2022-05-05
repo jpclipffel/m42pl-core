@@ -1,9 +1,9 @@
-<!-- vim: set ft=Markdown ts=2 -->
+<!-- vim: set ft=Markdown ts=4 -->
 
 # Installation
 
 M42PL is divided into several packages and repositories. If you're starting on
-the language, you may prefer to use a [container image](#container-images).
+the project, you may prefer to use a [container image](#container-images).
 
 For more experienced users and developers, you may [install the project from source](#from-source).
 
@@ -31,12 +31,13 @@ docker pull ghcr.io/jpclipffel/m42pl-core:latest
 
 M42PL is built on several components (_core_, _commands_, _dispatchers_, _kvstores_ and _encoders_).
 
-> **Hint**  
-> If is recomended to install M42PL into a dedicated virtual environement:  
-> `python -m venv m42pl` and `source m42pl/bin/activate`
+!!! info "Installation in a virtual environment"
+    If is recomended to install M42PL into a dedicated virtual environement:
+    `python -m venv m42pl && source m42pl/bin/activate`
 
-> **Hint**  
-> If you plan to make change to M42PL, install the component(s) with  `pip install -e <component>`
+!!! info "Installation in development mode"
+    If you plan to make change to M42PL, install the component(s) with 
+    `pip install -e <component>`
 
 Install the core project `m42pl_core`:
 

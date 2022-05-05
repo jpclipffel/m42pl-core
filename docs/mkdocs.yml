@@ -1,4 +1,4 @@
-# code: language=YAML tabSize=2
+# vim: set ft=Yaml ts=2
 
 # General
 site_name: M42PL
@@ -9,13 +9,27 @@ nav:
   - "Quick start":
     - "Installation": "quickstart/installation.md"
     - "First steps": "quickstart/firststeps.md"
-  - "Commands": "https://jpclipffel.github.io/m42pl-commands"
+  - "Commands index": "https://jpclipffel.github.io/m42pl-commands"
   - "Run pipelines":
     - "Overview": "mains/index.md"
     - "REPL (interactive)": "mains/repl2.md"
     - "Script": "mains/run.md"
     - "Grammar debug": "mains/grammar.md"
     - "Parsing debug": "mains/parse.md"
+  - "Fields":
+    - "Overview": "fields/index.md"
+    - "Literal": "fields/literal.md"
+    - "Path": "fields/path.md"
+    - "Evaluated": "fields/eval.md"
+    - "JsonPath": "fields/jsonpath.md"
+    - "Pipeline": "fields/pipe.md"
+  - "Components":
+    - "Overview": "components/index.md"
+    - "Core": "components/core.md"
+    - "Commands": "components/commands.md"
+    - "KVStores": "components/kvstores.md"
+    - "Encoders": "components/encoders.md"
+    - "Dispatchers": "components/dispatchers.md"
 
 # Source repository
 repo_url: https://github.com/jpclipffel/m42pl-core
