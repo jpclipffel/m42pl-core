@@ -13,7 +13,7 @@
     
     
       
-        <title>REPL (legacy) - M42PL</title>
+        <title>Path - M42PL</title>
       
     
     
@@ -63,7 +63,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#repl-legacy" class="md-skip">
+        <a href="#path-fields" class="md-skip">
           Skip to content
         </a>
       
@@ -95,7 +95,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              REPL (legacy)
+              Path
             
           </span>
         </div>
@@ -344,7 +344,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../" class="md-nav__link">
+      <a href="../../mains/" class="md-nav__link">
         Overview
       </a>
     </li>
@@ -358,7 +358,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../repl2/" class="md-nav__link">
+      <a href="../../mains/repl2/" class="md-nav__link">
         REPL (interactive)
       </a>
     </li>
@@ -372,7 +372,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../run/" class="md-nav__link">
+      <a href="../../mains/run/" class="md-nav__link">
         Script
       </a>
     </li>
@@ -386,7 +386,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../grammar/" class="md-nav__link">
+      <a href="../../mains/grammar/" class="md-nav__link">
         Grammar debug
       </a>
     </li>
@@ -400,7 +400,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../parse/" class="md-nav__link">
+      <a href="../../mains/parse/" class="md-nav__link">
         Parsing debug
       </a>
     </li>
@@ -420,12 +420,14 @@
 
   
   
+    
+  
   
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
       
       
-        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_5" type="checkbox" id="__nav_5" >
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_5" type="checkbox" id="__nav_5" checked>
       
       
       
@@ -448,7 +450,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../fields/" class="md-nav__link">
+      <a href="../" class="md-nav__link">
         Overview
       </a>
     </li>
@@ -462,7 +464,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../fields/literal/" class="md-nav__link">
+      <a href="../literal/" class="md-nav__link">
         Literal
       </a>
     </li>
@@ -474,11 +476,72 @@
               
   
   
+    
   
-    <li class="md-nav__item">
-      <a href="../../fields/path/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          Path
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         Path
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#syntax" class="md-nav__link">
+    Syntax
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#examples" class="md-nav__link">
+    Examples
+  </a>
+  
+    <nav class="md-nav" aria-label="Examples">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#generate-fields" class="md-nav__link">
+    Generate fields
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -490,7 +553,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../fields/eval/" class="md-nav__link">
+      <a href="../eval/" class="md-nav__link">
         Evaluated
       </a>
     </li>
@@ -504,7 +567,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../fields/jsonpath/" class="md-nav__link">
+      <a href="../jsonpath/" class="md-nav__link">
         JsonPath
       </a>
     </li>
@@ -518,7 +581,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../fields/pipe/" class="md-nav__link">
+      <a href="../pipe/" class="md-nav__link">
         Pipeline
       </a>
     </li>
@@ -670,6 +733,41 @@
     
   
   
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#syntax" class="md-nav__link">
+    Syntax
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#examples" class="md-nav__link">
+    Examples
+  </a>
+  
+    <nav class="md-nav" aria-label="Examples">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#generate-fields" class="md-nav__link">
+    Generate fields
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
 </nav>
                   </div>
                 </div>
@@ -680,15 +778,47 @@
             <article class="md-content__inner md-typeset">
               
                 
-  <a href="https://github.com/jpclipffel/m42pl-core/tree/main/docs/docs/mains/repl.md" title="Edit this page" class="md-content__button md-icon">
+  <a href="https://github.com/jpclipffel/m42pl-core/tree/main/docs/docs/fields/path.md" title="Edit this page" class="md-content__button md-icon">
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83 3.75 3.75M3 17.25V21h3.75L17.81 9.93l-3.75-3.75L3 17.25Z"/></svg>
   </a>
 
 
 
-<h1 id="repl-legacy">REPL (legacy)</h1>
-<p>Legacy M42PL REPL / interpreter. Replaced by the new <a href="../repl2/">repl2</a>.</p>
-<hr />
+<!-- vim: set ft=Markdown ts=4 -->
+
+<h1 id="path-fields">Path fields</h1>
+<p>Path fields are event's attributes names, which may use a dotted notattion
+(e.g. <code>some.field.name</code>) to represent nested events fields.</p>
+<h2 id="syntax">Syntax</h2>
+<ul>
+<li>Root fields are written as-in, e.g. <code>fieldName</code></li>
+<li>Nested fields are sperated by a dot, e.g. <code>user.name</code>, <code>user.identity.name</code></li>
+<li>Fields with spaces in their name can may be encosed in double-quotes, e.g. <code>"user name"</code>, <code>"user.last name"</code></li>
+</ul>
+<div class="admonition warning">
+<p class="admonition-title">Quotes matters</p>
+<p>Enclosing a fields into single-quotes as <code>'some string'</code> as a different
+meaning: see <a href="../literal/">literal fields</a></p>
+</div>
+<h2 id="examples">Examples</h2>
+<h3 id="generate-fields">Generate fields</h3>
+<pre><code>| make
+| eval
+    userid = 'jdoe',
+    user.name = 'John',
+    user.lastname = 'Doe',
+    &quot;user.twitter account&quot; = &quot;@JDoe&quot;,
+    user.loc = list(1, 2, 3)
+</code></pre>
+<pre><code class="language-json">{
+  &quot;userid&quot;: &quot;jdoe&quot;,
+  &quot;user&quot;: {
+    &quot;name&quot;: &quot;John&quot;,
+    &quot;lastname&quot;: &quot;Doe&quot;,
+    &quot;twitter account&quot;: &quot;@JDoe&quot;
+  }
+}
+</code></pre>
 
               
             </article>
@@ -698,6 +828,41 @@
       </main>
       
         <footer class="md-footer">
+  
+    <nav class="md-footer__inner md-grid" aria-label="Footer">
+      
+        
+        <a href="../literal/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Literal" rel="prev">
+          <div class="md-footer__button md-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12Z"/></svg>
+          </div>
+          <div class="md-footer__title">
+            <div class="md-ellipsis">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              Literal
+            </div>
+          </div>
+        </a>
+      
+      
+        
+        <a href="../eval/" class="md-footer__link md-footer__link--next" aria-label="Next: Evaluated" rel="next">
+          <div class="md-footer__title">
+            <div class="md-ellipsis">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              Evaluated
+            </div>
+          </div>
+          <div class="md-footer__button md-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11H4Z"/></svg>
+          </div>
+        </a>
+      
+    </nav>
   
   <div class="md-footer-meta md-typeset">
     <div class="md-footer-meta__inner md-grid">
