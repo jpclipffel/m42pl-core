@@ -23,6 +23,11 @@ nav:
     - "Evaluated": "fields/eval.md"
     - "JsonPath": "fields/jsonpath.md"
     - "Pipeline": "fields/pipe.md"
+  - "Constructs":
+    - "Overview": "constructs/index.md"
+    - "Structure": "constructs/pipelines_structure.md"
+    - "Parallelization": "constructs/parallelization.md"
+    - "Encoding & Decoding": "constructs/encoding_decoding.md"
   - "Components":
     - "Overview": "components/index.md"
     - "Core": "components/core.md"
@@ -41,18 +46,23 @@ src_uri: tree/main/docs/docs
 markdown_extensions:
   - admonition
 
+# Plugins
+plugins:
+  - search
+  - awesome-pages
+
 # Theme configuration
 theme:
   name: material
   palette:
     - scheme: slate
-      primary: blue
-      accent: blue
+      primary: black
+      accent: light blue
       toggle:
         icon: material/toggle-switch-off-outline
         name: Switch to dark mode
     - scheme: default
-      primary: blue
+      primary: black
       accent: blue
       toggle:
         icon: material/toggle-switch
