@@ -1,5 +1,3 @@
-from lib2to3.pgen2 import token
-import readline
 import signal
 import regex
 import sys
@@ -10,17 +8,54 @@ import getpass
 
 # import requests
 
+from pygments.lexer import RegexLexer
+from pygments import token
+from pygments.styles import get_style_by_name
+
 from prompt_toolkit import PromptSession
 from prompt_toolkit.history import FileHistory
 from prompt_toolkit.completion import Completer, Completion
 from prompt_toolkit.key_binding import KeyBindings
 from prompt_toolkit import HTML
+from prompt_toolkit.lexers import PygmentsLexer
+from prompt_toolkit.styles.pygments import style_from_pygments_cls
 
 import m42pl
 from m42pl.event import Event
 from m42pl.utils.errors import CLIErrorRender
 
 from .__base__ import RunAction
+
+
+class M42PLLexer(RegexLexer):
+    """M42PL grammar lexer.
+    """
+    name = 'M42PL'
+    aliases = ['m42pl', 'mpl']
+    filenames = ['*.m42pl', '*.mpl']
+    tokens = {
+        'root': [
+            (r'(\|)\s*[a-zA-Z_]+[a-zA-Z_0-9\.-]*', token.Name.Function),
+            (r'\'', token.Literal.String, 'string_squotes'),
+            (r'\"', token.Literal.String, 'string_dquotes'),
+            (r'\{', token.Name.Entity, 'jsonpath'),
+            (r'[0-9]+(\.[0-9]+)?', token.Literal.Number),
+            (r'\s+(as|with|to|from)\s+', token.Keyword.Pseudo),
+            (r'(=|\s+)(yes|Yes|YES|true|True|TRUE|no|No|NO|false|False|FALSE)', token.Keyword.Constant)
+        ],
+        'string_squotes': [
+            (r'[^\']+', token.Literal.String),
+            (r'\'', token.Literal.String, '#pop')
+        ],
+        'string_dquotes': [
+            (r'[^\"]+', token.Literal.String),
+            (r'\"', token.Literal.String, '#pop')
+        ],
+        'jsonpath': [
+            (r'[^\}]+', token.Name.Entity),
+            (r'\}', token.Name.Entity, '#pop')
+        ]
+    }
 
 
 class REPLCompleter(Completer):
@@ -59,7 +94,7 @@ class PromptPrefix:
     """
 
     def __init__(self, prefix: str = 'm42pl |'):
-        self.prefix = prefix + ' | '
+        self.prefix = prefix + ' '
 
     def builtins(self):
         return {
@@ -182,8 +217,10 @@ class Builtins:
         if isinstance(state, str):
             if state in ['yes', 'true', 'on']:
                 self.repl.prompt.multiline = True
+                self.repl.prompt.bottom_toolbar = self.repl.prompt_bottom_toolbar
             elif state in ['no', 'false', 'off']:
                 self.repl.prompt.multiline = False
+                self.repl.prompt.bottom_toolbar = None
             else:
                 print('Usage: ml {yes|no|true|false|on|off}')
         # Switch mutliline edit mode
@@ -239,17 +276,18 @@ class REPL2(RunAction):
 
     prompt_keys_bindings = KeyBindings()
 
-    @staticmethod
-    def prompt_bottom_toolbar():
+    # @staticmethod
+    def prompt_bottom_toolbar(self):
         """Prompt Toolkit's bottom toolbar.
         """
-        return 'Run: <Esc> <enter>'
+        if self.prompt.multiline is True:
+            return 'Run: <Esc> <enter>'
 
     @staticmethod
     def prompt_continuation(width, line_number, is_soft_wrap):
         """Prompt Toolkit's prompt continuation.
         """
-        return ' ' * (width - 2)
+        return ' ' * width
 
     @prompt_keys_bindings.add('c-c')
     def _(event):
@@ -281,6 +319,9 @@ class REPL2(RunAction):
             prompt_continuation=self.prompt_continuation,
             history=FileHistory(args.history or self.history_file),
             completer=REPLCompleter(builtins=self.builtins.list_builtins()),
+            lexer=PygmentsLexer(M42PLLexer),
+            style=style_from_pygments_cls(get_style_by_name('one-dark')),
+            include_default_pygments_style=False,
             key_bindings=self.prompt_keys_bindings
         )
         # Select and connect KVStore

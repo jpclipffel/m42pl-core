@@ -211,8 +211,6 @@ class Evaluator:
         'slice':        lambda field, start, *end: len(end) and solve(field, (str, list, tuple), None)[start:end[0]] or solve(field, (str, list, tuple), None)[start:],
         'idx':          lambda field, position: solve(field, (str, list, tuple), None)[position],
         'length':       lambda field: len(solve(field, (str, list, tuple), '')),
-        # Map
-        'keys':         lambda field = None: list(solve(field, (dict,), {}).keys()),
         # Math
         'round':        lambda field, x: round(solve(field, (float, int), 0), x),
         'even':         lambda field: solve(field, (int, float), 0) % 2 == 0,
@@ -255,16 +253,20 @@ class Evaluator:
             filename='<string>',
             mode='eval'
         )
+        # Pre-define the env
+        self.env = EvalNS(name='', functions=self.functions, fields={})
 
     def __call__(self, data: dict = {}) -> Any:
         """Runs evaluation and returns its result.
 
         :param data: Event fields used as eval globals
         """
-        # Build environement (functions map and globals)
-        env = EvalNS(name='', functions=self.functions, fields=data)
+        # Define run-time functions
+        self.functions['keys'] = lambda field = data: list(solve(field).keys())
+        # Update environement (functions map and globals)
+        self.env.fields = data
         # Evaluate the pre-compiled expression using built env
-        evaluated = eval(self.compiled, env)
+        evaluated = eval(self.compiled, self.env)
         # Solve the result a last time as EvalNS may returns a nested EvalNS
         solved = solve(evaluated, [], None)
         # Done
