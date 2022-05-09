@@ -115,17 +115,21 @@ class Grok:
     :ivar groups: Grok expression's groups rules & misc
     """
 
-    def __init__(self, expression: str, nested_sep: str = '__', keep_nameless: bool = False, ignore_failed: bool = False):
+    def __init__(self, expression: str, nested_sep: str = '___',
+                    nested_res: bool = True, keep_nameless: bool = False,
+                    ignore_failed: bool = False):
         """
         :param expression: Grok expression
         :param nested_sep: Nested fields separator
             (replaces `a.b`with `a<sep>b`)
+        :param nested_res: Write result in nested group
         :param keep_nameless: Keep the nameless group and name them
             after their Grok pattern name
         :param ignore_failed: If True, ignore errors and return as much
             fields as possible
         """
         self.nested_sep = nested_sep
+        self.nested_res = nested_res
         self.keep_nameless = keep_nameless
         self.ignore_failed = ignore_failed
         # Parse the Grok expression, set rules and compile regex
@@ -135,6 +139,27 @@ class Grok:
             self.keep_nameless
         )
         self.rx = regex.compile(rx)
+
+    def write_group(self, results, name, value):
+        """Writes a group into the result dict.
+
+        The method will nest the group according to `self.nested_sep`.
+
+        :param results: Grok results dict
+        :param name: Current regex group name
+        """
+        if self.nested_res:
+            paths = list(filter(None, name.split(self.nested_sep)))
+            _results = results
+            if len(paths) > 1:
+                for path in paths[0:-1]:
+                    if not path in _results:
+                        _results[path] = {}
+                    _results = _results[path]
+            _results[paths[-1]] = value
+        else:
+            results[name] = value
+        return results
 
     def match(self, data: str) -> dict:
         """Matches the given data with the internal Grok expression.
@@ -148,7 +173,8 @@ class Grok:
                 if len(self.rules.get(group, '')) > 0:
                     try:
                         for rule_name in self.rules[group]:
-                            res[group] = RULES[rule_name](value)
+                            # res[group] = RULES[rule_name](value)
+                            res = self.write_group(res, group, RULES[rule_name](value))
                     except KeyError:
                         if not self.ignore_failed:
                             raise GrokRuleError(
@@ -160,7 +186,8 @@ class Grok:
                                 rule_name,
                                 str(error)) from None
                 else:
-                    res[group] = value
+                    # res[group] = value
+                    res = self.write_group(res, group, value)
         return res
 
     def __call__(self, data: str) -> dict:
