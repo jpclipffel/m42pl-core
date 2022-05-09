@@ -23,11 +23,16 @@ nav:
     - "Evaluated": "fields/eval.md"
     - "JsonPath": "fields/jsonpath.md"
     - "Pipeline": "fields/pipe.md"
-  - "Constructs":
-    - "Overview": "constructs/index.md"
-    - "Structure": "constructs/pipelines_structure.md"
-    - "Parallelization": "constructs/parallelization.md"
-    - "Encoding & Decoding": "constructs/encoding_decoding.md"
+  - "Utils":
+    - "Overview": "utils/index.md"
+    - "Evaluation functions": "utils/eval.md"
+    - "Time expressions": "utils/time.md"
+    - "Grok (regex patterns)": "./utils/grok.md"
+  - "Idioms":
+    - "Overview": "idioms/index.md"
+    - "Structure": "idioms/pipelines_structure.md"
+    - "Parallelization": "idioms/parallelization.md"
+    - "Encoding & Decoding": "idioms/encoding_decoding.md"
   - "Components":
     - "Overview": "components/index.md"
     - "Core": "components/core.md"
@@ -40,7 +45,6 @@ nav:
 repo_url: https://github.com/jpclipffel/m42pl-core
 repo_name: jpclipffel/m42pl-core
 edit_uri: tree/main/docs/docs
-src_uri: tree/main/docs/docs
 
 # Markdown extensions
 markdown_extensions:

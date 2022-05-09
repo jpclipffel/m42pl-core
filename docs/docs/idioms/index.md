@@ -1,6 +1,6 @@
 <!-- vim: set ft=Markdown ts=4 -->
 
-# Constructs
+# Idioms
 
 This chapter documents typicall M42PL patterns.
 
