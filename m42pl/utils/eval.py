@@ -230,6 +230,7 @@ class Evaluator:
         # Misc
         'isnone':       functions['isnull'],
         'isnotnone':    functions['isnotnull'],
+        'time':         functions['reltime'],
         # String
         'str':          functions['tostring'],
         'string':       functions['tostring'],
