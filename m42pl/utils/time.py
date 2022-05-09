@@ -49,8 +49,8 @@ def now() -> datetime.datetime:
 def round(dt, unit: str) -> datetime.datetime:
     """Rounds the given datetime instance to the given unit.
 
-    :param dt:      Datetime instance
-    :param unit:    Unit to round to
+    :param dt: Datetime instance
+    :param unit: Unit to round to
     """
     return dt.replace(**ROUND_VALUES.get(unit, {}))
 
@@ -58,19 +58,26 @@ def round(dt, unit: str) -> datetime.datetime:
 def reltime(expression: str, dt = None) -> datetime.datetime:
     """Evaluates a relative time expression and returns its time.
 
-    :param expression:  Relative time expression
-                        Format is "(+|-)<value><unit>@<precision>"
+    Relative time expression is "(+|-)<value><unit>@<precision>"
+
+    :param expression: Relative time expression
     """
     # Parse relative time expression
     rx = RELTIME_REGEX.match(expression)
     # Round reference time (== current time) to reference unit
-    ref_time = round(dt or datetime.datetime.now(), rx.group("ref_unit"))
+    ref_time = round(dt or datetime.datetime.now(), rx.group('ref_unit'))
     # Extract relative time value and unit
-    req_value, req_unit = float(rx.group("req_value")), rx.group("req_unit")
-    # Return reference time - relative time
-    if req_unit == "ms":
-        return ref_time - datetime.timedelta()
-    return ref_time - datetime.timedelta(**{DELTA_VALUES[req_unit]: req_value}) # type: ignore
+    req_value, req_unit = float(rx.group('req_value')), rx.group('req_unit')
+    # Get relative time
+    if req_unit == 'ms':
+        rel_time = datetime.timedelta()
+    else:
+        rel_time = datetime.timedelta(**{DELTA_VALUES[req_unit]: req_value})
+    # Return reference time -/+ relative time
+    if rx.group('sign') in [None, '-']:
+        return ref_time - rel_time
+    else:
+        return ref_time + rel_time
 
 
 # pylint: disable=unsubscriptable-object
@@ -89,7 +96,9 @@ def strftime(expression: Union[float, str], format: str) -> str:
 
 
 def strptime(expression, format: str):
+    """Returns an epoch float from the given formated time string.
+
+    :param expression: Time as string
+    :format: Time string format
     """
-    """
-    print(f'strptime --> {expression}, {format}')
-    return datetime.datetime.strptime(expression, format)
+    return datetime.datetime.strptime(expression, format).timestamp()
