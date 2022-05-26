@@ -8,8 +8,8 @@ m42pl repl
 
 ## General usage
 
-* Unlike a standard Shell, the M42PL read multiples lines at once; to execute
-  the pipeline you typed, hit `Escape` then `Enter`
+* M42PL' REPL read multiples lines at once; to execute the pipeline you typed,
+  hit `Escape` then `Enter`
 * When a pipeline is running, type `Ctrl+c` to stop it
 * You can use the arrow keys to move in history and in the pipeline source
 * The REPL automatically adds an `output` command to your pipeline if you didn't
@@ -26,7 +26,7 @@ m42pl repl
 
 ## Builtins commands
 
-The REPL provides some builtins commands, not run by M42PL dispatcher.
+The REPL provides some builtins commands:
 
 | Builtin         | Description                               |
 |-----------------|-------------------------------------------|
@@ -37,6 +37,8 @@ The REPL provides some builtins commands, not run by M42PL dispatcher.
 | `help`          | Prints help                               |
 | `cd <path>`     | Changes the working directory to `<path>` |
 | `pwd`           | Prints the current working directory      |
+| `ml [on|off]`   | Multi-line edit switch                    |
+| `plan [on|off]` | Plan mode switch                          |
 
 ## Prompt customization
 
