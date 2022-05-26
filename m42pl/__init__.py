@@ -13,6 +13,7 @@ import m42pl.commands
 import m42pl.dispatchers
 import m42pl.kvstores
 import m42pl.encoders
+import m42pl.settings
 
 from m42pl.commands import script
 
@@ -106,6 +107,10 @@ def encoder(alias: str = 'json') -> Any:
             name=alias,
             message=f'Encoder not found: name="{alias}"'
         )
+
+
+def setting(scope: str, name: str, default = None):
+    return m42pl.settings.SETTINGS.get(scope, name, default)
 
 
 def load_module_path(namespace: str, path: str) -> None:
