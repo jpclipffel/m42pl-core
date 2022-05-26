@@ -55,7 +55,8 @@ class BufferingCommand(AsyncCommand):
         self.maxsize = 0
         self.hits = 0
 
-    async def setup(self, event: dict, pipeline: Pipeline, context: Context, maxsize: int = 1) -> None: # type: ignore[override]
+    async def setup(self, event: dict, pipeline: Pipeline, context: Context,
+                        maxsize: int = 1) -> None: # type: ignore[override]
         """
         :param maxsize:     Internal buffer maximum size
         """
@@ -72,7 +73,8 @@ class BufferingCommand(AsyncCommand):
         """
         return self.queue.qsize()
 
-    async def ready(self, event, pipeline, ending, remain) -> bool:
+    async def ready(self, event: dict, pipeline: Pipeline, ending: bool,
+                        remain: int) -> bool:
         """Returns True if the queue is ready to be empited and yielded.
 
         Queue is ready when:
@@ -90,16 +92,15 @@ class BufferingCommand(AsyncCommand):
 
     async def __call__(self, event: dict, pipeline: Pipeline,
                         context: Context, ending: bool = False,
-                        remain: int = 0,
-                        *args, **kwargs) -> AsyncGenerator[dict, None]:
+                        remain: int = 0) -> AsyncGenerator[dict, None]:
         """Receives, stores and process events in accordance with the
         pipeline state and buffer limits.
 
-        :param event:       Current event
-        :param pipeline:    Current pipeline instance
-        :param ending:      `True` if the pipeline is ending,
-            `False` otherwise
-        :param remain:      Amount of remaining events
+        :param event: Latest generated event or `None`
+        :param pipeline: Current pipeline instance
+        :param context: Current context
+        :param ending: True of the pipeline is ending
+        :param remain: Remaing number of events
         """
         try:
             # Always stores the new event if it is not None
