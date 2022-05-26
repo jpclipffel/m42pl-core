@@ -13,6 +13,7 @@ import m42pl.commands
 from m42pl.kvstores import KVStore
 from m42pl.utils import time
 from m42pl.utils.log import LoggerAdapter
+from m42pl.utils.plan import Plan
 
 
 # Dispatchers aliases map
@@ -51,7 +52,7 @@ class Dispatcher:
     kvstore_prefix = 'dispatchers'
 
     class State(IntEnum):
-        """Pipelines status, as returned by `status()`.
+        """Pipelines status, as returned by ``status()``.
         """
         UNKNOWN     = auto()
         RUNNING     = auto()
@@ -60,10 +61,12 @@ class Dispatcher:
 
     @staticmethod
     def flatten_commands(commands: list) -> list:
-        """Separates commands tuples, i.e. commands whom `__new__`
-        returned more than one object.
+        """Separates commands tuples.
         
-        :param commands:    Commands list.
+        Commands tuples are returned by commands whoms ``__new__``
+        returned more than one instance.
+        
+        :param commands: Commands list
         """
         _commands = []
         for command in commands:
@@ -73,19 +76,19 @@ class Dispatcher:
                 _commands.append(command)
         return _commands
 
-    @staticmethod
-    def split_commands(commands) -> list:
-        _commands = [] # type: list
-        _subcommands = [] # type: list
-        for command in commands:
-            if isinstance(command, m42pl.commands.MergingCommand):
-                _commands.append(_subcommands)
-                _commands.append([command, ])
-                _subcommands = []
-            else:
-                _subcommands.append(command)
-        _commands.append(_subcommands)
-        return _commands
+    # @staticmethod
+    # def split_commands(commands) -> list:
+    #     _commands = [] # type: list
+    #     _subcommands = [] # type: list
+    #     for command in commands:
+    #         if isinstance(command, m42pl.commands.MergingCommand):
+    #             _commands.append(_subcommands)
+    #             _commands.append([command, ])
+    #             _subcommands = []
+    #         else:
+    #             _subcommands.append(command)
+    #     _commands.append(_subcommands)
+    #     return _commands
 
     def __init_subclass__(cls, **kwargs) -> None:
         super().__init_subclass__(**kwargs) # type: ignore
@@ -106,8 +109,10 @@ class Dispatcher:
             defaults={},
             logger=logging.getLogger(f'm42pl.dispatcher.{self.__class__.__name__}')
         )
+        # Initialize plan
+        self.plan = Plan()
 
-    def target(self, context: Context, event: dict):
+    def target(self, context: Context, event: dict, plan: bool = False):
         """Runs the dispatcher.
 
         This method must be implemented by the actual dispatcher class,
@@ -116,30 +121,40 @@ class Dispatcher:
         * Enters KVStore context (e.g. `with context.kvstore: ...`)
         * Handle execution and pipeline exceptions 
 
+        If ``plan`` is set to ``True``, the dispatcher should not run
+        the pipeline but instead return a plan, i.e. a representation
+        of what would be executed.
+
         :param context: Pipelines context
-        :param event:   Initial event
+        :param event: Initial event
+        :param plan: Plan pipeline execution only
         """
         pass
 
-    def __call__(self, source: str, kvstore: KVStore, event: dict|None = None):
+    def __call__(self, source: str, kvstore: KVStore,
+                    event: dict|None = None, plan: bool = False):
         """Prepares to run and runs the dispatcher.
 
-        :param source:  Script source
+        :param source: Script source
         :param kvstore: KVStore instance
-        :param event:   Initial event
+        :param event: Initial event
+        :param plan: Plan pipeline execution only
         """
+        # Reinitialize plan
+        self.plan = Plan()
         return self.target(
             context = Context(
                 pipelines=self.script(source)(),
                 kvstore=kvstore
             ),
-            event=event or dict()
+            event=event or dict(),
+            plan=plan
         )
 
     async def status(self, kvstore, identifier: str|int|None) -> list:
         """Return the status of an underlying pipeline.
 
-        :param identifier:  Pipeline identifier (type is
+        :param identifier: Pipeline identifier (type is
             implementation-specific)
         """
         async with kvstore:
@@ -157,8 +172,8 @@ class Dispatcher:
     async def register(self, kvstore, identifier):
         """Registers a pipeline process into a KVStore.
 
-        :param kvstore:     KVStore instance (must be ready)
-        :param identifier:  Pipeline process identifier
+        :param kvstore: KVStore instance (must be ready)
+        :param identifier: Pipeline process identifier
         """
         self.logger.info('registering pipeline process')
         await kvstore.write(
@@ -175,8 +190,8 @@ class Dispatcher:
     async def unregister(self, kvstore, identifier):
         """Unregisters a pipeline process form a KVStore.
 
-        :param kvstore:     KVStore instance (must be ready)
-        :param identifier:  Pipeline process identifier
+        :param kvstore: KVStore instance (must be ready)
+        :param identifier: Pipeline process identifier
         """
         self.logger.info('unregistering pipeline process')
         await kvstore.delete(f'{self.kvstore_prefix}:{identifier}')
