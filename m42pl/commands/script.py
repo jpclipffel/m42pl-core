@@ -220,6 +220,9 @@ class PipelineScript(Script):
             return ', '.join(items)
 
         def start(self, items):
+            # Subrefs must be reinitialized as the script command instance
+            # may be resued.
+            self.subrefs = []
             return self.pipelines
 
 
