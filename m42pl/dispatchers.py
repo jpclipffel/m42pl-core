@@ -1,10 +1,7 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, List, Any
-
 from m42pl.context import Context
 import re
-import sys
 import logging
 from enum import IntEnum, auto
 
@@ -47,7 +44,7 @@ class Dispatcher:
     :ivar _aliases_:  List of dispatcher names
     """
 
-    _aliases_: List[str]  = []
+    _aliases_: list[str]  = []
 
     kvstore_prefix = 'dispatchers'
 
@@ -140,7 +137,6 @@ class Dispatcher:
         :param event: Initial event
         :param plan: Plan pipeline execution only
         """
-        # Reinitialize plan
         self.plan = Plan()
         return self.target(
             context = Context(

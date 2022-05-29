@@ -220,6 +220,12 @@ class Builtins:
         self.repl.plan_only = str_to_bool(state, default=not self.repl.plan_only)
         print(f'Plan mode is {self.repl.plan_only and "enabled" or "disabled"}')
 
+    def builtin_planout(self, state: str = ''):
+        """Dump pipeline plan after execution.
+        """
+        self.repl.plan_output = str_to_bool(state, default=not self.repl.plan_output)
+        print(f'Plan output is {self.repl.plan_output and "enabled" or "disabled"}')
+
 
 class REPL2(RunAction):
     """A REPL to run M42PL pipelines.
@@ -268,6 +274,7 @@ class REPL2(RunAction):
         self.builtins = Builtins(self)
         # Plan mode
         self.plan_only = False
+        self.plan_output = False
 
     def stop(self, sig = None, frame = None):
         sys.exit(-1)
@@ -313,7 +320,7 @@ class REPL2(RunAction):
                             plan=self.plan_only
                         )
                         # Render plan
-                        if self.plan_only:
+                        if self.plan_only or self.plan_output:
                             print(self.dispatcher.plan.render())
             except EOFError:
                 self.stop()
