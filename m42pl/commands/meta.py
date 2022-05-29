@@ -28,7 +28,7 @@ class MetaCommand(AsyncCommand):
         :param remain: Remaing number of events
         """
         try:
-            await self.target(event, pipeline, context)
+            await self.target(event, pipeline, context, ending, remain)
         except Exception as error:
             raise CommandError(command=self, message=str(error)) from error
         yield event
@@ -36,8 +36,6 @@ class MetaCommand(AsyncCommand):
     async def target(self, event: dict, pipeline: Pipeline, context: Context,
                         ending: bool = True, remain: int = 0) -> None:
         """MetaCommand target method.
-
-        Always yields the received event.
 
         :param event: Latest generated event or `None`
         :param pipeline: Current pipeline instance
