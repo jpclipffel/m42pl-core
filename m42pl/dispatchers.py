@@ -11,6 +11,8 @@ from m42pl.kvstores import KVStore
 from m42pl.utils import time
 from m42pl.utils.log import LoggerAdapter
 from m42pl.utils.plan import Plan
+from m42pl.pipeline import Pipeline
+from m42pl.commands import MergingCommand
 
 
 # Dispatchers aliases map
@@ -73,19 +75,39 @@ class Dispatcher:
                 _commands.append(command)
         return _commands
 
-    # @staticmethod
-    # def split_commands(commands) -> list:
-    #     _commands = [] # type: list
-    #     _subcommands = [] # type: list
-    #     for command in commands:
-    #         if isinstance(command, m42pl.commands.MergingCommand):
-    #             _commands.append(_subcommands)
-    #             _commands.append([command, ])
-    #             _subcommands = []
-    #         else:
-    #             _subcommands.append(command)
-    #     _commands.append(_subcommands)
-    #     return _commands
+    @staticmethod
+    def split_pipeline(pipeline, unify: bool = True, max_layers: int = 2,
+                        types: tuple = (MergingCommand,)) -> list:
+        """Splits the given ``pipeline`` by command type.
+
+        The source ``pipeline`` is split at each ``MergingCommand``
+        and in at most ``max_layers`` layers.
+
+        :param pipeline: Source pipeline
+        :param unify: Unify merging and post-merging commands or not
+        :param max_layers: Maximum number of layers; Default to 2
+            (one for pre-merging commands and one for merging and
+            post-merging commands)
+        """
+        commands = [[],]
+        pipelines = []
+        # Build the new pipelines' commands lists
+        for cmd in pipeline.commands:
+            # Split when the command type is a `MergingCommand`
+            if isinstance(cmd, types) and len(commands) < max_layers:
+                commands.append([cmd,])
+                if not unify:
+                    commands.append([])
+            # Append non-merging command to current commands list
+            else:
+                commands[-1].append(cmd)
+        # Build and returns new pipelines
+        for cmds in commands:
+            pipelines.append(Pipeline(
+                commands=cmds,
+                name=f'{pipeline.name}'
+            ))
+        return pipelines
 
     def __init_subclass__(cls, **kwargs) -> None:
         super().__init_subclass__(**kwargs) # type: ignore
