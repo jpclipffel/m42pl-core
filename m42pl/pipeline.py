@@ -395,7 +395,7 @@ class PipelineRunner:
                     # If neither the calling function nor the generator had 
                     # yield an event, stop the iteration.
                     if next_event is None:
-                        # self.logger.info(f'next_event is None, breaking')
+                        self.logger.info(f'next_event is None, breaking')
                         # self.trace(3, f'next event is None, raise StopAsyncIteration')
                         raise StopAsyncIteration()
                 # ---
@@ -403,7 +403,7 @@ class PipelineRunner:
                 # event. Send None to the processors to 'wake-up' the
                 # buffering commands and process the buffered events.
                 except asyncio.TimeoutError:
-                    # self.logger.debug(f'generator timeout, forcing pipeline wakeup')
+                    self.logger.debug(f'generator timeout, forcing pipeline wakeup')
                     # self.trace(4, f'shielded task {task} -> wake up !')
                     async for e in self.run_commands(processors, None, False, 0):
                         yield e
@@ -415,7 +415,7 @@ class PipelineRunner:
                     # self.trace(3, 'catched StopAsyncIteration')
                     # Always empty the buffered events
                     if len(processors):
-                        # self.logger.info(f'received StopAsyncIteration, running pipeline processors in end mode')
+                        self.logger.info(f'received StopAsyncIteration, running pipeline processors in end mode')
                         # self.trace(4, f'running processors in end mode')
                         async for _event in self.run_commands(processors, None, True, 0):
                             # self.trace(5, f'yield event from processors in end mode: {_event.signature}')
@@ -424,13 +424,13 @@ class PipelineRunner:
                     # and yield None to indicate the end of the current loop.
                     # The iterator will be reset in the new loop.
                     if infinite:
-                        # self.logger.debug(f'received StopAsyncIteration, reset pipeline loop')
+                        self.logger.debug(f'received StopAsyncIteration, reset pipeline loop')
                         # self.trace(4, 'inifite mote, reset iterator and yield None')
                         iterator = None
                         next_event = None
                     # Otherwise, simply break the pipeline loop.
                     else:
-                        # self.logger.debug(f'received StopAsyncIteration, breaking pipeline loop')
+                        self.logger.debug(f'received StopAsyncIteration, breaking pipeline loop')
                         # self.trace(4, 'standard mode, return')
                         return
                 # ---
