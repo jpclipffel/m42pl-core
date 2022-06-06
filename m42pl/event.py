@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import uuid
-import xxhash
+# import xxhash
 
 
 # Events are the fundamental unit of information procuded and shared by M42PL
