@@ -41,6 +41,12 @@ nav:
     - "KVStores": "components/kvstores.md"
     - "Encoders": "components/encoders.md"
     - "Dispatchers": "components/dispatchers.md"
+  - "Development":
+    - "Overview": "development/index.md"
+    - "Commands": "development/commands/index.md"
+    - "KVStores": "development/kvstores/index.md"
+    - "Encoders": "development/encoders/index.md"
+    - "Dispatchers": "development/dispatchers/index.md"
 
 # Source repository
 repo_url: https://github.com/jpclipffel/m42pl-core
