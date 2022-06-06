@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import uuid
-from copy import deepcopy
+import xxhash
 
 
 # Events are the fundamental unit of information procuded and shared by M42PL
@@ -34,6 +34,7 @@ def signature(event: dict):
     """
     if event.get('sign', None) is None:
         event['sign'] = str(uuid.uuid4())
+        # event['sign'] = xxhash.xxh32_hexdigest(str(id(event)))
     return event['sign']
 
 
