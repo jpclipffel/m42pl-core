@@ -36,7 +36,7 @@ class M42PLLexer(RegexLexer):
     filenames = ['*.m42pl', '*.mpl']
     tokens = {
         'root': [
-            (r'(\|)\s*[a-zA-Z_]+[a-zA-Z_0-9\.-]*', token.Name.Function),
+            (r'(^|\|)\s*[a-zA-Z_]+[a-zA-Z_0-9\.-]*', token.Name.Function),
             (r'\'', token.Literal.String, 'string_squotes'),
             (r'\"', token.Literal.String, 'string_dquotes'),
             (r'\{', token.Name.Entity, 'jsonpath'),
@@ -94,8 +94,8 @@ class PromptPrefix:
     """Prompt prefix for M42PL REPL.
     """
 
-    def __init__(self, prefix: str = 'm42pl |'):
-        self.prefix = prefix + ' '
+    def __init__(self, prefix: str = 'm42pl'):
+        self.prefix = prefix + ' | '
 
     def builtins(self):
         return {
@@ -308,9 +308,10 @@ class REPL2(RunAction):
                 if len(source) > 0:
                     # Run builtins
                     source = self.builtins(source)
+                    # Interpret source as a M42PL pipeline
                     if source and len(source) > 0:
-                    # Otherwise, interpret source as a M42PL pipeline
-                    # else:
+                        if source[0] != '|':
+                            source = f'| {source}'
                         if not self.dispatcher:
                             self.dispatcher = m42pl.dispatcher(args.dispatcher)(**args.dispatcher_kwargs)
                         self.dispatcher(
@@ -324,6 +325,9 @@ class REPL2(RunAction):
                             print(self.dispatcher.plan.render())
             except EOFError:
                 self.stop()
+            except BlockingIOError:
+                print('------\nBIOR\n------')
+                pass
             except Exception as error:
                 print(CLIErrorRender(error, source).render())
                 if args.raise_errors:
