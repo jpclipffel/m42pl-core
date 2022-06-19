@@ -3,8 +3,8 @@
 M42PL is a _Data Manipulation Language_, inspired by
 [Unix shells][unixshells] and [Splunk][splunk].
 
-The language is extremely simple to learn and to use. It is designed to make
-data manipulation trivial, even for non-technical users.
+The language is extremely simple to learn and to use, yet powerfull and versatile.
+It is designed to make data manipulation trivial, even for non-technical users.
 
 ## Examples
 

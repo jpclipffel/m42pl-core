@@ -45,7 +45,7 @@ The M42PL language is extremelly simple:
 This is an _Hello World_ example:
 
 ```
-| eval hello='world'
+| make | eval hello='world'
 ```
 
 At any point, you may run a _builtin_:

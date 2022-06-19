@@ -15,12 +15,18 @@ The class `m42pl.field.Field` takes 4 arguments:
 
 | Name      | Type                          | Default | Description                                           |
 | --------- | ----------------------------- | ------- | ----------------------------------------------------- |
-| `name`    | `str`                         | -       | Field name                                            |
+| `name`    | `str`, `Any`                  | -       | Field name or literal value                           |
 | `default` | `Any`                         | `None`  | Default value if the field is not found               |
 | `type`    | `type`, `tuple[type]`, `None` | `None`  | Allowed type for the field's value                    |
 | `seqn`    | `bool`                        | `False` | Force the field's value to be wrapped into a sequence |
 
+The following schema shows how a field is read and processed:
+
+![Fields reading](/assets/fields_reading.png){ align=left }
+
 ## FieldsMap
+
+To do.
 
 ## Example
 
@@ -52,7 +58,10 @@ Let's start with the basic:
 Now for the fields behaviour:
 
 * `MyCommand.static` will read the value of the event's field name pointed by the argument `static`
+* `MyCommand.static` will be read **once**, in `MyCommand.setup`
 * `MyCommand.dynamic` will read the value of the event's field name pointed by the argument `dynamic`
+* `MyCommand.dynamic` will be read **for each event**, in `MyCommand.target`
+
 
 Assuming the following script and event:
 

@@ -43,7 +43,9 @@ nav:
     - "Dispatchers": "components/dispatchers.md"
   - "Development":
     - "Overview": "development/index.md"
-    - "Commands": "development/commands/index.md"
+    - "Commands":
+        - "Overview": "development/commands/index.md"
+        - "Fields": "development/commands/fields.md"
     - "KVStores": "development/kvstores/index.md"
     - "Encoders": "development/encoders/index.md"
     - "Dispatchers": "development/dispatchers/index.md"
@@ -56,6 +58,8 @@ edit_uri: tree/main/docs/docs
 # Markdown extensions
 markdown_extensions:
   - admonition
+  - attr_list
+  - md_in_html
 
 # Plugins
 plugins:
