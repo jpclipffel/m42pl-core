@@ -17,8 +17,9 @@ class EvalField(BaseField):
         :ivar expr:     Expression evaluator
         """
         super().__init__(*args, **kwargs)
-        self.expr = Evaluator(self.name)
-        
+        expr = self.name.replace('\n', ' ').strip(' ')
+        self.expr = Evaluator(expr)
+
     async def _read(self, event: dict, *args, **kwargs):
         try:
             return self.expr(event and event.get('data', {}) or {})
