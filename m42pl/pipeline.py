@@ -112,6 +112,8 @@ class Pipeline:
         # Pipeline state
         self._commands_set = False
         self._ready = True
+        # Pipeline errors
+        self.errors = {}
 
     def to_dict(self) -> dict:
         """Serializes the pipeline as a :class:`dict`.
@@ -283,22 +285,19 @@ class PipelineRunner:
                             yield __event
                     elif _event:
                         yield _event
-                # else:
-                #     print(f'run commands > for else')
-                #     if ending:
-                #         print('run commands > for else > ending')
-                #         if has_further_commands:
-                #             print('run commands > for else > has further commands')
-                #             async for _event in self.run_commands(commands[1:], None, ending, remain):
-                #                 yield _event
-                #         elif event:
-                #             print('run commands > for else > yield event')
-                #             yield event
             # Command errors handling
             except errors.CommandError as error:
-                print(error.name, error.line, error.column, error.offset)
-                print(str(error))
-                print()
+                # print(error.name, error.line, error.column, error.offset)
+                # print(str(error))
+                # print()
+                error_key = f'{error.offset}:{error.line}:{error.column}:{error.name}'
+                if not error_key in self.pipeline.errors:
+                    self.pipeline.errors[error_key] = {
+                        'message': str(error),
+                        'count': 0
+                    }
+                self.pipeline.errors[error_key]['count'] += 1
+
 
     async def __call__(self, context: Context|None = None,
                         event: dict|None = None, infinite: bool = False,
