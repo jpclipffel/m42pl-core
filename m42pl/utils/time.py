@@ -1,16 +1,18 @@
 import regex
 import datetime
+from dateutil.relativedelta import relativedelta
 
 from typing import Union
 
 
 # Relative time units
 RELTIME_UNITS = [
-    'ms',
-    's',
-    'm',
-    'h',
-    'd'
+    'mon',  # month
+    'ms',   # micro second
+    's',    # second
+    'm',    # minute
+    'h',    # hour
+    'd',    # day
 ]
 
 # Relative time regex
@@ -24,19 +26,22 @@ RELTIME_REGEX = regex.compile((
 
 # Rounding values
 ROUND_VALUES = {
-    's':   {'microsecond': 0},
-    'm':   {'microsecond': 0, 'second': 0},
-    'h':   {'microsecond': 0, 'second': 0, 'minute': 0},
-    'd':   {'microsecond': 0, 'second': 0, 'minute': 0, 'hour': 0},
+    's':    {'microsecond': 0},
+    'm':    {'microsecond': 0, 'second': 0},
+    'h':    {'microsecond': 0, 'second': 0, 'minute': 0},
+    'd':    {'microsecond': 0, 'second': 0, 'minute': 0, 'hour': 0},
+    'w':    {'microsecond': 0, 'second': 0, 'minute': 0, 'hour': 0, 'day': 1},
+    'mon':  {'microsecond': 0, 'second': 0, 'minute': 0, 'hour': 0, 'day': 1},
 }
 
 # Delta values
 DELTA_VALUES = {
-    'ms': '',
-    's':  'seconds',
-    'm':  'minutes',
-    'h':  'hours',
-    'd':  'days',
+    'ms':   '',
+    's':    'seconds',
+    'm':    'minutes',
+    'h':    'hours',
+    'd':    'days',
+    'mon':  'months'
 }
 
 
@@ -72,7 +77,8 @@ def reltime(expression: str, dt = None) -> datetime.datetime:
     if req_unit == 'ms':
         rel_time = datetime.timedelta()
     else:
-        rel_time = datetime.timedelta(**{DELTA_VALUES[req_unit]: req_value})
+        # rel_time = datetime.timedelta(**{DELTA_VALUES[req_unit]: req_value})
+        rel_time = relativedelta(**{DELTA_VALUES[req_unit]: req_value})
     # Return reference time -/+ relative time
     if rx.group('sign') in [None, '-']:
         return ref_time - rel_time
