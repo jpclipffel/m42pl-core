@@ -298,7 +298,6 @@ class PipelineRunner:
                     }
                 self.pipeline.errors[error_key]['count'] += 1
 
-
     async def __call__(self, context: Context|None = None,
                         event: dict|None = None, infinite: bool = False,
                         timeout: float = 0.0):

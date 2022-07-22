@@ -218,6 +218,7 @@ class Evaluator:
         'false':        lambda field: field == False,
         # Filter
         'match':        lambda field, values: bool(list(filter(None, [ regex.findall(v, solve(field, (str,), '')) for v in isinstance(values, (list, tuple)) and values or (values,) ]))),
+        # 'match':        lambda field, expr: regex.match(solve(expr, (str, )), solve(field, (str, ))),
         # Path
         'basename':     lambda field: ntpath.basename(solve(field, (str,), 0)),
         'dirname':      lambda field: ntpath.dirname(solve(field, (str,), 0)),
