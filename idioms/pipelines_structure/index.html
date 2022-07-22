@@ -9,7 +9,7 @@
       
       
       <link rel="icon" href="../../assets/Logo - Text - White.png">
-      <meta name="generator" content="mkdocs-1.3.0, mkdocs-material-8.2.14">
+      <meta name="generator" content="mkdocs-1.3.1, mkdocs-material-8.3.9">
     
     
       
@@ -17,11 +17,12 @@
       
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/main.3de6f41f.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.1d29e8d0.min.css">
       
         
-        <link rel="stylesheet" href="../../assets/stylesheets/palette.cc9b2e1e.min.css">
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.cbb835fc.min.css">
         
+      
       
     
     
@@ -712,10 +713,31 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#monitoring-and-tracing" class="md-nav__link">
+    Monitoring and tracing
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
       
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reusability/" class="md-nav__link">
+        Reusability
+      </a>
     </li>
   
 
@@ -873,6 +895,157 @@
   
 
     
+      
+      
+      
+
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_9" type="checkbox" id="__nav_9" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_9">
+          Development
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Development" data-md-level="1">
+        <label class="md-nav__title" for="__nav_9">
+          <span class="md-nav__icon md-icon"></span>
+          Development
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development/" class="md-nav__link">
+        Overview
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_9_2" type="checkbox" id="__nav_9_2" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_9_2">
+          Commands
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Commands" data-md-level="2">
+        <label class="md-nav__title" for="__nav_9_2">
+          <span class="md-nav__icon md-icon"></span>
+          Commands
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development/commands/" class="md-nav__link">
+        Overview
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development/commands/fields/" class="md-nav__link">
+        Fields
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development/kvstores/index.md" class="md-nav__link">
+        KVStores
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development/encoders/index.md" class="md-nav__link">
+        Encoders
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development/dispatchers/index.md" class="md-nav__link">
+        Dispatchers
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
   </ul>
 </nav>
                   </div>
@@ -906,6 +1079,13 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#monitoring-and-tracing" class="md-nav__link">
+    Monitoring and tracing
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -932,10 +1112,45 @@ this is to be considered as a syntatic sugar.</p>
 <p>The <code>echo</code> command yields either the previous event or an empty one:</p>
 <pre><code>| echo
 </code></pre>
+<h2 id="monitoring-and-tracing">Monitoring and tracing</h2>
+<p>The <code>mpl-report</code> command (aliases: <code>report</code>, <code>mpl_report</code>) provide a pipeline
+reporting mechanism to trace the pipeline status.</p>
+<p><code>mpl-report</code> takes a pipeline as first argument. This pipeline may be used
+to print the report, to formar and send it on logging server, etc.</p>
+<p>If the command is given a <em>frequency</em> as second argument, the reporting
+pipeline will run every <em>frequency</em> event.</p>
+<p>This meta command runs by default right before the pipeline execution, and
+right after its ending.</p>
+<p><code>mpl-report</code> can be invoked anywhere in the pipeline, and of course multiple
+time.</p>
+<pre><code>| make showinfo=yes
+| report [ | echo | output format='raw' ]
+| output format='hjson'
+</code></pre>
+<pre><code>{'pipeline': {'name': 'main', 'state': 'running', 'errors': {'count': 0, 'list': {}}}, 'report': {'frequency': -1}}
+
+{
+  &quot;id&quot;: 0,
+  &quot;chunk&quot;: {
+    &quot;chunk&quot;: 0,
+    &quot;chunks&quot;: 1
+  },
+  &quot;count&quot;: {
+    &quot;begin&quot;: 0,
+    &quot;end&quot;: 1
+  },
+  &quot;pipeline&quot;: {
+    &quot;name&quot;: &quot;main&quot;
+  }
+}
+
+{'pipeline': {'name': 'main', 'state': 'ending', 'errors': {'count': 0, 'list': {}}}, 'report': {'frequency': -1}}
+</code></pre>
 <hr />
 
               
             </article>
+            
           </div>
         </div>
         
@@ -943,7 +1158,8 @@ this is to be considered as a syntatic sugar.</p>
       
         <footer class="md-footer">
   
-    <nav class="md-footer__inner md-grid" aria-label="Footer">
+    
+    <nav class="md-footer__inner md-grid" aria-label="Footer" >
       
         
         <a href="../" class="md-footer__link md-footer__link--prev" aria-label="Previous: Overview" rel="prev">
@@ -962,13 +1178,13 @@ this is to be considered as a syntatic sugar.</p>
       
       
         
-        <a href="../parallelization/" class="md-footer__link md-footer__link--next" aria-label="Next: Parallelization" rel="next">
+        <a href="../reusability/" class="md-footer__link md-footer__link--next" aria-label="Next: Reusability" rel="next">
           <div class="md-footer__title">
             <div class="md-ellipsis">
               <span class="md-footer__direction">
                 Next
               </span>
-              Parallelization
+              Reusability
             </div>
           </div>
           <div class="md-footer__button md-icon">
@@ -998,10 +1214,10 @@ this is to be considered as a syntatic sugar.</p>
     <div class="md-dialog" data-md-component="dialog">
       <div class="md-dialog__inner md-typeset"></div>
     </div>
-    <script id="__config" type="application/json">{"base": "../..", "features": [], "search": "../../assets/javascripts/workers/search.2a1c317c.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version.title": "Select version"}}</script>
+    <script id="__config" type="application/json">{"base": "../..", "features": [], "search": "../../assets/javascripts/workers/search.b97dbffb.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version.title": "Select version"}}</script>
     
     
-      <script src="../../assets/javascripts/bundle.c2e1ee47.min.js"></script>
+      <script src="../../assets/javascripts/bundle.6c7ad80a.min.js"></script>
       
     
   </body>
