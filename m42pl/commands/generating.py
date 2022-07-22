@@ -27,8 +27,9 @@ class GeneratingCommand(AsyncCommand):
                         *args, **kwargs) -> AsyncGenerator[dict|None, None]:
         """Runs the command.
 
-        :param event:       Latest generated event or `None`
-        :param pipeline:    Current pipeline instance
+        :param event: Latest generated event or `None`
+        :param pipeline: Current pipeline instance
+        :param context: Current context
         """
         try:
             async for _event in self.target(event or Event(), pipeline, context):
@@ -36,11 +37,12 @@ class GeneratingCommand(AsyncCommand):
         except Exception as error:
             raise CommandError(command=self, message=str(error)) from error
 
-    async def target(self, event: dict, pipeline: Pipeline, context: Context,
-                        *args, **kwargs) -> AsyncGenerator[dict|None, None]:
+    async def target(self, event: dict, pipeline: Pipeline,
+                        context: Context ) -> AsyncGenerator[dict|None, None]:
         """Generates and yields events.
 
-        :param event:       Latest generated event
-        :param pipeline:    Current pipeline instance
+        :param event: Latest generated event or `None`
+        :param pipeline: Current pipeline instance
+        :param context: Current context
         """
         yield None

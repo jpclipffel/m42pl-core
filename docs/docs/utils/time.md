@@ -21,11 +21,13 @@ Where:
     * `m`: minute
     * `h`: hour
     * `d`: day
+    * `mon`: month
 * `<precision>` is the current time rounded to:
     * `now`: microsecond
     * `s`: second
     * `m`: minute
     * `h`: hour
     * `d`: day
+    * `mon`: month
 
 ---

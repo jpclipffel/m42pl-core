@@ -31,6 +31,7 @@ nav:
   - "Idioms":
     - "Overview": "idioms/index.md"
     - "Structure": "idioms/pipelines_structure.md"
+    - "Reusability": "idioms/reusability.md"
     - "Parallelization": "idioms/parallelization.md"
     - "Encoding & Decoding": "idioms/encoding_decoding.md"
   - "Components":
@@ -40,6 +41,14 @@ nav:
     - "KVStores": "components/kvstores.md"
     - "Encoders": "components/encoders.md"
     - "Dispatchers": "components/dispatchers.md"
+  - "Development":
+    - "Overview": "development/index.md"
+    - "Commands":
+        - "Overview": "development/commands/index.md"
+        - "Fields": "development/commands/fields.md"
+    - "KVStores": "development/kvstores/index.md"
+    - "Encoders": "development/encoders/index.md"
+    - "Dispatchers": "development/dispatchers/index.md"
 
 # Source repository
 repo_url: https://github.com/jpclipffel/m42pl-core
@@ -49,6 +58,8 @@ edit_uri: tree/main/docs/docs
 # Markdown extensions
 markdown_extensions:
   - admonition
+  - attr_list
+  - md_in_html
 
 # Plugins
 plugins:

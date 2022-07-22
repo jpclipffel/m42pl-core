@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import uuid
+# import xxhash
 
 
 # Events are the fundamental unit of information procuded and shared by M42PL
@@ -11,7 +12,7 @@ import uuid
 # * `sign`: stores the event hash, read-only for the users
 
 
-def Event(data: dict|None = None, meta: dict|None = None, sign = None):
+def Event(data: dict = {}, meta: dict = {}, sign = None):
     """Event factory.
 
     :param data: Event data
@@ -19,9 +20,9 @@ def Event(data: dict|None = None, meta: dict|None = None, sign = None):
     :param sign: Event signature
     """
     return {
-        'data': data or {},
-        'meta': meta or {},
-        'sign': sign or None
+        'data': data,
+        'meta': meta,
+        'sign': sign
     }
 
 
@@ -33,6 +34,7 @@ def signature(event: dict):
     """
     if event.get('sign', None) is None:
         event['sign'] = str(uuid.uuid4())
+        # event['sign'] = xxhash.xxh32_hexdigest(str(id(event)))
     return event['sign']
 
 

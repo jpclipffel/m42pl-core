@@ -16,26 +16,31 @@ class MetaCommand(AsyncCommand):
     """
 
     async def __call__(self, event: dict, pipeline: Pipeline, context: Context,
-                        *args, **kwargs) -> AsyncGenerator[dict, None]:
+                        ending: bool = True, remain: int = 0) -> AsyncGenerator[dict, None]:
         """Runs the command.
         
         Always yields the received event.
         
-        :param event:       Current event
-        :param pipeline:    Current pipeline instance
+        :param event: Latest generated event or `None`
+        :param pipeline: Current pipeline instance
+        :param context: Current context
+        :param ending: True of the pipeline is ending
+        :param remain: Remaing number of events
         """
         try:
-            await self.target(event, pipeline, context)
+            await self.target(event, pipeline, context, ending, remain)
         except Exception as error:
             raise CommandError(command=self, message=str(error)) from error
         yield event
 
-    async def target(self, event: dict, pipeline: Pipeline, context: Context) -> None:
+    async def target(self, event: dict, pipeline: Pipeline, context: Context,
+                        ending: bool = True, remain: int = 0) -> None:
         """MetaCommand target method.
 
-        Always yields the received event.
-
-        :param event:       Current event
-        :param pipeline:    Current pipeline instance
+        :param event: Latest generated event or `None`
+        :param pipeline: Current pipeline instance
+        :param context: Current context
+        :param ending: True of the pipeline is ending
+        :param remain: Remaing number of events
         """
         pass

@@ -23,6 +23,7 @@ from prompt_toolkit.styles.pygments import style_from_pygments_cls
 import m42pl
 from m42pl.event import Event
 from m42pl.utils.errors import CLIErrorRender
+from m42pl.utils.text import str_to_bool
 
 from .__base__ import RunAction
 
@@ -35,7 +36,7 @@ class M42PLLexer(RegexLexer):
     filenames = ['*.m42pl', '*.mpl']
     tokens = {
         'root': [
-            (r'(\|)\s*[a-zA-Z_]+[a-zA-Z_0-9\.-]*', token.Name.Function),
+            (r'(^|\|)\s*[a-zA-Z_]+[a-zA-Z_0-9\.-]*', token.Name.Function),
             (r'\'', token.Literal.String, 'string_squotes'),
             (r'\"', token.Literal.String, 'string_dquotes'),
             (r'\{', token.Name.Entity, 'jsonpath'),
@@ -93,8 +94,8 @@ class PromptPrefix:
     """Prompt prefix for M42PL REPL.
     """
 
-    def __init__(self, prefix: str = 'm42pl |'):
-        self.prefix = prefix + ' '
+    def __init__(self, prefix: str = 'm42pl'):
+        self.prefix = prefix + ' | '
 
     def builtins(self):
         return {
@@ -179,24 +180,6 @@ class Builtins:
         m42pl.reload_modules()
         self.repl.dispatcher = None
 
-        # print(dedent('''\
-        #     Welcome to M42PL !
-
-        #     Builtins commands:
-        #     * exit          : Quit the interpreter
-        #     * modules       : Print the list of imported modules
-        #     * reload        : Reload the imported modules
-        #     * help          : Display this help message
-        #     * cd <path>     : Change working directory to <path>
-        #     * pwd           : Prints the current working directory
-        #     * import <name> : Import the module <name>
-
-        #     Snippets:
-        #     * Type 'exit' or Ctrl+D to leave the interpreter
-        #     * Type 'commands' to generate the list of commands
-        #     * Type 'command <command name>' to show a command help
-        # '''))
-
     def builtin_cd(self, path: str = '~'):
         """Change working directory.
         """
@@ -230,34 +213,18 @@ class Builtins:
         print(f"Multiline {self.repl.prompt.multiline and 'enabled' or 'disabled'}")
         if self.repl.prompt.multiline:
             print('Type <Esc> <Enter> to execute')
+    
+    def builtin_plan(self, state: str = ''):
+        """Run pipelines in plan mode.
+        """
+        self.repl.plan_only = str_to_bool(state, default=not self.repl.plan_only)
+        print(f'Plan mode is {self.repl.plan_only and "enabled" or "disabled"}')
 
-
-    # def builtin_connect(self, url: str = 'http://127.0.0.1:4242'):
-    #     """Connects to a M42PL server.
-
-    #     :param url: M42PL server URL.
-    #     """
-    #     self.server_url = url.rstrip('/')
-    #     try:
-    #         r = self.session.get(f'{self.server_url}/ping')
-    #         r.raise_for_status()
-    #         print('Connected')
-    #     except Exception as error:
-    #         print(f'Connection error: {str(error)})')
-    #         self.server_url = None
-
-    # def builtin_status(self, pid):
-    #     """Gets a remote pipeline status.
-    #     """
-    #     if self.server_url:
-    #         try:
-    #             r = requests.get(f'{self.server_url}/status/{pid}/')
-    #             r.raise_for_status()
-    #             print(r.json())
-    #         except Exception as error:
-    #             print(f'Error: {str(error)}')
-    #     else:
-    #         print(f'Not connected')
+    def builtin_planout(self, state: str = ''):
+        """Dump pipeline plan after execution.
+        """
+        self.repl.plan_output = str_to_bool(state, default=not self.repl.plan_output)
+        print(f'Plan output is {self.repl.plan_output and "enabled" or "disabled"}')
 
 
 class REPL2(RunAction):
@@ -305,6 +272,9 @@ class REPL2(RunAction):
         self.dispatcher = None
         # Builtins
         self.builtins = Builtins(self)
+        # Plan mode
+        self.plan_only = False
+        self.plan_output = False
 
     def stop(self, sig = None, frame = None):
         sys.exit(-1)
@@ -338,18 +308,26 @@ class REPL2(RunAction):
                 if len(source) > 0:
                     # Run builtins
                     source = self.builtins(source)
+                    # Interpret source as a M42PL pipeline
                     if source and len(source) > 0:
-                    # Otherwise, interpret source as a M42PL pipeline
-                    # else:
+                        if source[0] != '|':
+                            source = f'| {source}'
                         if not self.dispatcher:
                             self.dispatcher = m42pl.dispatcher(args.dispatcher)(**args.dispatcher_kwargs)
                         self.dispatcher(
                             source=source,
                             kvstore=kvstore,
-                            event=Event(args.event)
+                            event=Event(args.event),
+                            plan=self.plan_only
                         )
+                        # Render plan
+                        if self.plan_only or self.plan_output:
+                            print(self.dispatcher.plan.render())
             except EOFError:
                 self.stop()
+            except BlockingIOError:
+                print('------\nBIOR\n------')
+                pass
             except Exception as error:
                 print(CLIErrorRender(error, source).render())
                 if args.raise_errors:

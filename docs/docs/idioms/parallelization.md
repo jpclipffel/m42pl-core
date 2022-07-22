@@ -17,8 +17,8 @@ A pipeline can be split in multiples sub-pipelines using the
 ```
 | make count=10 showinfo=yes
 | parallel
-  [ | eval p=1 | stats count by p ],
-  [ | eval p=2 | stats max(id) by p ]
+  [ | echo | eval p=1 | stats count by p ],
+  [ | echo | eval p=2 | stats max(id) by p ]
 ```
 
 Output:

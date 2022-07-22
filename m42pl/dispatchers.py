@@ -1,10 +1,7 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, List, Any
-
 from m42pl.context import Context
 import re
-import sys
 import logging
 from enum import IntEnum, auto
 
@@ -13,6 +10,9 @@ import m42pl.commands
 from m42pl.kvstores import KVStore
 from m42pl.utils import time
 from m42pl.utils.log import LoggerAdapter
+from m42pl.utils.plan import Plan
+from m42pl.pipeline import Pipeline
+from m42pl.commands import MergingCommand
 
 
 # Dispatchers aliases map
@@ -46,12 +46,12 @@ class Dispatcher:
     :ivar _aliases_:  List of dispatcher names
     """
 
-    _aliases_: List[str]  = []
+    _aliases_: list[str]  = []
 
     kvstore_prefix = 'dispatchers'
 
     class State(IntEnum):
-        """Pipelines status, as returned by `status()`.
+        """Pipelines status, as returned by ``status()``.
         """
         UNKNOWN     = auto()
         RUNNING     = auto()
@@ -60,10 +60,12 @@ class Dispatcher:
 
     @staticmethod
     def flatten_commands(commands: list) -> list:
-        """Separates commands tuples, i.e. commands whom `__new__`
-        returned more than one object.
+        """Separates commands tuples.
         
-        :param commands:    Commands list.
+        Commands tuples are returned by commands whoms ``__new__``
+        returned more than one instance.
+        
+        :param commands: Commands list
         """
         _commands = []
         for command in commands:
@@ -74,18 +76,38 @@ class Dispatcher:
         return _commands
 
     @staticmethod
-    def split_commands(commands) -> list:
-        _commands = [] # type: list
-        _subcommands = [] # type: list
-        for command in commands:
-            if isinstance(command, m42pl.commands.MergingCommand):
-                _commands.append(_subcommands)
-                _commands.append([command, ])
-                _subcommands = []
+    def split_pipeline(pipeline, unify: bool = True, max_layers: int = 2,
+                        types: tuple = (MergingCommand,)) -> list:
+        """Splits the given ``pipeline`` by command type.
+
+        The source ``pipeline`` is split at each ``MergingCommand``
+        and in at most ``max_layers`` layers.
+
+        :param pipeline: Source pipeline
+        :param unify: Unify merging and post-merging commands or not
+        :param max_layers: Maximum number of layers; Default to 2
+            (one for pre-merging commands and one for merging and
+            post-merging commands)
+        """
+        commands = [[],]
+        pipelines = []
+        # Build the new pipelines' commands lists
+        for cmd in pipeline.commands:
+            # Split when the command type is a `MergingCommand`
+            if isinstance(cmd, types) and len(commands) < max_layers:
+                commands.append([cmd,])
+                if not unify:
+                    commands.append([])
+            # Append non-merging command to current commands list
             else:
-                _subcommands.append(command)
-        _commands.append(_subcommands)
-        return _commands
+                commands[-1].append(cmd)
+        # Build and returns new pipelines
+        for cmds in commands:
+            pipelines.append(Pipeline(
+                commands=cmds,
+                name=f'{pipeline.name}'
+            ))
+        return pipelines
 
     def __init_subclass__(cls, **kwargs) -> None:
         super().__init_subclass__(**kwargs) # type: ignore
@@ -106,8 +128,10 @@ class Dispatcher:
             defaults={},
             logger=logging.getLogger(f'm42pl.dispatcher.{self.__class__.__name__}')
         )
+        # Initialize plan
+        self.plan = Plan()
 
-    def target(self, context: Context, event: dict):
+    def target(self, context: Context, event: dict, plan: bool = False):
         """Runs the dispatcher.
 
         This method must be implemented by the actual dispatcher class,
@@ -116,30 +140,39 @@ class Dispatcher:
         * Enters KVStore context (e.g. `with context.kvstore: ...`)
         * Handle execution and pipeline exceptions 
 
+        If ``plan`` is set to ``True``, the dispatcher should not run
+        the pipeline but instead return a plan, i.e. a representation
+        of what would be executed.
+
         :param context: Pipelines context
-        :param event:   Initial event
+        :param event: Initial event
+        :param plan: Plan pipeline execution only
         """
         pass
 
-    def __call__(self, source: str, kvstore: KVStore, event: dict|None = None):
+    def __call__(self, source: str, kvstore: KVStore,
+                    event: dict|None = None, plan: bool = False):
         """Prepares to run and runs the dispatcher.
 
-        :param source:  Script source
+        :param source: Script source
         :param kvstore: KVStore instance
-        :param event:   Initial event
+        :param event: Initial event
+        :param plan: Plan pipeline execution only
         """
+        self.plan = Plan()
         return self.target(
             context = Context(
                 pipelines=self.script(source)(),
                 kvstore=kvstore
             ),
-            event=event or dict()
+            event=event or dict(),
+            plan=plan
         )
 
     async def status(self, kvstore, identifier: str|int|None) -> list:
         """Return the status of an underlying pipeline.
 
-        :param identifier:  Pipeline identifier (type is
+        :param identifier: Pipeline identifier (type is
             implementation-specific)
         """
         async with kvstore:
@@ -157,8 +190,8 @@ class Dispatcher:
     async def register(self, kvstore, identifier):
         """Registers a pipeline process into a KVStore.
 
-        :param kvstore:     KVStore instance (must be ready)
-        :param identifier:  Pipeline process identifier
+        :param kvstore: KVStore instance (must be ready)
+        :param identifier: Pipeline process identifier
         """
         self.logger.info('registering pipeline process')
         await kvstore.write(
@@ -175,8 +208,8 @@ class Dispatcher:
     async def unregister(self, kvstore, identifier):
         """Unregisters a pipeline process form a KVStore.
 
-        :param kvstore:     KVStore instance (must be ready)
-        :param identifier:  Pipeline process identifier
+        :param kvstore: KVStore instance (must be ready)
+        :param identifier: Pipeline process identifier
         """
         self.logger.info('unregistering pipeline process')
         await kvstore.delete(f'{self.kvstore_prefix}:{identifier}')

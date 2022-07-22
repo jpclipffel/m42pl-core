@@ -2,7 +2,7 @@
 
 # Evaluated fields
 
-Evaluated fields returns the result of an [evaluation expression]().
+Evaluated fields returns the result of an [evaluation expression](../utils/eval.md).
 They are similar to some programming languages _lambdas_.
 
 ## Syntax

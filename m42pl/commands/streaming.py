@@ -19,8 +19,9 @@ class StreamingCommand(AsyncCommand):
                         *args, **kwargs) -> AsyncGenerator[dict, None]:
         """Runs the command.
         
-        :param event:       Current event
-        :param pipeline:    Current pipeline instance
+        :param event: Current event
+        :param pipeline: Current pipeline instance
+        :param context: Current context
         """
         if event:
             try:
@@ -35,7 +36,8 @@ class StreamingCommand(AsyncCommand):
                         context: Context) -> AsyncGenerator[dict, None]:
         """Process and yields events.
 
-        :param event:       Current event
-        :param pipeline:    Current pipeline instance
+        :param event: Current event
+        :param pipeline: Current pipeline instance
+        :param context: Current context
         """
         yield event

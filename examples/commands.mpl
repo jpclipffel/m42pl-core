@@ -8,4 +8,4 @@
     command.about = at(command.about, 0),
     command.syntax = at(command.syntax, 0)
 | fields command.name, command.about, command.syntax, command.aliases
-| output
+| output buffer=4096
